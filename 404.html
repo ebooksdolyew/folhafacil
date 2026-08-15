@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Página não encontrada — Ghub</title>
+<meta name="description" content="A página que você procura não existe no Ghub. Volte para a análise inteligente de ponto.">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://ghub-66j.pages.dev/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#e6eaf2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#2b2f36" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ghub">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Página não encontrada — Ghub">
+<meta property="og:description" content="A página que você procura não existe no Ghub.">
+<meta property="og:url" content="https://ghub-66j.pages.dev/">
+<meta property="og:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#e6eaf2;
+  --sh-light:rgba(255,255,255,.95);
+  --sh-dark:rgba(163,177,198,.65);
+  --text-primary:#2d3440;
+  --text-secondary:#5c6677;
+  --text-muted:#8a93a6;
+  --logo-g-1:#9b5cf6;
+  --logo-g-2:#6a3de8;
+  --nm-out:7px 7px 14px var(--sh-dark),-7px -7px 14px var(--sh-light);
+  --nm-in-sm:inset 3px 3px 6px var(--sh-dark),inset -3px -3px 6px var(--sh-light)
+}
+
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#2b2f36;
+    --sh-light:rgba(62,68,78,.85);
+    --sh-dark:rgba(16,18,22,.75);
+    --text-primary:#eef1f6;
+    --text-secondary:#aeb6c4;
+    --text-muted:#737c8c;
+    --logo-g-1:#b98cff;
+    --logo-g-2:#8a5cff
+  }
+}
+
+body{
+  font-family:'Inter','Segoe UI',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text-primary);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+  min-height:100vh;
+  display:grid;place-items:center;
+  padding:32px
+}
+
+.card{
+  max-width:520px;width:100%;text-align:center;
+  padding:48px 36px;
+  border-radius:32px;
+  background:var(--bg);
+  box-shadow:var(--nm-out)
+}
+
+.logo{
+  width:76px;height:76px;margin:0 auto 26px;
+  border-radius:24px;
+  display:grid;place-items:center;
+  box-shadow:var(--nm-in-sm)
+}
+
+.code{
+  font-size:64px;font-weight:800;letter-spacing:-2px;
+  background:linear-gradient(135deg,var(--logo-g-1),var(--logo-g-2));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  line-height:1.1;margin-bottom:6px
+}
+
+h1{font-size:23px;font-weight:700;letter-spacing:-.4px;margin-bottom:12px}
+
+p{color:var(--text-secondary);font-size:15px;margin-bottom:30px}
+
+a.btn{
+  display:inline-block;
+  padding:15px 32px;
+  border-radius:999px;
+  background:var(--bg);
+  box-shadow:var(--nm-out);
+  color:var(--text-primary);
+  font-size:15px;font-weight:700;text-decoration:none;
+  transition:box-shadow .25s cubic-bezier(.4,0,.2,1),transform .25s cubic-bezier(.4,0,.2,1)
+}
+a.btn:hover{transform:translateY(-2px)}
+a.btn:active{box-shadow:var(--nm-in-sm);transform:translateY(0)}
+
+.foot{margin-top:28px;color:var(--text-muted);font-size:12px}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="42" height="42" aria-label="Ghub">
+      <defs>
+        <linearGradient id="lg" x1="10%" y1="0%" x2="90%" y2="100%">
+          <stop offset="0%" stop-color="var(--logo-g-1)"/>
+          <stop offset="100%" stop-color="var(--logo-g-2)"/>
+        </linearGradient>
+      </defs>
+      <path d="M50,19 A22.5,22.5 0 1,0 50,45" fill="none" stroke="url(#lg)" stroke-width="11" stroke-linecap="round"/>
+      <rect x="35" y="29.5" width="16.5" height="9" rx="2.5" fill="url(#lg)"/>
+    </svg>
+  </div>
+  <div class="code">404</div>
+  <h1>Página não encontrada</h1>
+  <p>O endereço que você acessou não existe no Ghub. Volte para a página inicial e continue a análise do seu PDF de ponto.</p>
+  <a class="btn" href="/">← Voltar para o Ghub</a>
+  <div class="foot">Ghub — Análise inteligente de ponto</div>
+</main>
+</body>
+</html>
