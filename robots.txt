@@ -1,0 +1,16 @@
+# robots.txt — Ghub · Análise Inteligente de Ponto
+# https://ghub-66j.pages.dev/
+
+# Todos os rastreadores podem indexar o site inteiro
+User-agent: *
+Allow: /
+Disallow:
+
+# Arquivos de trabalho do repositório não precisam ser indexados
+Disallow: /*.md$
+
+# Rastreadores de imagem — libera a imagem de compartilhamento
+User-agent: Googlebot-Image
+Allow: /assets/
+
+Sitemap: https://ghub-66j.pages.dev/sitemap.xml
