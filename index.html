@@ -1456,8 +1456,7 @@ function processPage(pg) {
     period,
     saldoHoras,
     totalFaltas,
-    detectionReport,
-    tableStruct
+    detectionReport
   };
 }
 
@@ -1482,27 +1481,42 @@ async function go(file) {
     const n = pdf.numPages;
     document.getElementById('fn').textContent = file.name;
     document.getElementById('fp').textContent = `${n} página${n > 1 ? 's' : ''}`;
+    if (n > 600) {
+      showAlert(`ℹ️ PDF com ${n} páginas. O processamento pode levar alguns minutos — mantenha esta aba aberta.`, 'warn');
+    }
     pageImageCache.clear();
-    const pages = [];
-    setStatus(`Fase 1/2 — Extraindo texto (${n} págs)…`);
+    allEmps = [];
+    setStatus(`Analisando ${n} página${n > 1 ? 's' : ''}…`);
+
     for (let i = 1; i <= n; i++) {
-      prog(5 + (i / n) * 40);
+      prog(5 + (i / n) * 85);
+
+      /* Atualiza o texto de status e devolve o controle à UI a cada 10 páginas,
+         para a barra de progresso não congelar em arquivos grandes. */
+      if (i === 1 || i % 10 === 0 || i === n) {
+        setStatus(`Analisando página ${i} de ${n}…`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+
       const pdfPage = await pdf.getPage(i);
       const tc = await pdfPage.getTextContent();
       const rows = buildRows(tc.items);
       const text = tc.items.map(it => it.str).join(' ');
-      pages.push({ num: i, rows, text, pdfPage });
-    }
-    setStatus(`Fase 2/2 — Análise de cor (${n} págs)…`);
-    for (let i = 0; i < pages.length; i++) {
-      prog(45 + ((i+1) / n) * 45);
-      await renderPageToCache(pages[i].pdfPage, pages[i].num);
-    }
-    allEmps = pages.map(pg => {
+      const pg = { num: i, rows, text };
+
+      /* ⚠️ ORDEM CRÍTICA — renderizar ANTES de processar.
+         sampleLuminance() lê pageImageCache.get(pageNum); sem o cache
+         presente ele retorna 255 (claro) e TODOS os ATMs são descartados. */
+      await renderPageToCache(pdfPage, i);
+
       const result = processPage(pg);
       if (!result) skippedPages++;
-      return result;
-    }).filter(Boolean);
+      else allEmps.push(result);
+
+      /* ⚠️ Liberar SOMENTE depois do processPage. */
+      pageImageCache.delete(i);
+      try { pdfPage.cleanup(); } catch (_) {}
+    }
     const elapsed = ((Date.now() - procStart) / 1000).toFixed(1);
     prog(100);
     /* Exibe o painel ANTES de renderizar: se a apresentação falhar,
