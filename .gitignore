@@ -3,11 +3,13 @@
 validacao/pdfs/
 validacao/baseline/
 validacao/atual/
-tests/regressao.spec.js-snapshots/
+# Snapshots gerados a partir de PDFs REAIS (contêm nome de funcionário).
+# O snapshot do PDF sintético é fictício e FICA versionado.
+tests/**/*-real-*-snapshots/
 *.BASELINE
 
 # Dependências e artefatos de teste
 node_modules/
-package-lock.json
 test-results/
 playwright-report/
+tests/fixtures/ponto-sintetico.pdf
