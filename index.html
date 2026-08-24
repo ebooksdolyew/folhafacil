@@ -6,7 +6,7 @@
 
 <!-- ═══════════ SEO — Identidade da página ═══════════ -->
 <title>Ghub — Análise Inteligente de Ponto Eletrônico em PDF</title>
-<meta name="description" content="Envie o PDF do ponto eletrônico e o Ghub identifica atestados, faltas, atrasos e escalas 12×36 automaticamente. Grátis, sem cadastro e 100% no navegador.">
+<meta name="description" content="Ferramenta corporativa de análise de folha de ponto em PDF. Identifica atestados, faltas, atrasos e escalas 12×36 com processamento local no navegador. Acesso mediante licenciamento.">
 <meta name="keywords" content="análise de ponto, ponto eletrônico, folha de ponto, espelho de ponto, atestado médico, faltas, atrasos, escala 12x36, leitor de PDF, departamento pessoal, RH">
 <meta name="author" content="Ghub">
 <meta name="application-name" content="Ghub">
@@ -14,8 +14,8 @@
 <link rel="canonical" href="https://ghub-66j.pages.dev/">
 
 <!-- Indexação -->
-<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
-<meta name="googlebot" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
 <meta name="language" content="pt-BR">
 <link rel="alternate" hreflang="pt-br" href="https://ghub-66j.pages.dev/">
 <link rel="alternate" hreflang="x-default" href="https://ghub-66j.pages.dev/">
@@ -43,7 +43,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://ghub-66j.pages.dev/">
 <meta property="og:title" content="Ghub — Análise Inteligente de Ponto Eletrônico em PDF">
-<meta property="og:description" content="Envie o PDF do ponto eletrônico e o Ghub identifica atestados, faltas, atrasos e escalas 12×36 automaticamente. Grátis, sem cadastro e 100% no navegador.">
+<meta property="og:description" content="Ferramenta corporativa de análise de folha de ponto em PDF. Identifica atestados, faltas, atrasos e escalas 12×36 com processamento local no navegador. Acesso mediante licenciamento.">
 <meta property="og:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta property="og:image:type" content="image/png">
@@ -54,7 +54,7 @@
 <!-- ═══════════ Twitter / X ═══════════ -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Ghub — Análise Inteligente de Ponto Eletrônico em PDF">
-<meta name="twitter:description" content="Envie o PDF do ponto eletrônico e o Ghub identifica atestados, faltas, atrasos e escalas 12×36 automaticamente. Grátis, sem cadastro e 100% no navegador.">
+<meta name="twitter:description" content="Ferramenta corporativa de análise de folha de ponto em PDF. Identifica atestados, faltas, atrasos e escalas 12×36 com processamento local no navegador. Acesso mediante licenciamento.">
 <meta name="twitter:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta name="twitter:image:alt" content="Ghub — análise inteligente de ponto eletrônico.">
 
@@ -63,17 +63,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-<link rel="dns-prefetch" href="https://www.googletagmanager.com">
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-2B4DEPLDH7"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-2B4DEPLDH7');
-</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -717,19 +706,19 @@ td strong{
       "@id": "https://ghub-66j.pages.dev/#app",
       "name": "Ghub — Análise Inteligente de Ponto",
       "url": "https://ghub-66j.pages.dev/",
-      "description": "Ferramenta que lê o PDF do ponto eletrônico e identifica automaticamente atestados, faltas, atrasos, saldo de horas e escalas 12×36, com exportação em PDF e planilha XLSX. O processamento acontece 100% no navegador, sem envio de dados para servidores externos.",
+      "description": "Ferramenta que lê o PDF do ponto eletrônico e identifica automaticamente atestados, faltas, atrasos, saldo de horas e escalas 12×36, com exportação em PDF e planilha XLSX. O processamento acontece integralmente no navegador do usuário; o arquivo PDF e os dados extraídos não são transmitidos a nenhum servidor.",
       "applicationCategory": "BusinessApplication",
       "applicationSubCategory": "Recursos Humanos / Departamento Pessoal",
       "operatingSystem": "Qualquer sistema com navegador moderno",
       "browserRequirements": "Requer JavaScript. Navegador com suporte a leitura de PDF (Chrome, Edge, Firefox ou Safari atualizados).",
       "softwareVersion": "2.2",
       "inLanguage": "pt-BR",
-      "isAccessibleForFree": true,
+      "isAccessibleForFree": false,
       "offers": {
         "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "BRL",
-        "availability": "https://schema.org/InStock"
+        "businessFunction": "https://purl.org/goodrelations/v1#LeaseOut",
+        "availability": "https://schema.org/LimitedAvailability",
+        "priceCurrency": "BRL"
       },
       "featureList": [
         "Leitura automática do PDF de frequências do ponto eletrônico",
@@ -739,7 +728,7 @@ td strong{
         "Cálculo de saldo de horas",
         "Busca e filtros por funcionário",
         "Exportação em PDF e planilha XLSX",
-        "Processamento local, sem envio de dados a servidores externos"
+        "Processamento local — o PDF não é transmitido a nenhum servidor"
       ],
       "screenshot": "https://ghub-66j.pages.dev/assets/og-image.png",
       "image": "https://ghub-66j.pages.dev/assets/og-image.png",
@@ -858,7 +847,7 @@ td strong{
 
   <footer class="footer">
     <strong>Ghub v2.2</strong> — Análise inteligente de ponto<br>
-    Processamento 100% no navegador · Nenhum dado é enviado para servidores externos
+    Processamento 100% no navegador · O arquivo PDF e os dados extraídos não são enviados a nenhum servidor
   </footer>
 </div>
 
@@ -915,9 +904,8 @@ let procStart = 0;
 function isWeekendDay(dowText) {
   if (!dowText) return false;
   const normalized = dowText.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const isSaturday = normalized === 'SAB' || normalized === 'SAB';
-  const isSunday = normalized === 'DOM' || normalized === 'DOM';
-  return isSaturday || isSunday;
+  /* O normalize('NFD') acima já converte SÁB em SAB — uma comparação por dia basta. */
+  return normalized === 'SAB' || normalized === 'DOM';
 }
 
 function isWeekendDayNumber(dow) {
@@ -1517,8 +1505,15 @@ async function go(file) {
     }).filter(Boolean);
     const elapsed = ((Date.now() - procStart) / 1000).toFixed(1);
     prog(100);
-    renderStats(); renderTable();
+    /* Exibe o painel ANTES de renderizar: se a apresentação falhar,
+       os dados extraídos continuam acessíveis para exportação. */
     document.getElementById('res').style.display = 'block';
+    try {
+      renderStats(); renderTable();
+    } catch (renderErr) {
+      console.error('Falha ao renderizar resultados:', renderErr);
+      showAlert('⚠️ Os dados foram lidos, mas houve um erro ao exibir a tabela. As exportações continuam funcionando.', 'warn');
+    }
     if (skippedPages > 0) {
       const fw = document.getElementById('fwarn');
       fw.textContent = `⚠️ ${skippedPages} página${skippedPages > 1 ? 's' : ''} sem funcionário reconhecido`;
@@ -1572,7 +1567,14 @@ function renderTable() {
   }
   const tbody = document.getElementById('tbd');
   if (!list.length) {
-    const msg = q ? `Nenhum funcionário encontrado para "${q}"` : only ? 'Nenhum funcionário com ATM neste arquivo' : 'Nenhum funcionário reconhecido';
+    let msg;
+    if (q) {
+      msg = `Nenhum funcionário encontrado para "${q}"`;
+    } else if (onlyAtm || onlyFaltas || onlyAtrasos) {
+      msg = 'Nenhum funcionário atende aos filtros selecionados';
+    } else {
+      msg = 'Nenhum funcionário reconhecido neste PDF. Verifique se o arquivo é uma folha de ponto com texto selecionável (PDFs escaneados ainda não são suportados).';
+    }
     tbody.innerHTML = `<tr class="empty-row"><td colspan="8">${msg}</td></tr>`;
     return;
   }
