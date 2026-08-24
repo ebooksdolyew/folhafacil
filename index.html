@@ -910,6 +910,17 @@ td strong{
 pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
 
 /* 🔒 REGRAS DE VALIDAÇÃO IMUTÁVEIS */
+
+/* FASE 4 — divergência entre motores, decisão pendente de medição.
+   false = comportamento legado atual (o motor legado descarta ATM quando a
+           JORNADA é "Folga"/"DSR"/"Descanso"). Preserva a contagem de hoje.
+   true  = REGRA 2 conforme documentada em REGRA_JORNADA_12x36.md, que manda
+           contabilizar ATM com JORNADA="Folga".
+   Só altere depois de rodar a medição descrita em LIMITACOES_CONHECIDAS.md.
+   O motor tabular (readAtmsFromTable + validateAtm12x36ByJornada) já aceita
+   "Folga" hoje — esta flag existe só para o motor legado. */
+const REGRA2_ACEITA_FOLGA = false;
+
 const DOW_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const ATM_RX = /(?<![A-Za-zÀ-ÿ0-9])ATM(?![A-Za-zÀ-ÿ0-9])/;
 const ADMIN_STOP = /\b(CARGO|FUN[ÇC][ÃA]O|FUNCAO|SETOR|MATR[ÍI]CULA|MATRICULA|CPF|REGISTRO|DEPART\w*|LOTA[ÇC][ÃA]O|EMPRESA|PER[ÍI]ODO|ESCALA|CONTRATO)\b/i;
@@ -1356,15 +1367,27 @@ function readAtmsFromTable(tableStruct, period, rows, pageNum, is12) {
 
 function detectAtmByRow(rows, is12, jornX, period, pageNum) {
   const tableStruct = identifyTableColumns(rows);
+  let diagnostico = 'sem-tabela';
   if (tableStruct && tableStruct.diaCol && tableStruct.entradas.length > 0) {
     const result = readAtmsFromTable(tableStruct, period, rows, pageNum, is12);
     if (result.atmDays && result.atmDays.length > 0) {
       result.tableStruct = tableStruct;
+      result.diagnostico = 'tabular';
       return result;
     }
+    diagnostico = 'tabela-ok-zero-atm';   /* tabela encontrada, mas nenhum ATM */
   }
   const legacyResult = detectAtmByRowLegacy(rows, is12, jornX, period, pageNum);
-  return { atmDays: legacyResult, rowYByKey: {} };
+  /* DIAGNÓSTICO DA FASE 4 — remover após a medição (ver LIMITACOES_CONHECIDAS.md).
+     Só avisa quando o motor legado REALMENTE produziu ATM, que é o único caso
+     em que a divergência entre os dois motores pode alterar a contagem. */
+  if (legacyResult.length > 0) {
+    console.warn(
+      `[GHUB-DIAG] pág ${pageNum}: MOTOR LEGADO encontrou ${legacyResult.length} ATM(s). ` +
+      `Causa: ${diagnostico}. Escala: ${is12 ? '12x36' : 'Convencional'}`
+    );
+  }
+  return { atmDays: legacyResult, rowYByKey: {}, diagnostico };
 }
 
 function detectAtmByRowLegacy(rows, is12, jornX, period, pageNum) {
@@ -1403,7 +1426,7 @@ function detectAtmByRowLegacy(rows, is12, jornX, period, pageNum) {
           if (jc) { jornStr = jc.str.trim(); break; }
         }
         if (!jornStr) continue;
-        if (/^(-|FOLGA|DSR|DESCANSO)$/i.test(jornStr)) continue;
+        if (!REGRA2_ACEITA_FOLGA && /^(-|FOLGA|DSR|DESCANSO)$/i.test(jornStr)) continue;
       }
       if (!found.has(dateAnchor.key)) {
         found.set(dateAnchor.key, { display: dateAnchor.display });
