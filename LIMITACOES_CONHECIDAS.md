@@ -112,7 +112,40 @@ reconhecimento num dado que hoje é determinístico.
 
 ---
 
-## 6. Como decidir (medição pendente)
+## 6. pdf.js 3.4.120 — atualização adiada conscientemente
+
+**Decisão registrada: adiar a Fase 5 do plano.**
+
+A versão em uso está na faixa afetada pela CVE-2024-4367
+(`GHSA-wgrm-67xf-hhpq`, High, corrigida em 4.2.67).
+
+**Controle compensatório em vigor:** `isEvalSupported: false` no
+`getDocument()` — o workaround oficial declarado no próprio advisory da
+Mozilla. Sem ele, o padrão é o valor vulnerável.
+
+**Por que adiar é a escolha certa hoje:** o 4.x mudou muito além da correção
+de segurança. Migrou para ESM; `getTextContent()` pode devolver agrupamento,
+quebra de strings e valores de `transform`/`width`/`height` diferentes; e a
+rasterização pode mudar sutilmente com o antialiasing de fonte. Isso mexe
+exatamente nas duas camadas de que a precisão depende: as coordenadas de
+texto que alimentam `buildRows()` (`ROW_TOL`, `COL_TOL`) e a luminância de
+pixel que alimenta `isTokenDark()` (`LUM_THRESHOLD`).
+
+**Quando for feito:** branch isolada, amostra de 20+ PDFs com todos os
+layouts já vistos, salto mínimo para a `4.2.67` (primeira versão corrigida,
+não a 5.x), `comparar.py` em cada PDF, e recalibração provável de `ROW_TOL`,
+`COL_TOL` e `LUM_THRESHOLD` — cada valor alterado documentado com o motivo.
+Uma divergência pode ser a versão nova **acertando** onde a antiga errava,
+mas isso só se sabe conferindo à mão contra o PDF.
+
+**Sobre SRI:** não substitui a auto-hospedagem. O `integrity` só se aplica a
+recursos declarados em `<script>` e `<link>`; o `pdf.worker.min.js` é buscado
+por `GlobalWorkerOptions.workerSrc` e ficaria sem verificação — justamente o
+arquivo onde o PDF é parseado e onde a CVE se manifesta.
+
+---
+
+## 7. Como decidir a divergência entre motores (medição pendente)
 
 A instrumentação `[GHUB-DIAG]` já está no código. Ela avisa **apenas** quando
 o motor legado realmente produziu ATM — o único caso em que a divergência
