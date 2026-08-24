@@ -1,0 +1,13 @@
+# ── LGPD: dados sensíveis nunca entram no repositório ──
+# Folhas de ponto reais contêm nome de funcionário e dado de saúde (ATM).
+validacao/pdfs/
+validacao/baseline/
+validacao/atual/
+tests/regressao.spec.js-snapshots/
+*.BASELINE
+
+# Dependências e artefatos de teste
+node_modules/
+package-lock.json
+test-results/
+playwright-report/
