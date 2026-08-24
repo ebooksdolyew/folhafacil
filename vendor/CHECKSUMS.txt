@@ -1,0 +1,26 @@
+# Bibliotecas auto-hospedadas — GHUB (plano de correções, Fase 3.2)
+#
+# ORIGEM: pacotes oficiais do npm, extraídos com `npm pack`:
+#   pdfjs-dist@3.4.120  -> build/pdf.min.js, build/pdf.worker.min.js
+#   pdf-lib@1.17.1      -> dist/pdf-lib.min.js
+#
+# As versões são EXATAMENTE as que estavam sendo carregadas do cdnjs, para que
+# o motor de extração permaneça idêntico ao que hoje dá 100% de acerto.
+#
+# CONFERÊNCIA CRUZADA (plano §13.3) — o ambiente onde estes arquivos foram
+# baixados não alcança o cdnjs, então a comparação com o CDN não foi feita
+# aqui. Rode uma vez, de uma máquina com acesso, antes de publicar:
+#
+#   curl -s https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js | sha256sum
+#   curl -s https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js | sha256sum
+#   curl -s https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js | sha256sum
+#
+# Se os hashes baterem com os de baixo, está comprovado que o cdnjs servia o
+# artefato oficial não modificado. Se não baterem, investigue antes de publicar.
+#
+# Reconferir a integridade a qualquer momento:
+#   cd vendor && grep -v '^#' CHECKSUMS.txt | grep . | sha256sum -c
+
+0f9a5cad07941f0826586c94e089d89b918c46e5c17cf2d5a3c6f666e3bc694f  pdf-lib.min.js
+519415484a0c6c9f36ff7b858ede2660e4d55472089ad929eeedcbe8b307ebf6  pdf.min.js
+e6a7f30b71ca739ee2738c2ada7e120390b3c6faa3f3d4aa172bb6ece586eab1  pdf.worker.min.js

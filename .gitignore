@@ -1,0 +1,15 @@
+# ── LGPD: dados sensíveis nunca entram no repositório ──
+# Folhas de ponto reais contêm nome de funcionário e dado de saúde (ATM).
+validacao/pdfs/
+validacao/baseline/
+validacao/atual/
+# Snapshots gerados a partir de PDFs REAIS (contêm nome de funcionário).
+# O snapshot do PDF sintético é fictício e FICA versionado.
+tests/**/*-real-*-snapshots/
+*.BASELINE
+
+# Dependências e artefatos de teste
+node_modules/
+test-results/
+playwright-report/
+tests/fixtures/ponto-sintetico.pdf

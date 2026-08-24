@@ -6,7 +6,7 @@
 
 <!-- ═══════════ SEO — Identidade da página ═══════════ -->
 <title>Ghub — Análise Inteligente de Ponto Eletrônico em PDF</title>
-<meta name="description" content="Envie o PDF do ponto eletrônico e o Ghub identifica atestados, faltas, atrasos e escalas 12×36 automaticamente. Grátis, sem cadastro e 100% no navegador.">
+<meta name="description" content="Ferramenta corporativa de análise de folha de ponto em PDF. Identifica atestados, faltas, atrasos e escalas 12×36 com processamento local no navegador. Acesso mediante licenciamento.">
 <meta name="keywords" content="análise de ponto, ponto eletrônico, folha de ponto, espelho de ponto, atestado médico, faltas, atrasos, escala 12x36, leitor de PDF, departamento pessoal, RH">
 <meta name="author" content="Ghub">
 <meta name="application-name" content="Ghub">
@@ -14,8 +14,8 @@
 <link rel="canonical" href="https://ghub-66j.pages.dev/">
 
 <!-- Indexação -->
-<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1">
-<meta name="googlebot" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="robots" content="noindex, nofollow">
+<meta name="googlebot" content="noindex, nofollow">
 <meta name="language" content="pt-BR">
 <link rel="alternate" hreflang="pt-br" href="https://ghub-66j.pages.dev/">
 <link rel="alternate" hreflang="x-default" href="https://ghub-66j.pages.dev/">
@@ -43,7 +43,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://ghub-66j.pages.dev/">
 <meta property="og:title" content="Ghub — Análise Inteligente de Ponto Eletrônico em PDF">
-<meta property="og:description" content="Envie o PDF do ponto eletrônico e o Ghub identifica atestados, faltas, atrasos e escalas 12×36 automaticamente. Grátis, sem cadastro e 100% no navegador.">
+<meta property="og:description" content="Ferramenta corporativa de análise de folha de ponto em PDF. Identifica atestados, faltas, atrasos e escalas 12×36 com processamento local no navegador. Acesso mediante licenciamento.">
 <meta property="og:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta property="og:image:type" content="image/png">
@@ -54,30 +54,46 @@
 <!-- ═══════════ Twitter / X ═══════════ -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Ghub — Análise Inteligente de Ponto Eletrônico em PDF">
-<meta name="twitter:description" content="Envie o PDF do ponto eletrônico e o Ghub identifica atestados, faltas, atrasos e escalas 12×36 automaticamente. Grátis, sem cadastro e 100% no navegador.">
+<meta name="twitter:description" content="Ferramenta corporativa de análise de folha de ponto em PDF. Identifica atestados, faltas, atrasos e escalas 12×36 com processamento local no navegador. Acesso mediante licenciamento.">
 <meta name="twitter:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta name="twitter:image:alt" content="Ghub — análise inteligente de ponto eletrônico.">
 
-<!-- ═══════════ Performance: conexões antecipadas ═══════════ -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-<link rel="dns-prefetch" href="https://www.googletagmanager.com">
-
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-2B4DEPLDH7"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-2B4DEPLDH7');
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<!-- Bibliotecas e fontes auto-hospedadas: nenhuma requisição a terceiros. -->
+<script src="./vendor/pdf.min.js"></script>
+<script src="./vendor/pdf-lib.min.js"></script>
 <style>
+/* ═══ Fontes auto-hospedadas (Fase 3.3) ═══
+   Origem: pacotes npm @fontsource/{inter,outfit,space-grotesk}.
+   Servidas do próprio domínio: a página não faz nenhuma requisição
+   externa, e o IP do usuário deixa de ser entregue ao Google a cada
+   carregamento. Subsets latin + latin-ext cobrem a acentuação do
+   português. */
+@font-face{font-family:'Inter';font-style:normal;font-weight:300;font-display:swap;src:url('./assets/fonts/Inter-latin-300.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:300;font-display:swap;src:url('./assets/fonts/Inter-latin-ext-300.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('./assets/fonts/Inter-latin-400.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('./assets/fonts/Inter-latin-ext-400.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url('./assets/fonts/Inter-latin-500.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url('./assets/fonts/Inter-latin-ext-500.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('./assets/fonts/Inter-latin-600.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('./assets/fonts/Inter-latin-ext-600.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('./assets/fonts/Inter-latin-700.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('./assets/fonts/Inter-latin-ext-700.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url('./assets/fonts/Inter-latin-800.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url('./assets/fonts/Inter-latin-ext-800.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:500;font-display:swap;src:url('./assets/fonts/Outfit-latin-500.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:500;font-display:swap;src:url('./assets/fonts/Outfit-latin-ext-500.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:600;font-display:swap;src:url('./assets/fonts/Outfit-latin-600.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:600;font-display:swap;src:url('./assets/fonts/Outfit-latin-ext-600.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:700;font-display:swap;src:url('./assets/fonts/Outfit-latin-700.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:700;font-display:swap;src:url('./assets/fonts/Outfit-latin-ext-700.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:800;font-display:swap;src:url('./assets/fonts/Outfit-latin-800.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:800;font-display:swap;src:url('./assets/fonts/Outfit-latin-ext-800.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:500;font-display:swap;src:url('./assets/fonts/SpaceGrotesk-latin-500.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:500;font-display:swap;src:url('./assets/fonts/SpaceGrotesk-latin-ext-500.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:600;font-display:swap;src:url('./assets/fonts/SpaceGrotesk-latin-600.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:600;font-display:swap;src:url('./assets/fonts/SpaceGrotesk-latin-ext-600.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url('./assets/fonts/SpaceGrotesk-latin-700.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url('./assets/fonts/SpaceGrotesk-latin-ext-700.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 /* ════════════════════════════════════════════════════════════════ */
 /* GHUB — NEUMORFISMO (Soft UI) · temas White (gelo) e Noturno     */
 /* ════════════════════════════════════════════════════════════════ */
@@ -717,19 +733,19 @@ td strong{
       "@id": "https://ghub-66j.pages.dev/#app",
       "name": "Ghub — Análise Inteligente de Ponto",
       "url": "https://ghub-66j.pages.dev/",
-      "description": "Ferramenta que lê o PDF do ponto eletrônico e identifica automaticamente atestados, faltas, atrasos, saldo de horas e escalas 12×36, com exportação em PDF e planilha XLSX. O processamento acontece 100% no navegador, sem envio de dados para servidores externos.",
+      "description": "Ferramenta que lê o PDF do ponto eletrônico e identifica automaticamente atestados, faltas, atrasos, saldo de horas e escalas 12×36, com exportação em PDF e planilha XLSX. O processamento acontece integralmente no navegador do usuário; o arquivo PDF e os dados extraídos não são transmitidos a nenhum servidor.",
       "applicationCategory": "BusinessApplication",
       "applicationSubCategory": "Recursos Humanos / Departamento Pessoal",
       "operatingSystem": "Qualquer sistema com navegador moderno",
       "browserRequirements": "Requer JavaScript. Navegador com suporte a leitura de PDF (Chrome, Edge, Firefox ou Safari atualizados).",
       "softwareVersion": "2.2",
       "inLanguage": "pt-BR",
-      "isAccessibleForFree": true,
+      "isAccessibleForFree": false,
       "offers": {
         "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "BRL",
-        "availability": "https://schema.org/InStock"
+        "businessFunction": "https://purl.org/goodrelations/v1#LeaseOut",
+        "availability": "https://schema.org/LimitedAvailability",
+        "priceCurrency": "BRL"
       },
       "featureList": [
         "Leitura automática do PDF de frequências do ponto eletrônico",
@@ -739,7 +755,7 @@ td strong{
         "Cálculo de saldo de horas",
         "Busca e filtros por funcionário",
         "Exportação em PDF e planilha XLSX",
-        "Processamento local, sem envio de dados a servidores externos"
+        "Processamento local — o PDF não é transmitido a nenhum servidor"
       ],
       "screenshot": "https://ghub-66j.pages.dev/assets/og-image.png",
       "image": "https://ghub-66j.pages.dev/assets/og-image.png",
@@ -858,7 +874,7 @@ td strong{
 
   <footer class="footer">
     <strong>Ghub v2.2</strong> — Análise inteligente de ponto<br>
-    Processamento 100% no navegador · Nenhum dado é enviado para servidores externos
+    Processamento 100% no navegador · O arquivo PDF e os dados extraídos não são enviados a nenhum servidor
   </footer>
 </div>
 
@@ -891,10 +907,20 @@ td strong{
 </script>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
 
 /* 🔒 REGRAS DE VALIDAÇÃO IMUTÁVEIS */
+
+/* FASE 4 — divergência entre motores, decisão pendente de medição.
+   false = comportamento legado atual (o motor legado descarta ATM quando a
+           JORNADA é "Folga"/"DSR"/"Descanso"). Preserva a contagem de hoje.
+   true  = REGRA 2 conforme documentada em REGRA_JORNADA_12x36.md, que manda
+           contabilizar ATM com JORNADA="Folga".
+   Só altere depois de rodar a medição descrita em LIMITACOES_CONHECIDAS.md.
+   O motor tabular (readAtmsFromTable + validateAtm12x36ByJornada) já aceita
+   "Folga" hoje — esta flag existe só para o motor legado. */
+const REGRA2_ACEITA_FOLGA = false;
+
 const DOW_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const ATM_RX = /(?<![A-Za-zÀ-ÿ0-9])ATM(?![A-Za-zÀ-ÿ0-9])/;
 const ADMIN_STOP = /\b(CARGO|FUN[ÇC][ÃA]O|FUNCAO|SETOR|MATR[ÍI]CULA|MATRICULA|CPF|REGISTRO|DEPART\w*|LOTA[ÇC][ÃA]O|EMPRESA|PER[ÍI]ODO|ESCALA|CONTRATO)\b/i;
@@ -915,9 +941,8 @@ let procStart = 0;
 function isWeekendDay(dowText) {
   if (!dowText) return false;
   const normalized = dowText.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const isSaturday = normalized === 'SAB' || normalized === 'SAB';
-  const isSunday = normalized === 'DOM' || normalized === 'DOM';
-  return isSaturday || isSunday;
+  /* O normalize('NFD') acima já converte SÁB em SAB — uma comparação por dia basta. */
+  return normalized === 'SAB' || normalized === 'DOM';
 }
 
 function isWeekendDayNumber(dow) {
@@ -1342,15 +1367,27 @@ function readAtmsFromTable(tableStruct, period, rows, pageNum, is12) {
 
 function detectAtmByRow(rows, is12, jornX, period, pageNum) {
   const tableStruct = identifyTableColumns(rows);
+  let diagnostico = 'sem-tabela';
   if (tableStruct && tableStruct.diaCol && tableStruct.entradas.length > 0) {
     const result = readAtmsFromTable(tableStruct, period, rows, pageNum, is12);
     if (result.atmDays && result.atmDays.length > 0) {
       result.tableStruct = tableStruct;
+      result.diagnostico = 'tabular';
       return result;
     }
+    diagnostico = 'tabela-ok-zero-atm';   /* tabela encontrada, mas nenhum ATM */
   }
   const legacyResult = detectAtmByRowLegacy(rows, is12, jornX, period, pageNum);
-  return { atmDays: legacyResult, rowYByKey: {} };
+  /* DIAGNÓSTICO DA FASE 4 — remover após a medição (ver LIMITACOES_CONHECIDAS.md).
+     Só avisa quando o motor legado REALMENTE produziu ATM, que é o único caso
+     em que a divergência entre os dois motores pode alterar a contagem. */
+  if (legacyResult.length > 0) {
+    console.warn(
+      `[GHUB-DIAG] pág ${pageNum}: MOTOR LEGADO encontrou ${legacyResult.length} ATM(s). ` +
+      `Causa: ${diagnostico}. Escala: ${is12 ? '12x36' : 'Convencional'}`
+    );
+  }
+  return { atmDays: legacyResult, rowYByKey: {}, diagnostico };
 }
 
 function detectAtmByRowLegacy(rows, is12, jornX, period, pageNum) {
@@ -1389,7 +1426,7 @@ function detectAtmByRowLegacy(rows, is12, jornX, period, pageNum) {
           if (jc) { jornStr = jc.str.trim(); break; }
         }
         if (!jornStr) continue;
-        if (/^(-|FOLGA|DSR|DESCANSO)$/i.test(jornStr)) continue;
+        if (!REGRA2_ACEITA_FOLGA && /^(-|FOLGA|DSR|DESCANSO)$/i.test(jornStr)) continue;
       }
       if (!found.has(dateAnchor.key)) {
         found.set(dateAnchor.key, { display: dateAnchor.display });
@@ -1468,8 +1505,7 @@ function processPage(pg) {
     period,
     saldoHoras,
     totalFaltas,
-    detectionReport,
-    tableStruct
+    detectionReport
   };
 }
 
@@ -1485,7 +1521,10 @@ async function go(file) {
     pdfBytes = new Uint8Array(buf.slice(0));
     let pdf;
     try {
-      pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      pdf = await pdfjsLib.getDocument({
+        data: buf,
+        isEvalSupported: false   /* mitiga CVE-2024-4367 (workaround oficial Mozilla) */
+      }).promise;
     } catch (pdfErr) {
       if (/password/i.test(pdfErr.message) || pdfErr.name === 'PasswordException')
         throw new Error('PDF protegido por senha. Remova a proteção antes de carregar.');
@@ -1494,31 +1533,53 @@ async function go(file) {
     const n = pdf.numPages;
     document.getElementById('fn').textContent = file.name;
     document.getElementById('fp').textContent = `${n} página${n > 1 ? 's' : ''}`;
+    if (n > 600) {
+      showAlert(`ℹ️ PDF com ${n} páginas. O processamento pode levar alguns minutos — mantenha esta aba aberta.`, 'warn');
+    }
     pageImageCache.clear();
-    const pages = [];
-    setStatus(`Fase 1/2 — Extraindo texto (${n} págs)…`);
+    allEmps = [];
+    setStatus(`Analisando ${n} página${n > 1 ? 's' : ''}…`);
+
     for (let i = 1; i <= n; i++) {
-      prog(5 + (i / n) * 40);
+      prog(5 + (i / n) * 85);
+
+      /* Atualiza o texto de status e devolve o controle à UI a cada 10 páginas,
+         para a barra de progresso não congelar em arquivos grandes. */
+      if (i === 1 || i % 10 === 0 || i === n) {
+        setStatus(`Analisando página ${i} de ${n}…`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+
       const pdfPage = await pdf.getPage(i);
       const tc = await pdfPage.getTextContent();
       const rows = buildRows(tc.items);
       const text = tc.items.map(it => it.str).join(' ');
-      pages.push({ num: i, rows, text, pdfPage });
-    }
-    setStatus(`Fase 2/2 — Análise de cor (${n} págs)…`);
-    for (let i = 0; i < pages.length; i++) {
-      prog(45 + ((i+1) / n) * 45);
-      await renderPageToCache(pages[i].pdfPage, pages[i].num);
-    }
-    allEmps = pages.map(pg => {
+      const pg = { num: i, rows, text };
+
+      /* ⚠️ ORDEM CRÍTICA — renderizar ANTES de processar.
+         sampleLuminance() lê pageImageCache.get(pageNum); sem o cache
+         presente ele retorna 255 (claro) e TODOS os ATMs são descartados. */
+      await renderPageToCache(pdfPage, i);
+
       const result = processPage(pg);
       if (!result) skippedPages++;
-      return result;
-    }).filter(Boolean);
+      else allEmps.push(result);
+
+      /* ⚠️ Liberar SOMENTE depois do processPage. */
+      pageImageCache.delete(i);
+      try { pdfPage.cleanup(); } catch (_) {}
+    }
     const elapsed = ((Date.now() - procStart) / 1000).toFixed(1);
     prog(100);
-    renderStats(); renderTable();
+    /* Exibe o painel ANTES de renderizar: se a apresentação falhar,
+       os dados extraídos continuam acessíveis para exportação. */
     document.getElementById('res').style.display = 'block';
+    try {
+      renderStats(); renderTable();
+    } catch (renderErr) {
+      console.error('Falha ao renderizar resultados:', renderErr);
+      showAlert('⚠️ Os dados foram lidos, mas houve um erro ao exibir a tabela. As exportações continuam funcionando.', 'warn');
+    }
     if (skippedPages > 0) {
       const fw = document.getElementById('fwarn');
       fw.textContent = `⚠️ ${skippedPages} página${skippedPages > 1 ? 's' : ''} sem funcionário reconhecido`;
@@ -1572,7 +1633,14 @@ function renderTable() {
   }
   const tbody = document.getElementById('tbd');
   if (!list.length) {
-    const msg = q ? `Nenhum funcionário encontrado para "${q}"` : only ? 'Nenhum funcionário com ATM neste arquivo' : 'Nenhum funcionário reconhecido';
+    let msg;
+    if (q) {
+      msg = `Nenhum funcionário encontrado para "${q}"`;
+    } else if (onlyAtm || onlyFaltas || onlyAtrasos) {
+      msg = 'Nenhum funcionário atende aos filtros selecionados';
+    } else {
+      msg = 'Nenhum funcionário reconhecido neste PDF. Verifique se o arquivo é uma folha de ponto com texto selecionável (PDFs escaneados ainda não são suportados).';
+    }
     tbody.innerHTML = `<tr class="empty-row"><td colspan="8">${msg}</td></tr>`;
     return;
   }
