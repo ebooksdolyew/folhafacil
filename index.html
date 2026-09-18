@@ -2110,6 +2110,8 @@ function _exportVerbas(ctx) {
 function _exportColumns(ctx) {
   const v = _exportVerbas(ctx);
   const single = (v.atm ? 1 : 0) + (v.faltas ? 1 : 0) + (v.atrasos ? 1 : 0) === 1;
+  const soAtestados = v.atm && !v.faltas && !v.atrasos;   // planilha só de atestados
+  const soFaltas    = v.faltas && !v.atm && !v.atrasos;   // planilha só de faltas
   const cols = [
     { header: 'MATRICULA',   width: 12, value: (e, i) => i + 1 },
     { header: 'Funcionário', width: 34, value: e => e.name },
@@ -2129,7 +2131,11 @@ function _exportColumns(ctx) {
       return m === null ? '—' : Math.abs(m);   // sempre positivo, sem o traço
     } });
   }
-  cols.push({ header: 'PROVENTO', width: 12, value: () => 680 });   // valor fixo
+  /* PROVENTO: ausente na planilha só de atestados; 504 na de faltas; 680 nos demais */
+  if (!soAtestados) {
+    const provento = soFaltas ? 504 : 680;
+    cols.push({ header: 'PROVENTO', width: 12, value: () => provento });
+  }
   cols.push({ header: 'Páginas',  width: 18, value: e => e.pages.join(', ') });
   cols.push({ header: 'VALOR',    width: 12, value: () => 0 });     // valor fixo
   return cols;
