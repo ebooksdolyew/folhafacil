@@ -2094,10 +2094,11 @@ function _buildXlsx(rows, sheetName, colWidths) {
 /* Monta a matriz de dados (1ª linha = cabeçalho) usada tanto pela planilha
    XLSX quanto pela exportação CSV — assim as duas saídas ficam idênticas. */
 function _buildExportRows(list) {
-  const rows = [['Funcionário','CPF','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas (min)','Páginas']];
-  for (const e of list) {
+  const rows = [['MATRICULA','Funcionário','CPF','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas (min)','PROVENTO','Páginas','VALOR']];
+  list.forEach((e, i) => {
     const saldoMin = saldoHorasEmMinutos(e.saldoHoras);
     rows.push([
+      i + 1,                                       // MATRICULA: contador sequencial (1, 2, 3, …)
       e.name,
       e.cpf || '—',
       e.is12 ? '12×36' : 'Convencional',
@@ -2105,9 +2106,11 @@ function _buildExportRows(list) {
       e.atmDays.map(d => d.display).join(' | '),
       e.totalFaltas > 0 ? e.totalFaltas : '—',
       saldoMin === null ? '—' : saldoMin,
-      e.pages.join(', ')
+      680,                                         // PROVENTO: valor fixo em todas as linhas
+      e.pages.join(', '),
+      0                                            // VALOR: valor fixo em todas as linhas
     ]);
-  }
+  });
   return rows;
 }
 
@@ -2118,7 +2121,7 @@ function dlXlsx() {
     const list = getFilteredEmps();
     const rows = _buildExportRows(list);
 
-    const blob = _buildXlsx(rows, ctx.label, [34, 16, 14, 11, 46, 15, 15, 18]);
+    const blob = _buildXlsx(rows, ctx.label, [12, 34, 16, 14, 11, 46, 15, 18, 12, 18, 12]);
     const url  = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
