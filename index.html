@@ -875,6 +875,7 @@ td strong{
       <label class="ck"><input type="checkbox" id="fd"> Apenas atrasos</label>
       <button class="btn bg" id="bdl" onclick="dlPdf()" aria-label="Baixar PDF com páginas de ATM" disabled>⬇️ Baixar PDF</button>
       <button class="btn bc" id="bcs" onclick="dlXlsx()" aria-label="Gerar planilha XLSX com a lista" disabled>📊 Gerar Planilha</button>
+      <button class="btn bc" id="bcsv" onclick="dlCsv()" aria-label="Gerar arquivo CSV com a lista" disabled>📄 Gerar CSV</button>
       <button class="btn bc" id="blr" onclick="dlReport()" aria-label="Baixar relatório de aprendizado" disabled>📈 Relatório</button>
       <button class="btn bs" onclick="resetTool()" aria-label="Carregar novo arquivo">🔄 Novo</button>
     </div>
@@ -1823,6 +1824,7 @@ function updateButtonStates() {
   const pdfOk = anyFilter ? list.length > 0 : allEmps.some(e => e.atm > 0);
   document.getElementById('bdl').disabled = !pdfOk || !pdfBytes;
   document.getElementById('bcs').disabled = list.length === 0;
+  document.getElementById('bcsv').disabled = list.length === 0;
   document.getElementById('blr').disabled = list.length === 0;
 }
 
@@ -2021,6 +2023,36 @@ function _buildXlsx(rows, sheetName, colWidths) {
 
   const safeName = (sheetName || 'Planilha').replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 31);
 
+  /* Data/hora atual no formato W3CDTF exigido pelas propriedades do documento */
+  const nowIso = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+  /* docProps/core.xml e docProps/app.xml: sem esses "metadados de documento"
+     o Excel abre o arquivo em um modo "estrangeiro" que atrapalha operações
+     como copiar/colar entre arquivos. Incluí-los faz o Excel tratar o .xlsx
+     como um arquivo nativo dele. */
+  const coreXml =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
+    '<dc:creator>Ghub</dc:creator>' +
+    '<cp:lastModifiedBy>Ghub</cp:lastModifiedBy>' +
+    `<dcterms:created xsi:type="dcterms:W3CDTF">${nowIso}</dcterms:created>` +
+    `<dcterms:modified xsi:type="dcterms:W3CDTF">${nowIso}</dcterms:modified>` +
+    '</cp:coreProperties>';
+
+  const appXml =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">' +
+    '<Application>Microsoft Excel</Application>' +
+    '<DocSecurity>0</DocSecurity>' +
+    '<ScaleCrop>false</ScaleCrop>' +
+    '<HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Planilhas</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs>' +
+    `<TitlesOfParts><vt:vector size="1" baseType="lpstr"><vt:lpstr>${_xmlEsc(safeName)}</vt:lpstr></vt:vector></TitlesOfParts>` +
+    '<LinksUpToDate>false</LinksUpToDate>' +
+    '<SharedDoc>false</SharedDoc>' +
+    '<HyperlinksChanged>false</HyperlinksChanged>' +
+    '<AppVersion>16.0300</AppVersion>' +
+    '</Properties>';
+
   return _zipStore([
     { name: '[Content_Types].xml', content:
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -2030,15 +2062,22 @@ function _buildXlsx(rows, sheetName, colWidths) {
       '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
       '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
       '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+      '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
       '</Types>' },
     { name: '_rels/.rels', content:
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
       '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
+      '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>' +
       '</Relationships>' },
+    { name: 'docProps/core.xml', content: coreXml },
+    { name: 'docProps/app.xml',  content: appXml },
     { name: 'xl/workbook.xml', content:
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<bookViews><workbookView xWindow="0" yWindow="0" windowWidth="20000" windowHeight="12000"/></bookViews>' +
       `<sheets><sheet name="${_xmlEsc(safeName)}" sheetId="1" r:id="rId1"/></sheets>` +
       '</workbook>' },
     { name: 'xl/_rels/workbook.xml.rels', content:
@@ -2052,25 +2091,32 @@ function _buildXlsx(rows, sheetName, colWidths) {
   ]);
 }
 
+/* Monta a matriz de dados (1ª linha = cabeçalho) usada tanto pela planilha
+   XLSX quanto pela exportação CSV — assim as duas saídas ficam idênticas. */
+function _buildExportRows(list) {
+  const rows = [['Funcionário','CPF','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas (min)','Páginas']];
+  for (const e of list) {
+    const saldoMin = saldoHorasEmMinutos(e.saldoHoras);
+    rows.push([
+      e.name,
+      e.cpf || '—',
+      e.is12 ? '12×36' : 'Convencional',
+      e.atm,
+      e.atmDays.map(d => d.display).join(' | '),
+      e.totalFaltas > 0 ? e.totalFaltas : '—',
+      saldoMin === null ? '—' : saldoMin,
+      e.pages.join(', ')
+    ]);
+  }
+  return rows;
+}
+
 function dlXlsx() {
   if (!allEmps.length) return;
   try {
     const ctx  = getActiveContext();
     const list = getFilteredEmps();
-    const rows = [['Funcionário','CPF','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas (min)','Páginas']];
-    for (const e of list) {
-      const saldoMin = saldoHorasEmMinutos(e.saldoHoras);
-      rows.push([
-        e.name,
-        e.cpf || '—',
-        e.is12 ? '12×36' : 'Convencional',
-        e.atm,
-        e.atmDays.map(d => d.display).join(' | '),
-        e.totalFaltas > 0 ? e.totalFaltas : '—',
-        saldoMin === null ? '—' : saldoMin,
-        e.pages.join(', ')
-      ]);
-    }
+    const rows = _buildExportRows(list);
 
     const blob = _buildXlsx(rows, ctx.label, [34, 16, 14, 11, 46, 15, 15, 18]);
     const url  = URL.createObjectURL(blob);
@@ -2081,6 +2127,37 @@ function dlXlsx() {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   } catch (err) {
     showAlert('Erro ao gerar planilha: ' + err.message, 'err');
+  }
+}
+
+/* ─── GERAR CSV (.csv) ───────────────────────────────────────── */
+
+/* Escapa um valor para o formato CSV: envolve em aspas quando houver
+   separador (;), aspas ou quebra de linha, dobrando as aspas internas. */
+function _csvCell(v) {
+  const s = (v === null || v === undefined) ? '' : String(v);
+  return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function dlCsv() {
+  if (!allEmps.length) return;
+  try {
+    const ctx  = getActiveContext();
+    const list = getFilteredEmps();
+    const rows = _buildExportRows(list);
+
+    /* Separador ";" e BOM UTF-8 para o Excel em português abrir com as
+       colunas separadas e os acentos corretos. Linhas terminadas em CRLF. */
+    const csv = '﻿' + rows.map(r => r.map(_csvCell).join(';')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (curFile ? curFile.name.replace(/\.pdf$/i, '') : 'freqatm') + `_${ctx.label}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (err) {
+    showAlert('Erro ao gerar CSV: ' + err.message, 'err');
   }
 }
 
