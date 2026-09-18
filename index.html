@@ -2091,27 +2091,57 @@ function _buildXlsx(rows, sheetName, colWidths) {
   ]);
 }
 
-/* Monta a matriz de dados (1ª linha = cabeçalho) usada tanto pela planilha
-   XLSX quanto pela exportação CSV — assim as duas saídas ficam idênticas. */
-function _buildExportRows(list) {
-  const rows = [['MATRICULA','Funcionário','CPF','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas (min)','PROVENTO','Páginas','VALOR']];
-  list.forEach((e, i) => {
-    const saldoMin = saldoHorasEmMinutos(e.saldoHoras);
-    rows.push([
-      i + 1,                                       // MATRICULA: contador sequencial (1, 2, 3, …)
-      e.name,
-      e.cpf || '—',
-      e.is12 ? '12×36' : 'Convencional',
-      e.atm,
-      e.atmDays.map(d => d.display).join(' | '),
-      e.totalFaltas > 0 ? e.totalFaltas : '—',
-      saldoMin === null ? '—' : saldoMin,
-      680,                                         // PROVENTO: valor fixo em todas as linhas
-      e.pages.join(', '),
-      0                                            // VALOR: valor fixo em todas as linhas
-    ]);
-  });
-  return rows;
+/* Descobre quais "verbas" entram na planilha a partir do contexto ativo.
+   Cada planilha filtrada (Atestados, Faltas ou Atrasos) leva só a sua verba;
+   sem filtro (GERAL) mostra as três, para uma visão geral. */
+function _exportVerbas(ctx) {
+  if (ctx.label === 'GERAL') return { atm: true, faltas: true, atrasos: true };
+  return {
+    atm:     ctx.label.includes('ATESTADOS'),
+    faltas:  ctx.label.includes('FALTAS'),
+    atrasos: ctx.label.includes('ATRASOS'),
+  };
+}
+
+/* Define as colunas da exportação conforme o contexto. Quando só uma verba
+   está ativa, a coluna da quantidade dessa verba se chama "QUANTIDADE"; com
+   mais de uma (ou GERAL), usa nomes descritivos para não repetir o cabeçalho.
+   Os valores de quantidade saem sempre positivos (sem sinal de menos). */
+function _exportColumns(ctx) {
+  const v = _exportVerbas(ctx);
+  const single = (v.atm ? 1 : 0) + (v.faltas ? 1 : 0) + (v.atrasos ? 1 : 0) === 1;
+  const cols = [
+    { header: 'MATRICULA',   width: 12, value: (e, i) => i + 1 },
+    { header: 'Funcionário', width: 34, value: e => e.name },
+    { header: 'CPF',         width: 16, value: e => e.cpf || '—' },
+    { header: 'Escala',      width: 14, value: e => e.is12 ? '12×36' : 'Convencional' },
+  ];
+  if (v.atm) {
+    cols.push({ header: single ? 'QUANTIDADE' : 'ATM (dias)', width: 12, value: e => e.atm });
+    cols.push({ header: 'Datas dos ATMs', width: 46, value: e => e.atmDays.map(d => d.display).join(' | ') });
+  }
+  if (v.faltas) {
+    cols.push({ header: single ? 'QUANTIDADE' : 'Total de Faltas', width: 15, value: e => e.totalFaltas || 0 });
+  }
+  if (v.atrasos) {
+    cols.push({ header: single ? 'QUANTIDADE' : 'Atraso (min)', width: 14, value: e => {
+      const m = saldoHorasEmMinutos(e.saldoHoras);
+      return m === null ? '—' : Math.abs(m);   // sempre positivo, sem o traço
+    } });
+  }
+  cols.push({ header: 'PROVENTO', width: 12, value: () => 680 });   // valor fixo
+  cols.push({ header: 'Páginas',  width: 18, value: e => e.pages.join(', ') });
+  cols.push({ header: 'VALOR',    width: 12, value: () => 0 });     // valor fixo
+  return cols;
+}
+
+/* Monta a matriz de dados (1ª linha = cabeçalho) e as larguras de coluna,
+   usadas tanto pela planilha XLSX quanto pela exportação CSV. */
+function _buildExportRows(list, ctx) {
+  const cols = _exportColumns(ctx);
+  const rows = [cols.map(c => c.header)];
+  list.forEach((e, i) => rows.push(cols.map(c => c.value(e, i))));
+  return { rows, widths: cols.map(c => c.width) };
 }
 
 function dlXlsx() {
@@ -2119,9 +2149,9 @@ function dlXlsx() {
   try {
     const ctx  = getActiveContext();
     const list = getFilteredEmps();
-    const rows = _buildExportRows(list);
+    const { rows, widths } = _buildExportRows(list, ctx);
 
-    const blob = _buildXlsx(rows, ctx.label, [12, 34, 16, 14, 11, 46, 15, 18, 12, 18, 12]);
+    const blob = _buildXlsx(rows, ctx.label, widths);
     const url  = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -2147,7 +2177,7 @@ function dlCsv() {
   try {
     const ctx  = getActiveContext();
     const list = getFilteredEmps();
-    const rows = _buildExportRows(list);
+    const { rows } = _buildExportRows(list, ctx);
 
     /* Separador ";" e BOM UTF-8 para o Excel em português abrir com as
        colunas separadas e os acentos corretos. Linhas terminadas em CRLF. */
