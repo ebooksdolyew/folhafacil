@@ -33,7 +33,7 @@ async function processar(page, pdf = PDF) {
       comFaltas: document.getElementById('sft').textContent,
     },
     emps: (typeof allEmps !== 'undefined' ? allEmps : []).map(e => ({
-      nome: e.name, atm: e.atm, is12: e.is12,
+      nome: e.name, cpf: e.cpf, atm: e.atm, is12: e.is12,
       dias: e.atmDays.map(d => d.display), motor: e.detectionReport?.motorUsado,
     })),
     tabela: [...document.querySelectorAll('#tbd tr')]
@@ -52,6 +52,8 @@ test.describe('Regras de negócio ponta a ponta', () => {
       expect(emp.atm).toBe(p.esperado.atm);
       expect(emp.is12).toBe(p.esperado.is12);
       expect(emp.dias).toEqual(p.esperado.dias);
+      /* CPF completo, só dígitos, com o zero à esquerda preservado. */
+      expect(emp.cpf).toBe(p.esperado.cpf);
     });
   }
 

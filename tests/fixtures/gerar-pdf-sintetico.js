@@ -22,50 +22,56 @@ const PERIODO = { mes: '05', ano: '2026' };
 const PAGINAS = [
   {
     nome: 'ANTONIO PEREIRA LIMA',
+    cpf: '012.345.678-90',              // zero à esquerda + pontuação → precisa virar "01234567890"
     escala: null,                       // Convencional
     atm: [4, 5, 9],                     // 9 é sábado → REGRA 1 rejeita
     jornada: {},
-    esperado: { atm: 2, is12: false, dias: ['04/05/2026 (Seg)', '05/05/2026 (Ter)'] },
-    nota: 'REGRA 1: ATM em dia útil conta; ATM em sábado é descartado.',
+    esperado: { atm: 2, is12: false, dias: ['04/05/2026 (Seg)', '05/05/2026 (Ter)'], cpf: '01234567890' },
+    nota: 'REGRA 1: ATM em dia útil conta; ATM em sábado é descartado. CPF com zero à esquerda.',
   },
   {
     nome: 'BEATRIZ SOUZA ROCHA',
+    cpf: '123.456.789-09',
     escala: '12x36',
     atm: [2, 6],                        // 2 é sábado → válido em 12x36
     jornada: { 2: '07:00-19:00', 6: '07:00-19:00' },
-    esperado: { atm: 2, is12: true, dias: ['02/05/2026 (Sáb)', '06/05/2026 (Qua)'] },
+    esperado: { atm: 2, is12: true, dias: ['02/05/2026 (Sáb)', '06/05/2026 (Qua)'], cpf: '12345678909' },
     nota: 'REGRA 2: 12x36 com JORNADA preenchida conta, inclusive em fim de semana.',
   },
   {
     nome: 'CARLOS EDUARDO NUNES',
+    cpf: '987.654.321-00',
     escala: '12x36',
     atm: [8, 12],
     jornada: { 8: '07:00-19:00' },      // dia 12 sem JORNADA → rejeitado
-    esperado: { atm: 1, is12: true, dias: ['08/05/2026 (Sex)'] },
+    esperado: { atm: 1, is12: true, dias: ['08/05/2026 (Sex)'], cpf: '98765432100' },
     nota: 'REGRA 2: 12x36 com JORNADA vazia é rejeitado.',
   },
   {
     nome: 'DANIELA MARTINS ALVES',
+    cpf: '045.678.912-34',              // outro zero à esquerda
     escala: '12x36',
     atm: [14],
     jornada: { 14: 'Folga' },           // caso da divergência da Fase 4
-    esperado: { atm: 1, is12: true, dias: ['14/05/2026 (Qui)'] },
+    esperado: { atm: 1, is12: true, dias: ['14/05/2026 (Qui)'], cpf: '04567891234' },
     nota: 'FASE 4: 12x36 com JORNADA="Folga". O motor tabular conta; o legado descartaria.',
   },
   {
     nome: 'EDUARDO SANTOS RIBEIRO',
+    cpf: '321.654.987-11',
     escala: null,
     atm: [],                            // funcionário limpo
     jornada: {},
-    esperado: { atm: 0, is12: false, dias: [] },
+    esperado: { atm: 0, is12: false, dias: [], cpf: '32165498711' },
     nota: 'Caso limpo: nenhuma ocorrência. Exercita o gatilho de fallback da Fase 4.',
   },
   {
     nome: 'FERNANDA COSTA BARROS',
+    cpf: '159.753.486-22',
     escala: null,
     atm: [11, 13, 15],
     jornada: {},
-    esperado: { atm: 3, is12: false, dias: ['11/05/2026 (Seg)', '13/05/2026 (Qua)', '15/05/2026 (Sex)'] },
+    esperado: { atm: 3, is12: false, dias: ['11/05/2026 (Seg)', '13/05/2026 (Qua)', '15/05/2026 (Sex)'], cpf: '15975348622' },
     nota: 'Vários ATMs em dias úteis.',
   },
 ];
@@ -90,6 +96,7 @@ async function gerar(destino) {
        então cleanName() corta exatamente no fim do nome. */
     put(`Funcionario: ${p.nome}`, 50, 764, bold, 10);
     put('CARGO OPERADOR', 300, 764);
+    if (p.cpf) put(`CPF: ${p.cpf}`, 300, 750);
     if (p.escala) put(`Escala: ${p.escala}`, 50, 746);
 
     let y = 710;
