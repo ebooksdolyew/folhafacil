@@ -651,6 +651,35 @@ td strong{
 }
 
 .footer strong{color:var(--text-primary);font-weight:800}
+.footer .privacy{margin-top:18px}
+.footer .privacy summary{
+  cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;
+  color:var(--accent);font-weight:700;font-size:12px;
+  padding:8px 16px;border-radius:var(--r-sm);
+  box-shadow:var(--nm-out);width:max-content;margin:0 auto;
+  transition:box-shadow .2s var(--ease)
+}
+.footer .privacy summary::-webkit-details-marker{display:none}
+.footer .privacy summary::before{content:'🔒'}
+.footer .privacy summary::after{content:'▸';transition:transform .2s var(--ease)}
+.footer .privacy[open] summary::after{transform:rotate(90deg)}
+.footer .privacy summary:hover{box-shadow:var(--nm-in-sm)}
+.footer .privacy summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.footer .privacy-body{
+  margin:16px auto 0;max-width:640px;
+  padding:20px 22px;border-radius:var(--r-md);
+  background:var(--bg);box-shadow:var(--nm-in-sm);
+  color:var(--text-secondary);font-size:12px;line-height:1.75;font-weight:500;text-align:left
+}
+.footer .privacy-body h4{color:var(--text-primary);font-size:12px;font-weight:800;margin:16px 0 5px}
+.footer .privacy-body h4:first-child{margin-top:0}
+.footer .privacy-body p{margin:0 0 6px}
+.footer .privacy-body strong{color:var(--text-primary);font-weight:700}
+.footer .privacy-body code{
+  background:var(--bg);box-shadow:var(--nm-in-sm);
+  padding:1px 6px;border-radius:8px;font-size:11px
+}
+.footer .privacy-body .upd{margin-top:16px;color:var(--text-muted);font-size:11px}
 
 #res{display:none}
 
@@ -875,6 +904,41 @@ td strong{
   <footer class="footer">
     <strong>Ghub v2.2</strong> — Análise inteligente de ponto<br>
     Processamento 100% no navegador · O arquivo PDF e os dados extraídos não são enviados a nenhum servidor
+    <details class="privacy">
+      <summary>Política de Privacidade</summary>
+      <div class="privacy-body">
+        <h4>Processamento local</h4>
+        <p>Toda a análise acontece no seu próprio navegador. O arquivo PDF e os
+        dados extraídos <strong>nunca são enviados, transmitidos ou armazenados
+        em nenhum servidor</strong>. Não há upload: o PDF não sai do seu
+        dispositivo.</p>
+
+        <h4>Sem rastreamento</h4>
+        <p>Não usamos cookies, analytics, pixels ou qualquer identificador de
+        rastreamento. O único dado que fica gravado no navegador é a sua
+        preferência de tema (claro/escuro), guardada localmente em
+        <code>localStorage</code> — nenhuma informação do PDF é salva.</p>
+
+        <h4>Dados na memória</h4>
+        <p>Durante o uso, o PDF e os dados extraídos ficam apenas na memória
+        temporária do navegador. Eles são <strong>apagados automaticamente</strong>
+        ao fechar ou recarregar a aba, e também ao clicar em “Limpar”.</p>
+
+        <h4>Arquivos que você baixa</h4>
+        <p>As exportações (PDF anotado, planilha XLSX e relatório TXT) são geradas
+        no seu dispositivo e contêm nomes de funcionários e atestados. Após o
+        download, esses arquivos ficam sob a sua guarda e responsabilidade.</p>
+
+        <h4>Dados pessoais sensíveis (LGPD)</h4>
+        <p>Atestados médicos (ATM) são <strong>dado pessoal sensível de saúde</strong>
+        nos termos da Lei nº 13.709/2018 (LGPD). Como o tratamento é integralmente
+        local, nenhum dado sensível trafega ou é retido por esta ferramenta. A base
+        legal e a finalidade do uso desses dados são de responsabilidade da
+        organização que opera a ferramenta (controladora dos dados).</p>
+
+        <p class="upd">Última atualização: setembro/2026.</p>
+      </div>
+    </details>
   </footer>
 </div>
 
@@ -2079,9 +2143,24 @@ function dlReport() {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-function resetTool() {
+/* ─── LGPD: limpeza da memória ─────────────────────────────────────────────
+   Zera o PDF carregado e os dados extraídos (nome + ATM = dado pessoal
+   sensível). Sobrescreve o buffer com zeros antes de soltar a referência,
+   em vez de deixar os bytes na memória à espera do coletor de lixo. */
+function wipeSensitiveData() {
+  if (pdfBytes) { try { pdfBytes.fill(0); } catch (_) {} }
   allEmps = []; pdfBytes = null; curFile = null;
   expanded.clear(); pageImageCache.clear();
+}
+
+/* Garante o wipe ao fechar, recarregar ou ocultar a aba — sem depender de o
+   usuário clicar em "Limpar". 'pagehide' cobre fechamento, navegação e o
+   cache de retorno (bfcache) em mobile; 'beforeunload' cobre o desktop. */
+window.addEventListener('pagehide', wipeSensitiveData);
+window.addEventListener('beforeunload', wipeSensitiveData);
+
+function resetTool() {
+  wipeSensitiveData();
   skippedPages = 0; sortCol = null; sortDir = 1;
   document.getElementById('res').style.display = 'none';
   document.getElementById('fi').value = '';
