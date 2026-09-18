@@ -1980,7 +1980,11 @@ function _buildXlsx(rows, sheetName, colWidths) {
     '</sheetView></sheetViews>' +
     '<sheetFormatPr defaultRowHeight="15"/>' +
     cols + sheetData +
-    `<autoFilter ref="${dim}"/>` +
+    /* Sem <autoFilter>: o filtro fazia o Excel tratar a seleção de uma
+       coluna inteira como "seleções múltiplas", bloqueando copiar/colar
+       ("Este comando não pode ser usado em seleções múltiplas"). A linha
+       de cabeçalho continua congelada (pane acima) para facilitar a
+       leitura; quem quiser filtrar pode ativar em Dados → Filtrar. */
     '</worksheet>';
 
   const stylesXml =
