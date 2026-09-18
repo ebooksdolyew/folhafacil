@@ -1294,6 +1294,17 @@ function formatSaldoHoras(saldo) {
   return `${sign}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 
+/* Converte o saldo de horas para o total em minutos (com sinal).
+   Usado APENAS na geração da planilha (.xlsx), onde os atrasos devem ser
+   contabilizados em minutos — ex.: -02:15 → -135. O relatório visual e o
+   relatório TXT continuam exibindo o formato de horas e minutos (HH:MM).
+   Retorna null quando não há saldo. */
+function saldoHorasEmMinutos(saldo) {
+  if (!saldo) return null;
+  const total = saldo.hours * 60 + saldo.minutes;
+  return saldo.negative ? -total : total;
+}
+
 function parseDate(str, period) {
   const s = str.trim();
   const fm = s.match(/\b(\d{1,2})[\/\-\.](\d{1,2})(?:[\/\-\.](\d{2,4}))?\b/);
@@ -2042,8 +2053,9 @@ function dlXlsx() {
   try {
     const ctx  = getActiveContext();
     const list = getFilteredEmps();
-    const rows = [['Funcionário','CPF','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas','Páginas']];
+    const rows = [['Funcionário','CPF','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas (min)','Páginas']];
     for (const e of list) {
+      const saldoMin = saldoHorasEmMinutos(e.saldoHoras);
       rows.push([
         e.name,
         e.cpf || '—',
@@ -2051,7 +2063,7 @@ function dlXlsx() {
         e.atm,
         e.atmDays.map(d => d.display).join(' | '),
         e.totalFaltas > 0 ? e.totalFaltas : '—',
-        formatSaldoHoras(e.saldoHoras) || '—',
+        saldoMin === null ? '—' : saldoMin,
         e.pages.join(', ')
       ]);
     }
