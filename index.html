@@ -1181,6 +1181,32 @@ function extractName(rows, fullText) {
   return null;
 }
 
+/* Normaliza um CPF para 11 dígitos, sem ponto nem traço, preservando
+   o zero à esquerda. Retorna null se não houver exatamente 11 dígitos. */
+function normalizeCpf(raw) {
+  if (raw == null) return null;
+  const digits = String(raw).replace(/\D/g, '');
+  return digits.length === 11 ? digits : null;
+}
+
+/* Extrai o CPF do funcionário a partir do texto da página.
+   Prioriza o valor rotulado ("CPF: ...") e aceita com ou sem pontuação;
+   como fallback, procura um CPF formatado (XXX.XXX.XXX-XX) no texto.
+   O retorno é sempre uma string de dígitos — nunca um número — para que
+   o zero inicial não seja descartado ao gerar a planilha. */
+function extractCpf(rows, fullText) {
+  const RX_LABELED = /CPF\s*[:\-]?\s*(\d{3}\.?\s?\d{3}\.?\s?\d{3}\s?-?\s?\d{2})/i;
+  const m1 = fullText.match(RX_LABELED);
+  if (m1) {
+    const cpf = normalizeCpf(m1[1]);
+    if (cpf) return cpf;
+  }
+  const RX_FORMATTED = /\b(\d{3}\.\d{3}\.\d{3}-\d{2})\b/;
+  const m2 = fullText.match(RX_FORMATTED);
+  if (m2) return normalizeCpf(m2[1]);
+  return null;
+}
+
 function findJornadaCol(rows) {
   for (const row of rows) {
     const jCell = row.cells.find(c => /^jorn(ada)?\.?$/i.test(c.str.trim()));
@@ -1532,6 +1558,7 @@ function validateAtm12x36ByJornada(atmDays, tableStruct, rowYByAtmKey) {
 function processPage(pg) {
   const name = extractName(pg.rows, pg.text);
   if (!name) return null;
+  const cpf = extractCpf(pg.rows, pg.text);
   const is12 = is12x36(pg.text, pg.rows);
   const jornX = findJornadaCol(pg.rows);
   const period = findPeriod(pg.text);
@@ -1559,6 +1586,7 @@ function processPage(pg) {
   };
   return {
     name,
+    cpf,
     pages: [pg.num],
     atmDays,
     is12,
@@ -2014,10 +2042,11 @@ function dlXlsx() {
   try {
     const ctx  = getActiveContext();
     const list = getFilteredEmps();
-    const rows = [['Funcionário','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas','Páginas']];
+    const rows = [['Funcionário','CPF','Escala','ATM (dias)','Datas dos ATMs','Total de Faltas','Saldo de Horas','Páginas']];
     for (const e of list) {
       rows.push([
         e.name,
+        e.cpf || '—',
         e.is12 ? '12×36' : 'Convencional',
         e.atm,
         e.atmDays.map(d => d.display).join(' | '),
@@ -2027,7 +2056,7 @@ function dlXlsx() {
       ]);
     }
 
-    const blob = _buildXlsx(rows, ctx.label, [34, 14, 11, 46, 15, 15, 18]);
+    const blob = _buildXlsx(rows, ctx.label, [34, 16, 14, 11, 46, 15, 15, 18]);
     const url  = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
