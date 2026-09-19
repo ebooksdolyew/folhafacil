@@ -124,7 +124,7 @@ test.describe('isWeekendDay', () => {
 });
 
 /* ── Reconhecimento de ATM: documenta o comportamento REAL dos dois motores.
-      Ver LIMITACOES_CONHECIDAS.md, divergência A. ── */
+      Ver docs/LIMITACOES_CONHECIDAS.md, divergência A. ── */
 test.describe('Reconhecimento de ATM', () => {
   const tabular = (t) => /\bATM\b/.test(t) || /^[AM]+$/.test(t) || /MAT|ATM|ATMA/.test(t);
 

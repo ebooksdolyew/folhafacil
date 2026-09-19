@@ -21,7 +21,7 @@
 <meta name="theme-color" content="#2b2f36" media="(prefers-color-scheme: dark)">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png">
 
 <!-- Compartilhamento do link direto (WhatsApp, Teams, e-mail) -->
 <meta property="og:type" content="website">
@@ -30,7 +30,7 @@
 <meta property="og:url" content="https://ghub-66j.pages.dev/infrequencia.html">
 <meta property="og:title" content="Infrequência — Folha Fácil">
 <meta property="og:description" content="Conferência da planilha mensal de ponto e geração da planilha da folha, com as regras de escala e de DSR.">
-<meta property="og:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
+<meta property="og:image" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <!-- Inter servida do próprio domínio, como no index.html: a CSP do site
      (style-src 'self'; font-src 'self') bloqueia o Google Fonts, e assim esta
@@ -337,8 +337,8 @@ section:not(.hide),.actionbar:not(.hide){animation:rise .35s ease both}
 
 <!-- Camada de interface neumórfica compartilhada com o index.html.
      Sem ela, os seletores voltam a abrir a lista nativa do navegador. -->
-<link rel="stylesheet" href="./ui-neu.css">
-<script src="./ui-neu.js" defer></script>
+<link rel="stylesheet" href="./ui/neu.css">
+<script src="./ui/neu.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -634,7 +634,7 @@ function cpfValido(s){
 }
 
 /* ============================================================
-   CALENDÁRIO (ver regras/regra-escala-convencional.md)
+   CALENDÁRIO (ver docs/regras/regra-escala-convencional.md)
    A planilha só traz dia e sigla do mês ("01/ago"). O mês de
    referência é SEMPRE o mês anterior ao atual; o ano é o atual,
    exceto em janeiro (planilha de dezembro), que usa o ano anterior.
@@ -834,7 +834,7 @@ function escalaDe(r){
 }
 
 /* ============================================================
-   REGRAS DE QUANTIDADE (ver regras/REGRAS.md)
+   REGRAS DE QUANTIDADE (ver docs/regras/REGRAS.md)
    Recebe a linha do funcionário, o tipo (F / A / D) e a escala, e
    devolve quais dias contam para a coluna QUANTIDADE das planilhas
    geradas e quais foram pulados.
@@ -848,13 +848,13 @@ function escalaDe(r){
         Ex.: 3 dias corridos = 2 faltas. Não vale para atestado nem TRE.
    R3 — CONVENCIONAL SÓ SEG A SEX (falta, atestado e TRE): ocorrência
         de funcionário de escala Convencional que cair em sábado ou
-        domingo não conta. Feriado conta normal. Ver regras/regra-escala-convencional.md.
+        domingo não conta. Feriado conta normal. Ver docs/regras/regra-escala-convencional.md.
         Exceção (só faltas): se TODAS as faltas do funcionário caírem em
         fim de semana, elas contam e a planilha recebe um aviso para verificar.
    R4 — DSR (só faltas): Convencional = 1 DSR por semana (seg a sex)
         com pelo menos uma falta contada, não importa quantas;
         12×36 = 1 DSR por falta contada. 31 faltas (R1) fica sem DSR.
-        Ver regras/regra-dsr.md.
+        Ver docs/regras/regra-dsr.md.
    ============================================================ */
 const MES_CHEIO = 31;
 

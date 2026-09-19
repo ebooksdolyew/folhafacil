@@ -32,13 +32,13 @@ produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_head
 |---|---|
 | `index.html` | A ferramenta de ponto inteira (HTML + CSS + JS) e o seletor que carrega a Infrequência. |
 | `infrequencia.html` | A Infrequência inteira, com a biblioteca xlsx-js-style (Apache-2.0) embutida. |
-| `ui-neu.css`, `ui-neu.js` | Camada de interface usada pelas duas: lista neumórfica no lugar da lista nativa do `<select>`, caixas de marcação e retorno visual dos controles. Se não carregar, os seletores voltam a abrir a lista do navegador e nada quebra. |
+| `ui/neu.css`, `ui/neu.js` | Camada de interface usada pelas duas: lista neumórfica no lugar da lista nativa do `<select>`, caixas de marcação e retorno visual dos controles. Se não carregar, os seletores voltam a abrir a lista do navegador e nada quebra. |
 | `404.html`, `_headers`, `robots.txt`, `site.webmanifest`, `favicon.svg` | Página de erro, cabeçalhos HTTP (CSP inclusive), SEO e PWA. |
-| `assets/` | Ícones, imagem de compartilhamento e as fontes auto-hospedadas (Inter, Outfit, Space Grotesk). |
+| `assets/` | `icons/` (ícones do site e do PWA), `social/` (imagem de compartilhamento) e `fonts/` (Inter, Outfit e Space Grotesk auto-hospedadas). |
 | `vendor/` | pdf.js e pdf-lib auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |
-| `regras/` | Regras de cálculo da **Infrequência** (R1 a R4) em linguagem simples. |
-| `REGRA_VALIDACAO_ESCALA.md`, `REGRA_JORNADA_12x36.md` | Regras de validação de atestado do **ponto eletrônico**. |
-| `LIMITACOES_CONHECIDAS.md` | Divergências conhecidas entre código e documentação, com a medição que falta para decidir cada uma. |
+| `docs/regras/` | Regras de cálculo da **Infrequência** (R1 a R4) em linguagem simples. |
+| `docs/REGRA_VALIDACAO_ESCALA.md`, `docs/REGRA_JORNADA_12x36.md` | Regras de validação de atestado do **ponto eletrônico**. |
+| `docs/LIMITACOES_CONHECIDAS.md` | Divergências conhecidas entre código e documentação, com a medição que falta para decidir cada uma. |
 | `tests/` | Suíte Playwright (unitária + ponta a ponta) sobre o `index.html` real. Ver `tests/README.md`. |
 | `validacao/` | Procedimento de regressão contra PDFs reais (`comparar.py`) — os PDFs ficam fora do git. |
 
@@ -51,11 +51,11 @@ Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas 
 
 - Existem **dois motores de detecção de ATM** (tabular e legado), com critérios
   diferentes de reconhecimento. A divergência entre eles está descrita em
-  `LIMITACOES_CONHECIDAS.md`, junto com a medição que ainda falta para decidir o que
+  `docs/LIMITACOES_CONHECIDAS.md`, junto com a medição que ainda falta para decidir o que
   fazer com ela — leia antes de alterar qualquer um dos dois.
 - A validação de escala acontece **durante** a extração (`readAtmsFromTable`), não
   depois: para Convencional, atestado em sábado ou domingo nunca chega a ser
-  registrado. Ver `REGRA_VALIDACAO_ESCALA.md` e `REGRA_JORNADA_12x36.md`.
+  registrado. Ver `docs/REGRA_VALIDACAO_ESCALA.md` e `docs/REGRA_JORNADA_12x36.md`.
 
 ### Infrequência (`infrequencia.html`)
 
@@ -64,7 +64,7 @@ Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas 
 3. Deduz a escala pela função (porteiro = 12×36; demais = Convencional).
 4. Descobre o mês/ano de referência (mês anterior ao atual) e o dia da semana de cada
    dia, pedindo confirmação se o cabeçalho da planilha disser outro mês.
-5. Aplica as regras R1–R4 (`regras/`) para chegar à QUANTIDADE e à DSR.
+5. Aplica as regras R1–R4 (`docs/regras/`) para chegar à QUANTIDADE e à DSR.
 6. Gera duas planilhas, com filtros de empresa, tipo, escala e "ausência mês completo":
    - **Modelo da folha** — `MATRICULA | Funcionário | [Empresa] | CPF | Escala | QUANTIDADE | DSR | PROVENTO | VALOR | [Observação]`
    - **Detalhada** — tudo acima mais lotação, função, tipo, dias contados e não contados.
@@ -76,8 +76,8 @@ Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas 
 | R3 | F, A, D, Convencional | Sábado e domingo não contam. Exceção: faltas *só* em fim de semana contam, com aviso. |
 | R4 | F | DSR — Convencional: 1 por semana com falta. 12×36: 1 por falta contada. |
 
-Detalhe de cada uma em `regras/REGRAS.md`, `regras/regra-escala-convencional.md` e
-`regras/regra-dsr.md`. **Toda regra nova entra no código e no `regras/` no mesmo
+Detalhe de cada uma em `docs/regras/REGRAS.md`, `docs/regras/regra-escala-convencional.md`
+e `docs/regras/regra-dsr.md`. **Toda regra nova entra no código e no `docs/regras/` no mesmo
 commit** — documentação que contradiz o código é pior que documentação nenhuma.
 
 ## Testes

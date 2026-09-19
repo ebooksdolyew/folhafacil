@@ -28,9 +28,9 @@
 
 <!-- Ícones e PWA -->
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-<link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="./assets/icon-512.png">
-<link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./assets/icons/icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png">
 <link rel="manifest" href="./site.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Folha Fácil">
@@ -44,8 +44,8 @@
 <meta property="og:url" content="https://ghub-66j.pages.dev/">
 <meta property="og:title" content="Folha Fácil — Ponto Eletrônico e Infrequência">
 <meta property="og:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
-<meta property="og:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
-<meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/og-image.png">
+<meta property="og:image" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
+<meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -55,7 +55,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Folha Fácil — Ponto Eletrônico e Infrequência">
 <meta name="twitter:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
-<meta name="twitter:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
+<meta name="twitter:image" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
 <meta name="twitter:image:alt" content="Folha Fácil — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
 
 <!-- Bibliotecas e fontes auto-hospedadas: nenhuma requisição a terceiros. -->
@@ -749,7 +749,7 @@ td strong{
       "url": "https://ghub-66j.pages.dev/",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://ghub-66j.pages.dev/assets/icon-512.png",
+        "url": "https://ghub-66j.pages.dev/assets/icons/icon-512.png",
         "width": 512,
         "height": 512
       }
@@ -802,8 +802,8 @@ td strong{
           "description": "Lê a planilha mensal de ponto, reconta faltas, atestados e TRE, aplica as regras de escala e de DSR e gera a planilha da folha."
         }
       ],
-      "screenshot": "https://ghub-66j.pages.dev/assets/og-image.png",
-      "image": "https://ghub-66j.pages.dev/assets/og-image.png",
+      "screenshot": "https://ghub-66j.pages.dev/assets/social/og-image.png",
+      "image": "https://ghub-66j.pages.dev/assets/social/og-image.png",
       "publisher": { "@id": "https://ghub-66j.pages.dev/#organization" },
       "isPartOf": { "@id": "https://ghub-66j.pages.dev/#website" }
     }
@@ -839,8 +839,8 @@ body.tool-infreq .wrap{padding-bottom:0}
 </style>
 
 <!-- Camada de interface neumórfica compartilhada pelas duas ferramentas -->
-<link rel="stylesheet" href="./ui-neu.css">
-<script src="./ui-neu.js" defer></script>
+<link rel="stylesheet" href="./ui/neu.css">
+<script src="./ui/neu.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -1036,9 +1036,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
 /* FASE 4 — divergência entre motores, decisão pendente de medição.
    false = comportamento legado atual (o motor legado descarta ATM quando a
            JORNADA é "Folga"/"DSR"/"Descanso"). Preserva a contagem de hoje.
-   true  = REGRA 2 conforme documentada em REGRA_JORNADA_12x36.md, que manda
+   true  = REGRA 2 conforme documentada em docs/REGRA_JORNADA_12x36.md, que manda
            contabilizar ATM com JORNADA="Folga".
-   Só altere depois de rodar a medição descrita em LIMITACOES_CONHECIDAS.md.
+   Só altere depois de rodar a medição descrita em docs/LIMITACOES_CONHECIDAS.md.
    O motor tabular (readAtmsFromTable + validateAtm12x36ByJornada) já aceita
    "Folga" hoje — esta flag existe só para o motor legado. */
 const REGRA2_ACEITA_FOLGA = false;
@@ -1537,7 +1537,7 @@ function detectAtmByRow(rows, is12, jornX, period, pageNum) {
     diagnostico = 'tabela-ok-zero-atm';   /* tabela encontrada, mas nenhum ATM */
   }
   const legacyResult = detectAtmByRowLegacy(rows, is12, jornX, period, pageNum);
-  /* DIAGNÓSTICO DA FASE 4 — remover após a medição (ver LIMITACOES_CONHECIDAS.md).
+  /* DIAGNÓSTICO DA FASE 4 — remover após a medição (ver docs/LIMITACOES_CONHECIDAS.md).
      Só avisa quando o motor legado REALMENTE produziu ATM, que é o único caso
      em que a divergência entre os dois motores pode alterar a contagem. */
   if (legacyResult.length > 0) {

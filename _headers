@@ -18,9 +18,9 @@
   Cache-Control: public, max-age=0, must-revalidate
 /infrequencia.html
   Cache-Control: public, max-age=0, must-revalidate
-/ui-neu.css
-  Cache-Control: public, max-age=0, must-revalidate
-/ui-neu.js
+
+# Camada de interface compartilhada: revalidada junto com as páginas
+/ui/*
   Cache-Control: public, max-age=0, must-revalidate
 
 # Imagens e ícones: cache longo
