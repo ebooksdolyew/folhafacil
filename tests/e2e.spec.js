@@ -109,6 +109,66 @@ test.describe('Layout de produção', () => {
   });
 });
 
+/* A planilha é o único lugar onde a contagem por escala e a DSR aparecem.
+   A tela e o relatório TXT continuam mostrando o número cru do PDF — estes
+   testes guardam essa separação nos dois sentidos. */
+test.describe('Planilha gerada', () => {
+  /** Baixa o CSV com os filtros pedidos e devolve as linhas já separadas. */
+  async function csv(page, testInfo, filtros) {
+    await processar(page, PDF_LAYOUT);
+    for (const f of filtros) await page.check(f);
+    const [d] = await Promise.all([page.waitForEvent('download'), page.click('#bcsv')]);
+    const dest = testInfo.outputPath(d.suggestedFilename());
+    await d.saveAs(dest);
+    return fs.readFileSync(dest, 'utf8').replace(/^\uFEFF/, '')
+      .split('\r\n').filter(Boolean).map(l => l.split(';'));
+  }
+
+  test('a planilha de FALTAS traz a quantidade por escala e a DSR', async ({ page }, testInfo) => {
+    const linhas = await csv(page, testInfo, ['#ff']);
+    const cab = linhas[0], dados = linhas[1];
+    expect(cab).toContain('QUANTIDADE');
+    expect(cab).toContain('DSR');
+    /* O PDF imprime 6; o 12×36 com três pares de dias corridos vale 3. */
+    expect(dados[cab.indexOf('QUANTIDADE')]).toBe(String(LAYOUT_PRODUCAO.esperado.faltaQtd));
+    expect(dados[cab.indexOf('DSR')]).toBe(String(LAYOUT_PRODUCAO.esperado.faltaDsr));
+  });
+
+  test('a planilha de ATRASOS traz o saldo em minutos, positivo', async ({ page }, testInfo) => {
+    const linhas = await csv(page, testInfo, ['#fd']);
+    const cab = linhas[0], dados = linhas[1];
+    expect(cab).toContain('QUANTIDADE');
+    /* -2 HORA(S) E 15 MINUTO(S) → 135, sem sinal e sem "hh:mm". */
+    const v = dados[cab.indexOf('QUANTIDADE')];
+    expect(v).toBe(String(LAYOUT_PRODUCAO.esperado.atrasoMinutos));
+    expect(v).not.toContain('-');
+    expect(v).not.toContain(':');
+  });
+});
+
+/* O relatório TXT e a tela NÃO seguem a contagem por escala: mostram o número
+   cru impresso no PDF, como sempre fizeram. */
+test.describe('Relatório e tela ficam no número cru', () => {
+  test('o relatório TXT mostra o total impresso, não a quantidade da planilha', async ({ page }, testInfo) => {
+    await processar(page, PDF_LAYOUT);
+    const [d] = await Promise.all([page.waitForEvent('download'), page.click('#blr')]);
+    const dest = testInfo.outputPath(d.suggestedFilename());
+    await d.saveAs(dest);
+    const txt = fs.readFileSync(dest, 'utf8');
+    const cru = LAYOUT_PRODUCAO.esperado.faltaImpresso;
+    expect(txt).toContain(`Total de Faltas: ${cru} dias`);
+    expect(txt).toContain(`Total de dias de falta: ${cru}`);
+    expect(txt, 'o relatório não deve trazer DSR').not.toContain('DSR');
+  });
+
+  test('a tabela na tela mostra o total impresso', async ({ page }) => {
+    const r = await processar(page, PDF_LAYOUT);
+    expect(r.stats.comFaltas).toBe('1');
+    expect(r.tabela).toContain(`${LAYOUT_PRODUCAO.esperado.faltaImpresso} dias`);
+    expect(r.tabela, 'a tela não deve ganhar coluna de DSR').not.toContain('|3|');
+  });
+});
+
 test.describe('Fluxo completo', () => {
   test('processar, filtrar, ordenar, expandir, tema, 3 downloads e reset', async ({ page }, testInfo) => {
     const erros = [];

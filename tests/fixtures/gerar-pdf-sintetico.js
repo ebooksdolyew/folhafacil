@@ -319,7 +319,11 @@ const LAYOUT_PRODUCAO = {
   escala: '12x36',
   faltas: [7, 8, 13, 14, 23, 24],
   obs: { 3: 'BATIDAS FORA DA MARGEM', 19: 'PONTO ABONADO COM ACORDO DA DIRECAO' },
-  esperado: { faltaQtd: 3, faltaDsr: 3, faltaConf: 'conferido' },
+  esperado: {
+    faltaQtd: 3, faltaDsr: 3, faltaConf: 'conferido',
+    faltaImpresso: 6,          // o que o relatório e a tela continuam mostrando
+    atrasoMinutos: 135,        // -2h15 convertido e positivo, na planilha
+  },
   /* h = cabeçalho, c = conteúdo. Não alinhe: o desencontro é o teste. */
   cols: {
     DIA:          { h:  30, c:  30 },
@@ -376,8 +380,10 @@ async function gerarLayoutProducao(destino) {
   y -= 14;
   put('LEGENDAS: N - ESCALA NORMAL, EC - EXTENSAO DE CARGA HORARIA', p.cols.DIA.c, y, font, 7);
   y -= 14;
+  /* Saldo negativo: é o que exercita a coluna de atraso da planilha, que
+     converte hora+minuto para minutos e sai sempre positiva. -2h15 → 135. */
   put('SALDO DE HORAS', p.cols.DIA.c, y, bold, 8);
-  put('0 HORA(S) E 0 MINUTO(S)', p.cols.ENT2.c, y);
+  put('-2 HORA(S) E 15 MINUTO(S)', p.cols.ENT2.c, y);
   y -= 14;
   put('TOTAL DE FALTAS:', p.cols.DIA.c, y, bold, 8);
   put(String(p.faltas.length), p.cols.ENT2.c, y, bold, 8);

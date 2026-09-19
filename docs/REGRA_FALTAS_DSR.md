@@ -1,16 +1,31 @@
 # REGRA DE FALTAS E DSR — Guardião Sepog
 
 O Guardião Sepog lê as faltas dia a dia, a partir da coluna OBSERVAÇÃO do PDF de
-frequências, e calcula a QUANTIDADE e a DSR. Este arquivo é a referência em linguagem
-simples; **toda alteração na regra entra aqui e no código no mesmo commit.**
+frequências, e calcula a QUANTIDADE e a DSR **da planilha gerada**. Este arquivo é a
+referência em linguagem simples; **toda alteração na regra entra aqui e no código no
+mesmo commit.**
 
 ## Escopo
 
-Esta regra vale **só para o Guardião Sepog** (`index.html`) e **só para faltas**.
+Esta regra vale **só para o Guardião Sepog** (`index.html`), **só para faltas** e **só
+na planilha gerada**.
+
+### Onde a regra vale, e onde não vale
+
+| Superfície | O que mostra |
+|---|---|
+| **Planilha XLSX e CSV** | QUANTIDADE depois das regras de escala, coluna DSR e, quando preciso, coluna Conferência |
+| Tabela na tela | o `TOTAL DE FALTAS` **cru**, impresso no PDF — sem escala, sem DSR |
+| Relatório TXT | o `TOTAL DE FALTAS` **cru**, impresso no PDF — sem escala, sem DSR |
+
+A tela e o relatório são conferência: servem para comparar com o documento em mãos, e
+por isso precisam repetir o que o PDF diz. Quem recebe o número tratado é a folha, pela
+planilha. Misturar os dois tira justamente a chance de conferir.
 
 | | |
 |---|---|
 | Não altera | a detecção de atestados (ATM), em nenhum ponto |
+| Não altera | a tabela na tela nem o relatório TXT |
 | Não altera | `infrequencia.html` — a Infrequência SME está fora deste trabalho |
 | Não altera | como a escala é determinada (continua vindo do CARGO, via `is12x36`) |
 
@@ -271,9 +286,9 @@ impresso, sem escala e sem DSR — com um aviso visível. Nunca menos que isso.
 O `periodo-divergente` é o único caso em que a QUANTIDADE vale e a DSR não: o número do
 dia foi lido certo, mas a semana em que ele cai depende do mês, e o mês está em dúvida.
 
-Na tela, qualquer estado diferente de `conferido` acende uma marca ao lado da
-quantidade, com a explicação no título. Na planilha, a coluna **Conferência** só é
-criada quando alguma linha precisa dela.
+A coluna **Conferência** só é criada na planilha quando alguma linha precisa dela — com
+tudo conferido, a planilha sai limpa. A tela não recebe nenhuma marca: ela continua
+mostrando o número cru, e é contra ele que a conferência é feita.
 
 ---
 
@@ -315,7 +330,9 @@ com o do atestado.
   inteiro com 30, falta em fim de semana, uma página só de observações que não são falta,
   e uma com o rodapé mentindo (conferência divergente).
 - `tests/e2e.spec.js` — QUANTIDADE, DSR e estado de conferência por funcionário, mais o
-  snapshot da tabela.
+  snapshot da tabela. Inclui os dois lados da separação: a planilha CSV traz a
+  quantidade por escala e a DSR, enquanto o relatório TXT e a tela continuam no número
+  cru e sem DSR.
 - `ponto-sintetico-layout-producao.pdf` — uma página com as **onze colunas** do PDF real
   e a geometria que quebrou a primeira implementação: cabeçalho OBSERVAÇÃO centralizado
   em 468 com o texto em 416, e JORNADA com valor largo começando à esquerda do próprio

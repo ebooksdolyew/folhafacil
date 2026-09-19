@@ -677,29 +677,6 @@ td strong{
   transition:background .35s var(--ease),box-shadow .35s var(--ease)
 }
 
-.bdsr{
-  display:inline-flex;align-items:center;justify-content:center;
-  min-width:30px;padding:6px 12px;border-radius:var(--r-pill);
-  font-size:12px;font-weight:800;
-  font-family:'Outfit',monospace;letter-spacing:.3px;
-  color:var(--accent-2);
-  background:var(--bg);
-  box-shadow:var(--nm-out-sm);
-  transition:background .35s var(--ease),box-shadow .35s var(--ease)
-}
-
-/* marca de conferência: só aparece quando a leitura não fechou com o
-   TOTAL DE FALTAS impresso no PDF */
-.bconf{
-  display:inline-flex;align-items:center;
-  margin-left:6px;padding:4px;border-radius:50%;
-  color:var(--amber);
-  background:var(--bg);
-  box-shadow:var(--nm-in-sm);
-  cursor:help
-}
-.bconf .ico{width:13px;height:13px}
-
 .bfaltas{
   display:inline-flex;align-items:center;gap:5px;
   padding:6px 14px;border-radius:var(--r-pill);
@@ -1022,8 +999,7 @@ body.tool-infreq .wrap{padding-bottom:0}
             <th class="sortable" data-col="name" aria-sort="none">Funcionário <span class="sort-arrow"></span></th>
             <th class="sortable" data-col="scale" aria-sort="none">Escala <span class="sort-arrow"></span></th>
             <th class="sortable" data-col="atm" aria-sort="none">ATM (dias) <span class="sort-arrow"></span></th>
-            <th class="sortable" data-col="faltas" aria-sort="none" style="width:150px">Faltas <span class="sort-arrow"></span></th>
-            <th class="sortable" data-col="dsr" aria-sort="none" style="width:80px">DSR <span class="sort-arrow"></span></th>
+            <th class="sortable" data-col="faltas" aria-sort="none" style="width:140px">Faltas <span class="sort-arrow"></span></th>
             <th class="sortable" data-col="saldo" aria-sort="none" style="width:110px">Saldo Hrs <span class="sort-arrow"></span></th>
             <th style="width:70px">Páginas</th>
             <th style="width:32px"></th>
@@ -2143,7 +2119,7 @@ function renderStats() {
   document.getElementById('sa').textContent = allEmps.filter(e => e.atm > 0).length;
   document.getElementById('satr').textContent = allEmps.filter(e => e.saldoHoras && e.saldoHoras.negative).length;
   document.getElementById('s1').textContent = allEmps.filter(e => e.is12).length;
-  document.getElementById('sft').textContent = allEmps.filter(e => faltaQtd(e) > 0).length;
+  document.getElementById('sft').textContent = allEmps.filter(e => e.totalFaltas > 0).length;
   updateButtonStates();
 }
 
@@ -2157,7 +2133,7 @@ function renderTable() {
     .filter(({ e }) => 
       (!q || e.name.toLowerCase().includes(q)) && 
       (!onlyAtm || e.atm > 0) &&
-      (!onlyFaltas || faltaQtd(e) > 0) &&
+      (!onlyFaltas || e.totalFaltas > 0) &&
       (!onlyAtrasos || (e.saldoHoras && e.saldoHoras.negative))
     );
   if (sortCol) {
@@ -2166,8 +2142,7 @@ function renderTable() {
       if (sortCol === 'name') { va = a.e.name; vb = b.e.name; return sortDir * va.localeCompare(vb, 'pt-BR'); }
       if (sortCol === 'scale') { va = a.e.is12 ? 1 : 0; vb = b.e.is12 ? 1 : 0; }
       if (sortCol === 'atm') { va = a.e.atm; vb = b.e.atm; }
-      if (sortCol === 'faltas') { va = faltaQtd(a.e); vb = faltaQtd(b.e); }
-      else if (sortCol === 'dsr') { va = faltaDsr(a.e) || 0; vb = faltaDsr(b.e) || 0; }
+      if (sortCol === 'faltas') { va = a.e.totalFaltas || 0; vb = b.e.totalFaltas || 0; }
       if (sortCol === 'saldo') {
         const totalMinutes = s => s ? (s.hours * 60 + s.minutes) * (s.negative ? -1 : 1) : 0;
         va = totalMinutes(a.e.saldoHoras);
@@ -2186,7 +2161,7 @@ function renderTable() {
     } else {
       msg = 'Nenhum funcionário reconhecido neste PDF. Verifique se o arquivo é uma folha de ponto com texto selecionável (PDFs escaneados ainda não são suportados).';
     }
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">${msg}</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">${msg}</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(({ e, i }) => {
@@ -2196,32 +2171,19 @@ function renderTable() {
     const saldoCell = saldoFmt
       ? `<span class="bsaldo">${ico('relogio')} ${saldoFmt}</span>`
       : '<span style="color:#7a8fa8">—</span>';
-    /* QUANTIDADE já passada pelas regras de escala — não é mais o total
-       impresso no PDF. A marca ao lado só aparece quando a leitura não
-       fechou com esse total. */
-    const qf = faltaQtd(e);
-    const conf = faltaConf(e);
-    const marca = (conf && conf !== 'conferido')
-      ? ` <span class="bconf" title="${FALTA_CONF_TITULO[conf] || conf}">${ico('info')}</span>`
-      : '';
-    const faltasCell = (qf > 0
-      ? `<span class="bfaltas">${ico('alerta')} ${qf} dia${qf > 1 ? 's' : ''}</span>`
-      : '<span style="color:#7a8fa8">—</span>') + marca;
-    const dsrVal = faltaDsr(e);
-    const dsrCell = (dsrVal === null || dsrVal === undefined)
-      ? '<span style="color:#7a8fa8">—</span>'
-      : `<span class="bdsr">${dsrVal}</span>`;
+    const faltasCell = e.totalFaltas > 0
+      ? `<span class="bfaltas">${ico('alerta')} ${e.totalFaltas} dia${e.totalFaltas > 1 ? 's' : ''}</span>`
+      : '<span style="color:#7a8fa8">—</span>';
     return `<tr class="mr" onclick="toggle(${i})">
       <td style="color:#7a8fa8;font-size:11px;font-weight:600">${i+1}</td>
       <td><strong>${e.name}</strong></td>
       <td><span class="bdg ${e.is12 ? 'b12' : 'bcv'}">${e.is12 ? '12×36' : 'Convencional'}</span></td>
       <td>${e.atm > 0 ? `<span class="batm">${ico('estetoscopio')} ${e.atm} dia${e.atm > 1 ? 's' : ''}</span>` : '<span style="color:#7a8fa8">—</span>'}</td>
       <td>${faltasCell}</td>
-      <td>${dsrCell}</td>
       <td>${saldoCell}</td>
       <td style="color:#a8adc7;font-size:12px;font-weight:500">${e.pages.join(', ')}</td>
       <td style="text-align:center;font-size:11px;color:#7a8fa8">${e.atm > 0 ? (exp ? '▲' : '▼') : ''}</td>
-    </tr>${exp && e.atm > 0 ? `<tr class="dr"><td colspan="9"><div class="dlist">${chips}</div></td></tr>` : ''}`;
+    </tr>${exp && e.atm > 0 ? `<tr class="dr"><td colspan="8"><div class="dlist">${chips}</div></td></tr>` : ''}`;
   }).join('');
   updateButtonStates();
 }
@@ -2255,7 +2217,7 @@ function getFilteredEmps() {
   return allEmps.filter(e =>
     (!q           || e.name.toLowerCase().includes(q)) &&
     (!onlyAtm     || e.atm > 0) &&
-    (!onlyFaltas  || faltaQtd(e) > 0) &&
+    (!onlyFaltas  || e.totalFaltas > 0) &&
     (!onlyAtrasos || (e.saldoHoras && e.saldoHoras.negative))
   );
 }
@@ -2719,18 +2681,14 @@ function dlReport() {
     lines.push('');
   }
 
-  /* ── Seção: Faltas ── */
-  const comFaltas = list.filter(e => faltaQtd(e) > 0);
+  /* ── Seção: Faltas ──
+     O relatório mostra o número CRU do PDF, de propósito. A contagem por
+     escala e a DSR existem só na planilha gerada. Ver docs/REGRA_FALTAS_DSR.md. */
+  const comFaltas = list.filter(e => e.totalFaltas > 0);
   if (comFaltas.length > 0) {
-    lines.push('─ FALTAS');
+    lines.push('─ FALTAS (TOTAL DE FALTAS > 0)');
     lines.push(`  Com faltas: ${comFaltas.length}`);
-    lines.push(`  Dias lidos na coluna OBSERVAÇÃO: ${list.reduce((t, e) => t + (e.faltas ? e.faltas.dias.length : 0), 0)}`);
-    lines.push(`  QUANTIDADE após as regras de escala: ${list.reduce((t, e) => t + faltaQtd(e), 0)}`);
-    lines.push(`  DSR total: ${list.reduce((t, e) => t + (faltaDsr(e) || 0), 0)}`);
-    const aConferir = list.filter(e => { const c = faltaConf(e); return c && c !== 'conferido'; });
-    if (aConferir.length) {
-      lines.push(`    [!] ${aConferir.length} funcionário(s) com leitura a conferir — ver detalhes abaixo`);
-    }
+    lines.push(`  Total de dias de falta: ${comFaltas.reduce((s, e) => s + (e.totalFaltas || 0), 0)}`);
     lines.push('');
   }
 
@@ -2750,25 +2708,8 @@ function dlReport() {
     if (showAtrasos) {
       lines.push(`    Saldo de Horas: ${formatSaldoHoras(e.saldoHoras) || '—'}`);
     }
-    const f = e.faltas;
-    if (f && (f.dias.length > 0 || f.quantidade > 0)) {
-      if (f.impresso !== null && f.impresso !== undefined) {
-        lines.push(`    Total de Faltas impresso no PDF: ${f.impresso}`);
-      }
-      if (f.dias.length) {
-        lines.push(`    Dias de falta lidos: ${f.dias.map(d => d.display).join(', ')}`);
-      }
-      if (f.pulados.length) {
-        lines.push(`    Dias não contados (12×36, dia sim/dia não): ${f.pulados.join(', ')}`);
-      }
-      if (f.mesCheio) {
-        lines.push(`    Mês inteiro (${f.dias.length} faltas): contabilizado integral, sem DSR`);
-      }
-      lines.push(`    QUANTIDADE de faltas: ${f.quantidade}`);
-      lines.push(`    DSR: ${f.dsr === null || f.dsr === undefined ? '—' : f.dsr}`);
-      if (f.conferencia && f.conferencia !== 'conferido') {
-        lines.push(`    [!] ${FALTA_CONF_TITULO[f.conferencia] || f.conferencia}`);
-      }
+    if (e.totalFaltas > 0) {
+      lines.push(`    Total de Faltas: ${e.totalFaltas} dia${e.totalFaltas > 1 ? 's' : ''}`);
     }
     if (e.detectionReport?.motorUsado === 'linha-legacy') {
       lines.push(`    [!] Motor legado (verifique estrutura do PDF)`);
