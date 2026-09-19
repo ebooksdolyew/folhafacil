@@ -793,6 +793,23 @@ td strong{
   ]
 }
 </script>
+
+<!-- ═══════════ Seletor de ferramentas (adicionado) ═══════════ -->
+<style>
+/* Estilos exclusivos do seletor e do contêiner da segunda ferramenta.
+   Nada aqui altera regras existentes: só classes novas (.tool-*). */
+.tool-switch{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 22px;padding:8px;width:fit-content;max-width:100%;border-radius:var(--r-pill);background:var(--bg);box-shadow:var(--nm-in-sm)}
+.tool-switch-btn{appearance:none;border:0;cursor:pointer;font:inherit;font-size:14px;font-weight:600;line-height:20px;color:var(--text-secondary);background:var(--bg);padding:10px 22px;border-radius:var(--r-pill);transition:all .25s var(--ease)}
+.tool-switch-btn:hover{color:var(--text-primary)}
+.tool-switch-btn[aria-selected="true"]{color:var(--accent);box-shadow:var(--nm-out-sm)}
+.tool-switch-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tool-frame{display:block;width:100%;height:calc(100vh - 215px);min-height:520px;border:0;border-radius:var(--r-md);background:var(--bg-2);box-shadow:var(--nm-out-sm)}
+@media (max-width:640px){
+  .tool-switch{width:100%;justify-content:center}
+  .tool-switch-btn{flex:1 1 auto;padding:10px 12px;text-align:center}
+  .tool-frame{height:calc(100vh - 175px)}
+}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -821,6 +838,15 @@ td strong{
     </div>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar entre tema claro e noturno" title="Alternar tema">🌙</button>
   </header>
+
+  <!-- Seletor de ferramentas (adicionado) -->
+  <nav class="tool-switch" role="tablist" aria-label="Escolher ferramenta">
+    <button class="tool-switch-btn" id="toolBtnPonto" type="button" role="tab" aria-selected="true" aria-controls="toolPonto">Ponto eletrônico</button>
+    <button class="tool-switch-btn" id="toolBtnInfreq" type="button" role="tab" aria-selected="false" aria-controls="toolInfrequencia">Infrequência</button>
+  </nav>
+
+  <!-- Contêiner da ferramenta atual — conteúdo interno inalterado -->
+  <div id="toolPonto" role="tabpanel" aria-labelledby="toolBtnPonto">
 
   <main>
   <div class="up" id="up" onclick="document.getElementById('fi').click()" role="button" aria-label="Selecionar arquivo PDF de frequências">
@@ -938,6 +964,12 @@ td strong{
       </div>
     </details>
   </footer>
+
+  </div><!-- /#toolPonto -->
+
+  <!-- Segunda ferramenta: arquivo próprio, isolado em iframe de mesma origem -->
+  <iframe class="tool-frame" id="toolInfrequencia" title="Infrequência" role="tabpanel"
+          aria-labelledby="toolBtnInfreq" data-src="./infrequencia.html" style="display:none"></iframe>
 </div>
 
 <script>
@@ -2345,6 +2377,33 @@ function prog(p) {
   document.getElementById('pw').style.display = 'block';
   document.getElementById('pb').style.width = p + '%';
 }
+</script>
+
+<script>
+/* ─── SELETOR DE FERRAMENTAS — isolado, não toca na lógica de nenhuma das duas ───
+   A ferramenta de ponto é a padrão. A Infrequência vive em iframe de mesma
+   origem: CSS, JS e IDs das duas ficam separados, e alternar apenas esconde
+   (display:none), preservando o que já foi carregado em cada uma. */
+(function () {
+  var painel = document.getElementById('toolPonto');
+  var frame  = document.getElementById('toolInfrequencia');
+  var btnP   = document.getElementById('toolBtnPonto');
+  var btnI   = document.getElementById('toolBtnInfreq');
+
+  function mostrar(infreq) {
+    /* carrega a Infrequência só no primeiro acesso; depois fica em memória */
+    if (infreq && !frame.getAttribute('src')) {
+      frame.setAttribute('src', frame.getAttribute('data-src'));
+    }
+    painel.style.display = infreq ? 'none' : '';
+    frame.style.display  = infreq ? 'block' : 'none';
+    btnP.setAttribute('aria-selected', infreq ? 'false' : 'true');
+    btnI.setAttribute('aria-selected', infreq ? 'true' : 'false');
+  }
+
+  btnP.addEventListener('click', function () { mostrar(false); });
+  btnI.addEventListener('click', function () { mostrar(true); });
+})();
 </script>
 </body>
 </html>
