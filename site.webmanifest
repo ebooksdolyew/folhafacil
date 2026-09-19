@@ -1,5 +1,5 @@
 {
-  "name": "Folha Fácil — Ponto Eletrônico e Infrequência",
+  "name": "Folha Fácil — Guardião Sepog e Infrequência SME",
   "short_name": "Folha Fácil",
   "description": "Duas ferramentas de departamento pessoal: envie o PDF do ponto eletrônico para identificar atestados, faltas, atrasos e escala 12×36, ou a planilha mensal de infrequência para gerar a planilha da folha. Processamento 100% no navegador.",
   "lang": "pt-BR",
@@ -44,7 +44,7 @@
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Folha Fácil — análise de ponto eletrônico e conferência de infrequência"
+      "label": "Folha Fácil — Guardião Sepog e Infrequência SME"
     }
   ]
 }

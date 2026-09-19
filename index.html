@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <!-- ═══════════ SEO — Identidade da página ═══════════ -->
-<title>Folha Fácil — Ponto Eletrônico e Infrequência</title>
+<title>Folha Fácil — Guardião Sepog e Infrequência SME</title>
 <meta name="description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador. Acesso mediante licenciamento.">
 <meta name="keywords" content="análise de ponto, ponto eletrônico, folha de ponto, espelho de ponto, infrequência, atestado médico, faltas, atrasos, DSR, escala 12x36, planilha da folha, leitor de PDF, departamento pessoal, RH">
 <meta name="author" content="Folha Fácil">
@@ -42,7 +42,7 @@
 <meta property="og:site_name" content="Folha Fácil">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://ghub-66j.pages.dev/">
-<meta property="og:title" content="Folha Fácil — Ponto Eletrônico e Infrequência">
+<meta property="og:title" content="Folha Fácil — Guardião Sepog e Infrequência SME">
 <meta property="og:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
 <meta property="og:image" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
 <meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
@@ -53,7 +53,7 @@
 
 <!-- ═══════════ Twitter / X ═══════════ -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Folha Fácil — Ponto Eletrônico e Infrequência">
+<meta name="twitter:title" content="Folha Fácil — Guardião Sepog e Infrequência SME">
 <meta name="twitter:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
 <meta name="twitter:image" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
 <meta name="twitter:image:alt" content="Folha Fácil — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
@@ -98,6 +98,27 @@
 /* GHUB — NEUMORFISMO (Soft UI) · temas White (gelo) e Noturno     */
 /* ════════════════════════════════════════════════════════════════ */
 *{box-sizing:border-box;margin:0;padding:0}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* ÍCONES — traço fino que herda a cor do elemento                 */
+/*                                                                 */
+/* Mesmo desenho usado na Infrequência: SVG 24×24, sem preenchi-   */
+/* mento, traço em currentColor. Assim o ícone acompanha o tema    */
+/* (claro/noturno) e a cor de cada contexto (verde do baixar,      */
+/* âmbar do aviso…) sem nenhuma variante de arquivo. O relevo      */
+/* neumórfico continua vindo da pastilha que envolve o ícone.      */
+/* ════════════════════════════════════════════════════════════════ */
+.ico{
+  width:1em;height:1em;flex:none;display:block;
+  fill:none;stroke:currentColor;
+  stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+  vector-effect:non-scaling-stroke
+}
+
+/* Girando enquanto o PDF é montado */
+@keyframes ico-spin{to{transform:rotate(360deg)}}
+.ico-spin{animation:ico-spin 1s linear infinite;transform-origin:50% 50%}
+@media (prefers-reduced-motion:reduce){.ico-spin{animation:none}}
 
 /* ── TEMA WHITE (padrão): branco gelo ── */
 :root{
@@ -324,10 +345,13 @@ body{
 }
 
 .sm{
+  display:flex;align-items:center;justify-content:center;gap:8px;
   text-align:center;color:var(--text-secondary);
   font-size:13px;min-height:20px;margin-bottom:16px;
   font-weight:600;letter-spacing:.3px
 }
+
+.sm .ico{width:16px;height:16px}
 
 /* ════════════════════════════════════════════════════════════════ */
 /* FILE INFO CARD */
@@ -360,12 +384,17 @@ body{
 }
 
 .fip{color:var(--text-secondary);font-size:13px;font-weight:500}
-.fip-warn{color:var(--amber);font-size:12px;margin-top:6px;font-weight:700}
+.fip-warn{
+  display:flex;align-items:center;gap:6px;
+  color:var(--amber);font-size:12px;margin-top:6px;font-weight:700
+}
+.fip-warn .ico{width:14px;height:14px}
 
 /* ════════════════════════════════════════════════════════════════ */
 /* ALERTS */
 /* ════════════════════════════════════════════════════════════════ */
 .alert{
+  display:flex;align-items:flex-start;gap:10px;
   border-radius:var(--r-md);
   padding:16px 20px;margin-bottom:20px;
   font-size:14px;font-weight:600;
@@ -379,6 +408,7 @@ body{
 .alert-warn{border-color:var(--amber);color:var(--amber)}
 .alert-err{border-color:var(--red);color:var(--red)}
 .alert-info{border-color:var(--accent);color:var(--accent)}
+.alert .ico{width:19px;height:19px;margin-top:1px}
 
 /* ════════════════════════════════════════════════════════════════ */
 /* STATISTICS GRID */
@@ -441,10 +471,25 @@ body{
   transition:background .35s var(--ease),box-shadow .35s var(--ease)
 }
 
+/* poço da busca: guarda a lupa e o campo na mesma pastilha */
+.sbox{
+  position:relative;flex:1 1 250px;min-width:0;
+  display:flex;align-items:center
+}
+
+.sbox .ico{
+  position:absolute;left:18px;
+  width:17px;height:17px;
+  color:var(--text-muted);pointer-events:none;
+  transition:color .25s var(--ease)
+}
+
+.sbox:focus-within .ico{color:var(--accent)}
+
 /* input escavado */
 .si{
-  flex:1 1 250px;min-width:0;
-  padding:13px 20px;font-size:14px;font-weight:500;
+  flex:1 1 auto;width:100%;min-width:0;
+  padding:13px 20px 13px 45px;font-size:14px;font-weight:500;
   font-family:'Inter',sans-serif;
   color:var(--text-primary);
   background:var(--bg);
@@ -496,6 +541,8 @@ body{
   box-shadow:var(--nm-out-sm);
   transition:box-shadow .2s var(--ease),transform .2s var(--ease),color .25s var(--ease),background .35s var(--ease)
 }
+
+.btn .ico{width:16px;height:16px}
 
 .btn:hover:not(:disabled){transform:translateY(-2px)}
 .btn:active:not(:disabled){box-shadow:var(--nm-in-sm);transform:translateY(0)}
@@ -588,6 +635,9 @@ td strong{
 .b12{color:var(--accent)}
 .bcv{color:var(--accent-2)}
 
+/* nas pastilhas o ícone anda meio ponto acima da letra */
+.batm .ico,.bsaldo .ico,.bfaltas .ico{width:14px;height:14px}
+
 .batm{
   display:inline-flex;align-items:center;gap:5px;
   padding:6px 14px;border-radius:var(--r-pill);
@@ -602,6 +652,7 @@ td strong{
 .dlist{padding:18px 20px 20px 54px;display:flex;flex-wrap:wrap;gap:10px}
 
 .dchip{
+  display:inline-flex;align-items:center;gap:6px;
   padding:7px 15px;border-radius:var(--r-pill);
   font-size:11px;font-weight:700;cursor:default;
   color:var(--green);
@@ -610,6 +661,7 @@ td strong{
   transition:transform .2s var(--ease),box-shadow .2s var(--ease),background .35s var(--ease)
 }
 
+.dchip .ico{width:13px;height:13px}
 .dchip:hover{transform:translateY(-2px)}
 .dchip:active{box-shadow:var(--nm-in-sm);transform:translateY(0)}
 
@@ -658,7 +710,7 @@ td strong{
   transition:box-shadow .2s var(--ease)
 }
 .footer .privacy summary::-webkit-details-marker{display:none}
-.footer .privacy summary::before{content:'🔒'}
+.footer .privacy summary .ico{width:14px;height:14px}
 .footer .privacy summary::after{content:'▸';transition:transform .2s var(--ease)}
 .footer .privacy[open] summary::after{transform:rotate(90deg)}
 .footer .privacy summary:hover{box-shadow:var(--nm-in-sm)}
@@ -705,7 +757,7 @@ td strong{
   .stats{grid-template-columns:repeat(2,1fr);gap:16px}
   .sn{font-size:38px}
   .tbar{flex-direction:column;align-items:stretch;padding:14px}
-  .si{flex:1 1 auto;width:100%}
+  .sbox{flex:1 1 auto;width:100%}
   .ck,.btn{width:100%;justify-content:center}
   .up{padding:56px 24px}
   .up-txt{font-size:18px}
@@ -757,9 +809,9 @@ td strong{
     {
       "@type": "WebApplication",
       "@id": "https://ghub-66j.pages.dev/#app",
-      "name": "Folha Fácil — Ponto Eletrônico e Infrequência",
+      "name": "Folha Fácil — Guardião Sepog e Infrequência SME",
       "url": "https://ghub-66j.pages.dev/",
-      "description": "Reúne duas ferramentas. A primeira lê o PDF do ponto eletrônico e identifica atestados, faltas, atrasos, saldo de horas e escalas 12×36, exportando em PDF e planilha XLSX. A segunda, Infrequência, lê a planilha mensal de ponto, reconta faltas, atestados e TRE por funcionário, aplica as regras de escala e de DSR e gera a planilha enxuta para a folha. O processamento acontece integralmente no navegador do usuário; os arquivos e os dados extraídos não são transmitidos a nenhum servidor.",
+      "description": "Reúne duas ferramentas. A primeira lê o PDF do ponto eletrônico e identifica atestados, faltas, atrasos, saldo de horas e escalas 12×36, exportando em PDF e planilha XLSX. A segunda, Infrequência SME, lê a planilha mensal de ponto, reconta faltas, atestados e TRE por funcionário, aplica as regras de escala e de DSR e gera a planilha enxuta para a folha. O processamento acontece integralmente no navegador do usuário; os arquivos e os dados extraídos não são transmitidos a nenhum servidor.",
       "applicationCategory": "BusinessApplication",
       "applicationSubCategory": "Recursos Humanos / Departamento Pessoal",
       "operatingSystem": "Qualquer sistema com navegador moderno",
@@ -790,13 +842,13 @@ td strong{
       "hasPart": [
         {
           "@type": "WebApplication",
-          "name": "Análise de ponto eletrônico",
+          "name": "Guardião Sepog",
           "applicationCategory": "BusinessApplication",
           "description": "Lê o PDF de frequências e identifica atestados, faltas, atrasos, saldo de horas e escala 12×36."
         },
         {
           "@type": "WebApplication",
-          "name": "Infrequência",
+          "name": "Infrequência SME",
           "url": "https://ghub-66j.pages.dev/infrequencia.html",
           "applicationCategory": "BusinessApplication",
           "description": "Lê a planilha mensal de ponto, reconta faltas, atestados e TRE, aplica as regras de escala e de DSR e gera a planilha da folha."
@@ -862,17 +914,17 @@ body.tool-infreq .wrap{padding-bottom:0}
       </span>
       <div class="brand-info">
         <h1 class="brand-name">
-          Folha Fácil<span class="sr-only"> — ponto eletrônico e infrequência</span>
+          Folha Fácil<span class="sr-only"> — Guardião Sepog e Infrequência SME</span>
         </h1>
       </div>
     </div>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar entre tema claro e noturno" title="Alternar tema">🌙</button>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar entre tema claro e noturno" title="Alternar tema"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 0 1 9.7 3.5a8.6 8.6 0 1 0 10.8 10.8Z"/></svg></button>
   </header>
 
   <!-- Seletor de ferramentas (adicionado) -->
   <nav class="tool-switch" role="tablist" aria-label="Escolher ferramenta">
-    <button class="tool-switch-btn" id="toolBtnPonto" type="button" role="tab" aria-selected="true" aria-controls="toolPonto">Ponto eletrônico</button>
-    <button class="tool-switch-btn" id="toolBtnInfreq" type="button" role="tab" aria-selected="false" aria-controls="toolInfrequencia">Infrequência</button>
+    <button class="tool-switch-btn" id="toolBtnPonto" type="button" role="tab" aria-selected="true" aria-controls="toolPonto">Guardião Sepog</button>
+    <button class="tool-switch-btn" id="toolBtnInfreq" type="button" role="tab" aria-selected="false" aria-controls="toolInfrequencia">Infrequência SME</button>
   </nav>
 
   <!-- Contêiner da ferramenta atual — conteúdo interno inalterado -->
@@ -880,7 +932,7 @@ body.tool-infreq .wrap{padding-bottom:0}
 
   <main>
   <div class="up" id="up" onclick="document.getElementById('fi').click()" role="button" aria-label="Selecionar arquivo PDF de frequências">
-    <div class="up-ico">📄</div>
+    <div class="up-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg></div>
     <h2 class="up-txt">Clique ou arraste o PDF de frequências aqui</h2>
     <div class="up-hint">Arquivo .pdf do ponto eletrônico</div>
     <input type="file" id="fi" accept=".pdf" aria-label="Arquivo PDF">
@@ -891,7 +943,7 @@ body.tool-infreq .wrap{padding-bottom:0}
 
   <div id="res">
     <div class="fib">
-      <span class="fib-icon">📄</span>
+      <span class="fib-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg></span>
       <div class="fib-content">
         <div class="fin" id="fn"></div>
         <div class="fip" id="fp"></div>
@@ -903,37 +955,40 @@ body.tool-infreq .wrap{padding-bottom:0}
 
     <div class="stats">
       <div class="sc">
-        <div class="sc-ico">🩺</div>
+        <div class="sc-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 3v2"/><path d="M11.5 3v2"/><path d="M4 4h-.5A1.5 1.5 0 0 0 2 5.5V9a6 6 0 0 0 12 0V5.5A1.5 1.5 0 0 0 12.5 4H12"/><path d="M8 15a6 6 0 0 0 12 0v-2.2"/><circle cx="20" cy="10" r="2.2"/></svg></div>
         <div class="sn" id="sa">0</div>
         <div class="sl">Com Atestados</div>
       </div>
       <div class="sc">
-        <div class="sc-ico">🚫</div>
+        <div class="sc-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></div>
         <div class="sn" id="sft">0</div>
         <div class="sl">Com Faltas</div>
       </div>
       <div class="sc">
-        <div class="sc-ico">⏱️</div>
+        <div class="sc-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.4 2"/></svg></div>
         <div class="sn" id="satr">0</div>
         <div class="sl">Com Atrasos</div>
       </div>
       <div class="sc">
-        <div class="sc-ico">🔁</div>
+        <div class="sc-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h13"/><path d="m8 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H4"/></svg></div>
         <div class="sn" id="s1">0</div>
         <div class="sl">Escala 12×36</div>
       </div>
     </div>
 
     <div class="tbar">
-      <input type="text" class="si" id="srch" placeholder="🔍 Buscar funcionário..." aria-label="Buscar funcionário">
+      <div class="sbox">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.2-4.2"/></svg>
+        <input type="text" class="si" id="srch" placeholder="Buscar funcionário..." aria-label="Buscar funcionário">
+      </div>
       <label class="ck"><input type="checkbox" id="fa"> Apenas atestados</label>
       <label class="ck"><input type="checkbox" id="ff"> Apenas faltas</label>
       <label class="ck"><input type="checkbox" id="fd"> Apenas atrasos</label>
-      <button class="btn bg" id="bdl" onclick="dlPdf()" aria-label="Baixar PDF com páginas de ATM" disabled>⬇️ Baixar PDF</button>
-      <button class="btn bc" id="bcs" onclick="dlXlsx()" aria-label="Gerar planilha XLSX com a lista" disabled>📊 Gerar Planilha</button>
-      <button class="btn bc" id="bcsv" onclick="dlCsv()" aria-label="Gerar arquivo CSV com a lista" disabled>📄 Gerar CSV</button>
-      <button class="btn bc" id="blr" onclick="dlReport()" aria-label="Baixar relatório de aprendizado" disabled>📈 Relatório</button>
-      <button class="btn bs" onclick="resetTool()" aria-label="Carregar novo arquivo">🔄 Novo</button>
+      <button class="btn bg" id="bdl" onclick="dlPdf()" aria-label="Baixar PDF com páginas de ATM" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Baixar PDF</button>
+      <button class="btn bc" id="bcs" onclick="dlXlsx()" aria-label="Gerar planilha XLSX com a lista" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 9v12"/></svg> Gerar Planilha</button>
+      <button class="btn bc" id="bcsv" onclick="dlCsv()" aria-label="Gerar arquivo CSV com a lista" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg> Gerar CSV</button>
+      <button class="btn bc" id="blr" onclick="dlReport()" aria-label="Baixar relatório de aprendizado" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.5 9.5 11l4 4L21 7.5"/><path d="M15.5 7.5H21v5.5"/></svg> Relatório</button>
+      <button class="btn bs" onclick="resetTool()" aria-label="Carregar novo arquivo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6l2.5 2.5"/><path d="M21 3v5.5h-5.5"/></svg> Novo</button>
     </div>
 
     <div class="tw">
@@ -959,7 +1014,7 @@ body.tool-infreq .wrap{padding-bottom:0}
 
   <footer class="footer">
     <details class="privacy">
-      <summary>Política de Privacidade</summary>
+      <summary><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="10.5" width="17" height="10.5" rx="2.5"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/></svg> Política de Privacidade</summary>
       <div class="privacy-body">
         <h4>Processamento local</h4>
         <p>Toda a análise acontece no seu próprio navegador. O arquivo PDF e os
@@ -996,9 +1051,47 @@ body.tool-infreq .wrap{padding-bottom:0}
   </div><!-- /#toolPonto -->
 
   <!-- Segunda ferramenta: arquivo próprio, isolado em iframe de mesma origem -->
-  <iframe class="tool-frame" id="toolInfrequencia" title="Infrequência" role="tabpanel"
+  <iframe class="tool-frame" id="toolInfrequencia" title="Infrequência SME" role="tabpanel"
           aria-labelledby="toolBtnInfreq" data-src="./infrequencia.html" style="display:none"></iframe>
 </div>
+
+<script>
+/* ─── ÍCONES ──────────────────────────────────────────────────────────────
+   Os mesmos desenhos de traço usados no HTML acima, disponíveis para o que
+   é montado em tempo de execução (linhas da tabela, avisos, rótulo do botão
+   enquanto o PDF é gerado). Cada entrada é só o miolo do <svg>; a classe
+   .ico dá tamanho e a cor vem de currentColor, então o ícone acompanha o
+   tema e a cor do contexto sem nenhuma variante de arquivo.
+
+   ico() devolve texto para interpolar em template string; icoEl() devolve o
+   elemento, para quando o texto ao lado vier do usuário ou de um erro e
+   precisar continuar entrando como nó de texto. */
+var ICO_PATHS = {
+  sol:      '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2"/><path d="M12 19.5v2"/><path d="M4.2 4.2l1.4 1.4"/><path d="M18.4 18.4l1.4 1.4"/><path d="M2.5 12h2"/><path d="M19.5 12h2"/><path d="M4.2 19.8l1.4-1.4"/><path d="M18.4 5.6l1.4-1.4"/>',
+  lua:      '<path d="M20.5 14.3A8.6 8.6 0 0 1 9.7 3.5a8.6 8.6 0 1 0 10.8 10.8Z"/>',
+  baixar:   '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+  ampulheta:'<path d="M21 12a9 9 0 1 1-6.2-8.6"/>',
+  agenda:   '<path d="M8 2.5v3"/><path d="M16 2.5v3"/><rect x="3.5" y="4.5" width="17" height="16.5" rx="2.5"/><path d="M3.5 10h17"/>',
+  relogio:  '<circle cx="12" cy="12" r="9"/><path d="M12 7v5.2l3.4 2"/>',
+  alerta:   '<path d="M10.3 3.9 2.6 17.6A2 2 0 0 0 4.3 20.6h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4"/><path d="M12 17h.01"/>',
+  estetoscopio:'<path d="M5.5 3v2"/><path d="M11.5 3v2"/><path d="M4 4h-.5A1.5 1.5 0 0 0 2 5.5V9a6 6 0 0 0 12 0V5.5A1.5 1.5 0 0 0 12.5 4H12"/><path d="M8 15a6 6 0 0 0 12 0v-2.2"/><circle cx="20" cy="10" r="2.2"/>',
+  erro:     '<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  info:     '<circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5"/><path d="M12 7.8h.01"/>',
+  ok:       '<path d="M21.4 10.6A9.5 9.5 0 1 1 16.6 3"/><path d="m8.5 11.5 3.2 3.2L22 4.4"/>'
+};
+
+function ico(nome, extra) {
+  var d = ICO_PATHS[nome];
+  if (!d) return '';
+  return '<svg class="ico' + (extra ? ' ' + extra : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>';
+}
+
+function icoEl(nome, extra) {
+  var t = document.createElement('template');
+  t.innerHTML = ico(nome, extra);
+  return t.content.firstChild;
+}
+</script>
 
 <script>
 /* ─── TOGGLE DE TEMA (Noturno / White) — isolado, não toca na lógica do app ─── */
@@ -1008,11 +1101,11 @@ body.tool-infreq .wrap{padding-bottom:0}
   function apply(theme) {
     if (theme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
-      btn.textContent = '☀️';
+      btn.replaceChildren(icoEl('sol'));
       btn.title = 'Mudar para tema White';
     } else {
       document.documentElement.removeAttribute('data-theme');
-      btn.textContent = '🌙';
+      btn.replaceChildren(icoEl('lua'));
       btn.title = 'Mudar para tema Noturno';
     }
   }
@@ -1078,7 +1171,7 @@ upEl.addEventListener('drop', e => {
   e.preventDefault(); upEl.classList.remove('over');
   const files = e.dataTransfer.files;
   if (!files || !files.length) return;
-  if (files.length > 1) return showAlert('⚠️ Selecione apenas um arquivo PDF por vez.');
+  if (files.length > 1) return showAlert('Selecione apenas um arquivo PDF por vez.');
   const f = files[0];
   if (validateFile(f)) go(f);
 });
@@ -1093,19 +1186,23 @@ document.getElementById('fd').addEventListener('change', renderTable);
 
 function validateFile(f) {
   const ok = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
-  if (!ok) { showAlert('❌ Arquivo inválido. Selecione um PDF do ponto eletrônico.'); return false; }
+  if (!ok) { showAlert('Arquivo inválido. Selecione um PDF do ponto eletrônico.', 'warn', 'erro'); return false; }
   if (f.size > MAX_SIZE_MB * 1048576) {
-    showAlert(`❌ Arquivo muito grande (${(f.size/1048576).toFixed(1)} MB). Limite: ${MAX_SIZE_MB} MB.`);
+    showAlert(`Arquivo muito grande (${(f.size/1048576).toFixed(1)} MB). Limite: ${MAX_SIZE_MB} MB.`, 'warn', 'erro');
     return false;
   }
   return true;
 }
 
-function showAlert(msg, type = 'warn') {
+const ICO_ALERTA = { warn: 'alerta', err: 'erro', info: 'info' };
+
+/* `icone` só é passado onde o aviso mostra um símbolo diferente do que a cor
+   do tipo sugere — um X vermelho numa tarja âmbar, por exemplo. */
+function showAlert(msg, type = 'warn', icone) {
   const el = document.getElementById('alrt');
   el.className = `alert alert-${type}`;
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.replaceChildren(icoEl(icone || ICO_ALERTA[type] || 'alerta'), document.createTextNode(msg));
+  el.style.display = 'flex';
   document.getElementById('res').style.display = 'block';
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.style.display = 'none'; }, 7000);
@@ -1695,7 +1792,7 @@ async function go(file) {
     document.getElementById('fn').textContent = file.name;
     document.getElementById('fp').textContent = `${n} página${n > 1 ? 's' : ''}`;
     if (n > 600) {
-      showAlert(`ℹ️ PDF com ${n} páginas. O processamento pode levar alguns minutos — mantenha esta aba aberta.`, 'warn');
+      showAlert(`PDF com ${n} páginas. O processamento pode levar alguns minutos — mantenha esta aba aberta.`, 'warn', 'info');
     }
     pageImageCache.clear();
     allEmps = [];
@@ -1739,19 +1836,20 @@ async function go(file) {
       renderStats(); renderTable();
     } catch (renderErr) {
       console.error('Falha ao renderizar resultados:', renderErr);
-      showAlert('⚠️ Os dados foram lidos, mas houve um erro ao exibir a tabela. As exportações continuam funcionando.', 'warn');
+      showAlert('Os dados foram lidos, mas houve um erro ao exibir a tabela. As exportações continuam funcionando.', 'warn');
     }
     if (skippedPages > 0) {
       const fw = document.getElementById('fwarn');
-      fw.textContent = `⚠️ ${skippedPages} página${skippedPages > 1 ? 's' : ''} sem funcionário reconhecido`;
-      fw.style.display = 'block';
+      fw.replaceChildren(icoEl('alerta'), document.createTextNode(
+        `${skippedPages} página${skippedPages > 1 ? 's' : ''} sem funcionário reconhecido`));
+      fw.style.display = 'flex';
     }
     setTimeout(() => {
       document.getElementById('pw').style.display = 'none';
-      setStatus(`✅ Concluído em ${elapsed}s`);
+      setStatus(`Concluído em ${elapsed}s`, 'ok');
     }, 400);
   } catch (err) {
-    setStatus('❌ Erro: ' + err.message);
+    setStatus('Erro: ' + err.message, 'erro');
     console.error(err);
   }
 }
@@ -1807,19 +1905,19 @@ function renderTable() {
   }
   tbody.innerHTML = list.map(({ e, i }) => {
     const exp = expanded.has(i);
-    const chips = e.atmDays.map(d => `<span class="dchip">📅 ${d.display}</span>`).join('');
+    const chips = e.atmDays.map(d => `<span class="dchip">${ico('agenda')} ${d.display}</span>`).join('');
     const saldoFmt = formatSaldoHoras(e.saldoHoras);
     const saldoCell = saldoFmt
-      ? `<span class="bsaldo">⏱️ ${saldoFmt}</span>`
+      ? `<span class="bsaldo">${ico('relogio')} ${saldoFmt}</span>`
       : '<span style="color:#7a8fa8">—</span>';
     const faltasCell = e.totalFaltas > 0
-      ? `<span class="bfaltas">⚠️ ${e.totalFaltas} dia${e.totalFaltas > 1 ? 's' : ''}</span>`
+      ? `<span class="bfaltas">${ico('alerta')} ${e.totalFaltas} dia${e.totalFaltas > 1 ? 's' : ''}</span>`
       : '<span style="color:#7a8fa8">—</span>';
     return `<tr class="mr" onclick="toggle(${i})">
       <td style="color:#7a8fa8;font-size:11px;font-weight:600">${i+1}</td>
       <td><strong>${e.name}</strong></td>
       <td><span class="bdg ${e.is12 ? 'b12' : 'bcv'}">${e.is12 ? '12×36' : 'Convencional'}</span></td>
-      <td>${e.atm > 0 ? `<span class="batm">🩺 ${e.atm} dia${e.atm > 1 ? 's' : ''}</span>` : '<span style="color:#7a8fa8">—</span>'}</td>
+      <td>${e.atm > 0 ? `<span class="batm">${ico('estetoscopio')} ${e.atm} dia${e.atm > 1 ? 's' : ''}</span>` : '<span style="color:#7a8fa8">—</span>'}</td>
       <td>${faltasCell}</td>
       <td>${saldoCell}</td>
       <td style="color:#a8adc7;font-size:12px;font-weight:500">${e.pages.join(', ')}</td>
@@ -1892,7 +1990,7 @@ function updateButtonStates() {
 async function dlPdf() {
   if (!pdfBytes || !curFile) return;
   const btn = document.getElementById('bdl');
-  btn.disabled = true; btn.textContent = '⏳ Gerando PDF…';
+  btn.disabled = true; btn.innerHTML = ico('ampulheta', 'ico-spin') + ' Gerando PDF…';
   try {
     if (typeof PDFLib === 'undefined') throw new Error('PDFLib não carregou.');
     const ctx  = getActiveContext();
@@ -1913,7 +2011,7 @@ async function dlPdf() {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   } catch (err) { showAlert('Erro ao gerar PDF: ' + err.message, 'err'); }
-  btn.textContent = '⬇️ Baixar PDF';
+  btn.innerHTML = ico('baixar') + ' Baixar PDF';
   updateButtonStates();
 }
 
@@ -2267,7 +2365,7 @@ function dlReport() {
   const list = getFilteredEmps();
   const lines = [];
 
-  lines.push(`📈 RELATÓRIO — ${ctx.title.toUpperCase()} — Folha Fácil v2.2`);
+  lines.push(`RELATÓRIO — ${ctx.title.toUpperCase()} — Folha Fácil v2.2`);
   lines.push('');
   lines.push(`Data: ${new Date().toLocaleString('pt-BR')}`);
   lines.push(`Arquivo: ${curFile?.name || 'N/A'}`);
@@ -2285,9 +2383,9 @@ function dlReport() {
     const convencionalCount = list.filter(e => !e.is12).length;
     const x12Count          = list.filter(e => e.is12).length;
     lines.push(`  Escala Convencional: ${convencionalCount} funcionários`);
-    lines.push(`    ✅ REGRA 1 ATIVA: ATMs apenas de Seg-Sex`);
+    lines.push(`    [OK] REGRA 1 ATIVA: ATMs apenas de Seg-Sex`);
     lines.push(`  Escala 12×36: ${x12Count} funcionários`);
-    lines.push(`    ✅ REGRA 2 ATIVA: Validação de JORNADA preenchida`);
+    lines.push(`    [OK] REGRA 2 ATIVA: Validação de JORNADA preenchida`);
     lines.push('');
   }
 
@@ -2329,7 +2427,7 @@ function dlReport() {
       lines.push(`    Total de Faltas: ${e.totalFaltas} dia${e.totalFaltas > 1 ? 's' : ''}`);
     }
     if (e.detectionReport?.motorUsado === 'linha-legacy') {
-      lines.push(`    ⚠️  Motor legado (verifique estrutura do PDF)`);
+      lines.push(`    [!] Motor legado (verifique estrutura do PDF)`);
     }
     lines.push('');
   }
@@ -2349,7 +2447,7 @@ function dlReport() {
     lines.push(`  • ${lowConf} funcionário(s) com confiança < 90%`);
     lines.push(`    → Verifique ATMs em fonte colorida ou OCR incorreto`);
   }
-  if (!legacyCount && !lowConf) lines.push('  ✅ Nenhuma inconsistência detectada.');
+  if (!legacyCount && !lowConf) lines.push('  [OK] Nenhuma inconsistência detectada.');
 
   const txt  = lines.join('\n');
   const blob = new Blob([txt], { type: 'text/plain;charset=utf-8;' });
@@ -2400,7 +2498,11 @@ function resetTool() {
   });
 }
 
-function setStatus(m) { document.getElementById('sm').textContent = m; }
+function setStatus(m, icone) {
+  const el = document.getElementById('sm');
+  if (icone) el.replaceChildren(icoEl(icone), document.createTextNode(m));
+  else el.textContent = m;
+}
 function prog(p) {
   document.getElementById('pw').style.display = 'block';
   document.getElementById('pb').style.width = p + '%';
@@ -2409,11 +2511,11 @@ function prog(p) {
 
 <script>
 /* ─── SELETOR DE FERRAMENTAS — isolado, não toca na lógica de nenhuma das duas ───
-   A ferramenta de ponto é a padrão. A Infrequência vive em iframe de mesma
+   O Guardião Sepog é a padrão. A Infrequência SME vive em iframe de mesma
    origem: CSS, JS e IDs das duas ficam separados, e alternar apenas esconde
    (display:none), preservando o que já foi carregado em cada uma.
    O iframe ocupa a janela inteira abaixo do seletor e recebe, de fora, a mesma
-   paleta de preto e branco do Ghub e o tema escolhido no botão 🌙/☀️ — nada
+   paleta de preto e branco do Ghub e o tema escolhido no botão de tema — nada
    disso edita o infrequencia.html, que continua funcionando sozinho. */
 (function () {
   var painel = document.getElementById('toolPonto');

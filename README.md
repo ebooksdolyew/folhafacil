@@ -6,10 +6,10 @@ processado no navegador de quem usa.
 
 | Ferramenta | Entrada | Saída |
 |---|---|---|
-| **Ponto eletrônico** (padrão) | PDF de frequências | Tabela na tela, PDF anotado, planilha XLSX e relatório TXT |
-| **Infrequência** | Planilha mensal de ponto (.xlsx, .xlsm ou .csv) | Planilha da folha e planilha detalhada |
+| **Guardião Sepog** (padrão) | PDF de frequências | Tabela na tela, PDF anotado, planilha XLSX e relatório TXT |
+| **Infrequência SME** | Planilha mensal de ponto (.xlsx, .xlsm ou .csv) | Planilha da folha e planilha detalhada |
 
-A Infrequência fica em `infrequencia.html`, um arquivo à parte carregado dentro de um
+A Infrequência SME fica em `infrequencia.html`, um arquivo à parte carregado dentro de um
 `<iframe>` de mesma origem. É o que mantém o CSS, o JavaScript e os IDs das duas
 separados — as duas foram escritas para viver sozinhas na página e colidiriam se
 fossem coladas no mesmo documento. O `index.html` só acrescenta o seletor, o contêiner
@@ -30,21 +30,21 @@ produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_head
 
 | Caminho | O que é |
 |---|---|
-| `index.html` | A ferramenta de ponto inteira (HTML + CSS + JS) e o seletor que carrega a Infrequência. |
-| `infrequencia.html` | A Infrequência inteira, com a biblioteca xlsx-js-style (Apache-2.0) embutida. |
+| `index.html` | O Guardião Sepog inteiro (HTML + CSS + JS) e o seletor que carrega a Infrequência SME. |
+| `infrequencia.html` | A Infrequência SME inteira, com a biblioteca xlsx-js-style (Apache-2.0) embutida. |
 | `ui/neu.css`, `ui/neu.js` | Camada de interface usada pelas duas: lista neumórfica no lugar da lista nativa do `<select>`, caixas de marcação e retorno visual dos controles. Se não carregar, os seletores voltam a abrir a lista do navegador e nada quebra. |
 | `404.html`, `_headers`, `robots.txt`, `site.webmanifest`, `favicon.svg` | Página de erro, cabeçalhos HTTP (CSP inclusive), SEO e PWA. |
 | `assets/` | `icons/` (ícones do site e do PWA), `social/` (imagem de compartilhamento) e `fonts/` (Inter, Outfit e Space Grotesk auto-hospedadas). |
 | `vendor/` | pdf.js e pdf-lib auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |
-| `docs/regras/` | Regras de cálculo da **Infrequência** (R1 a R4) em linguagem simples. |
-| `docs/REGRA_VALIDACAO_ESCALA.md`, `docs/REGRA_JORNADA_12x36.md` | Regras de validação de atestado do **ponto eletrônico**. |
+| `docs/regras/` | Regras de cálculo da **Infrequência SME** (R1 a R4) em linguagem simples. |
+| `docs/REGRA_VALIDACAO_ESCALA.md`, `docs/REGRA_JORNADA_12x36.md` | Regras de validação de atestado do **Guardião Sepog**. |
 | `docs/LIMITACOES_CONHECIDAS.md` | Divergências conhecidas entre código e documentação, com a medição que falta para decidir cada uma. |
 | `tests/` | Suíte Playwright (unitária + ponta a ponta) sobre o `index.html` real. Ver `tests/README.md`. |
 | `validacao/` | Procedimento de regressão contra PDFs reais (`comparar.py`) — os PDFs ficam fora do git. |
 
 ## As duas ferramentas
 
-### Ponto eletrônico (`index.html`)
+### Guardião Sepog (`index.html`)
 
 Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas e escala
 12×36, e exporta PDF anotado, XLSX e TXT. Dois pontos que valem saber antes de mexer:
@@ -57,7 +57,7 @@ Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas 
   depois: para Convencional, atestado em sábado ou domingo nunca chega a ser
   registrado. Ver `docs/REGRA_VALIDACAO_ESCALA.md` e `docs/REGRA_JORNADA_12x36.md`.
 
-### Infrequência (`infrequencia.html`)
+### Infrequência SME (`infrequencia.html`)
 
 1. Lê a planilha (detecta cabeçalho, colunas de dia `01/ago`…, CPF, função, empresa…).
 2. Reconta os dias marcados `F` / `A` / `D` e compara com as colunas declaradas.
