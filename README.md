@@ -38,6 +38,7 @@ produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_head
 | `vendor/` | pdf.js e pdf-lib auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |
 | `docs/regras/` | Regras de cálculo da **Infrequência SME** (R1 a R4) em linguagem simples. |
 | `docs/REGRA_VALIDACAO_ESCALA.md`, `docs/REGRA_JORNADA_12x36.md` | Regras de validação de atestado do **Guardião Sepog**. |
+| `docs/REGRA_FALTAS_DSR.md` | Regra de faltas e DSR do **Guardião Sepog** — leitura da coluna OBSERVAÇÃO. Especificação; implementação pendente. |
 | `docs/LIMITACOES_CONHECIDAS.md` | Divergências conhecidas entre código e documentação, com a medição que falta para decidir cada uma. |
 | `tests/` | Suíte Playwright (unitária + ponta a ponta) sobre o `index.html` real. Ver `tests/README.md`. |
 | `validacao/` | Procedimento de regressão contra PDFs reais (`comparar.py`) — os PDFs ficam fora do git. |
