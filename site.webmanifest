@@ -1,7 +1,7 @@
 {
-  "name": "Ghub — Análise Inteligente de Ponto",
+  "name": "Ghub — Análise de Ponto Eletrônico e Infrequência",
   "short_name": "Ghub",
-  "description": "Envie o PDF do ponto eletrônico e identifique atestados, faltas, atrasos e escalas 12×36 automaticamente. Processamento 100% no navegador.",
+  "description": "Duas ferramentas de departamento pessoal: envie o PDF do ponto eletrônico para identificar atestados, faltas, atrasos e escala 12×36, ou a planilha mensal de infrequência para gerar a planilha da folha. Processamento 100% no navegador.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./",
@@ -44,7 +44,7 @@
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Ghub — análise inteligente de ponto eletrônico"
+      "label": "Ghub — análise de ponto eletrônico e conferência de infrequência"
     }
   ]
 }

@@ -1,5 +1,6 @@
-# robots.txt — Ghub · Análise Inteligente de Ponto
-# Aplicação corporativa de acesso restrito.
+# robots.txt — Ghub · Análise de ponto eletrônico e Infrequência
+# Aplicação corporativa de acesso restrito: nenhuma página deve ser indexada,
+# nem a inicial nem a /infrequencia.html.
 
 User-agent: *
 Disallow: /

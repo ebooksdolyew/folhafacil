@@ -7,8 +7,11 @@
 ## Como usar
 
 1. Coloque de 5 a 10 PDFs reais em `validacao/pdfs/` cobrindo os cenários da tabela abaixo.
-2. Com a versão **baseline** (`git checkout v2.2-baseline -- index.html`), processe cada PDF
-   e salve os exports em `validacao/baseline/<nome-do-pdf>.xlsx` e `.txt`.
+2. Com a versão **baseline** — o commit do `index.html` anterior à alteração que se quer
+   validar (`git log --oneline index.html` para achá-lo, depois
+   `git checkout <commit> -- index.html`) — processe cada PDF e salve os exports em
+   `validacao/baseline/<nome-do-pdf>.xlsx` e `.txt`. Ao terminar, devolva o arquivo com
+   `git checkout HEAD -- index.html`.
 3. Após cada fase, reprocesse os mesmos PDFs salvando em `validacao/atual/` e rode:
 
    ```bash
@@ -37,7 +40,7 @@ não o que o sistema diz.
 
 ## Métricas do baseline
 
-Anote com a versão `v2.2-baseline`, antes de qualquer alteração:
+Anote com a versão baseline, antes de qualquer alteração:
 
 | Arquivo | Páginas | Tempo (s) | Memória da aba (Shift+Esc) | com ATM | saldo neg. | 12×36 | com faltas | Aviso de páginas sem funcionário |
 |---------|---------|-----------|----------------------------|---------|-----------|-------|-----------|----------------------------------|

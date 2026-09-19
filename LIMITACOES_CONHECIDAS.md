@@ -44,7 +44,7 @@ comprovar um falso positivo concreto.
 
 ## 3. Divergência B — "Folga" na REGRA 2 (a mais séria)
 
-`REGRA_JORNADA_12x36.md` e `PROJETO_LEITOR_GUARDIAO.md` são explícitos:
+`REGRA_JORNADA_12x36.md` é explícito:
 
 > `| 22/05 | ATM | Folga | ✅ CONTABILIZAR |`
 
@@ -175,7 +175,7 @@ Compare as duas saídas com o mesmo PDF virando a flag e rodando o
 `comparar.py`: ele mostra exatamente quais funcionários mudam.
 
 Depois de decidir: remova a flag, deixe só o comportamento escolhido, remova
-a instrumentação e sincronize `REGRA_JORNADA_12x36.md` e
-`PROJETO_LEITOR_GUARDIAO.md` com o comportamento real do código.
+a instrumentação e sincronize `REGRA_JORNADA_12x36.md` com o comportamento
+real do código.
 Documentação que contradiz o código é pior que documentação ausente,
 principalmente quando vira anexo de contrato.

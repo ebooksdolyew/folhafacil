@@ -1,36 +1,72 @@
-# Infrequência
+# Ghub
 
-Ferramenta em um único arquivo HTML que lê a planilha mensal de ponto (.xlsx/.csv),
-reconta faltas, atestados e TRE por funcionário, aplica as regras de escala e gera a
-planilha enxuta para a folha.
+Site estático com **duas ferramentas de departamento pessoal**, escolhidas por um
+seletor no topo da página. Nenhuma das duas envia arquivo para servidor: tudo é
+processado no navegador de quem usa.
 
-Funciona offline: basta abrir `infrequencia.html` no navegador. A biblioteca de
-leitura/escrita de Excel (xlsx-js-style, Apache-2.0) já está embutida no arquivo.
+| Ferramenta | Entrada | Saída |
+|---|---|---|
+| **Ponto eletrônico** (padrão) | PDF de frequências | Tabela na tela, PDF anotado, planilha XLSX e relatório TXT |
+| **Infrequência** | Planilha mensal de ponto (.xlsx, .xlsm ou .csv) | Planilha da folha e planilha detalhada |
 
-## Estrutura
+A Infrequência fica em `infrequencia.html`, um arquivo à parte carregado dentro de um
+`<iframe>` de mesma origem. É o que mantém o CSS, o JavaScript e os IDs das duas
+separados — as duas foram escritas para viver sozinhas na página e colidiriam se
+fossem coladas no mesmo documento. O `index.html` só acrescenta o seletor, o contêiner
+e o iframe; as duas ferramentas continuam intactas por dentro.
+
+## Rodar
+
+É estático, sem build. Qualquer servidor de arquivos serve:
+
+```bash
+python3 -m http.server 8000     # depois abra http://127.0.0.1:8000/index.html
+```
+
+Abrir o `index.html` direto do disco (`file://`) funciona no Chrome e no Edge. Em
+produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_headers`.
+
+## Mapa do repositório
 
 | Caminho | O que é |
 |---|---|
-| `infrequencia.html` | A ferramenta inteira (HTML + CSS + JS + biblioteca xlsx). |
-| `regras/REGRAS.md` | Índice das regras de cálculo (R1 a R4) em linguagem simples. |
-| `regras/regra-escala-convencional.md` | Como o programa descobre mês/ano e dia da semana; regra R3. |
-| `regras/regra-dsr.md` | Regra R4 — DSR para Convencional e 12×36. |
-| `PROMPT-INTEGRACAO.md` | Instruções para integrar esta ferramenta ao `index.html` de outro projeto. |
-| `planilhas-teste/` | Planilhas reais usadas nos testes. **Ignorada pelo git** (contém CPF e nomes). |
+| `index.html` | A ferramenta de ponto inteira (HTML + CSS + JS) e o seletor que carrega a Infrequência. |
+| `infrequencia.html` | A Infrequência inteira, com a biblioteca xlsx-js-style (Apache-2.0) embutida. |
+| `404.html`, `_headers`, `robots.txt`, `site.webmanifest`, `favicon.svg` | Página de erro, cabeçalhos HTTP (CSP inclusive), SEO e PWA. |
+| `assets/` | Ícones, imagem de compartilhamento e as fontes auto-hospedadas (Inter, Outfit, Space Grotesk). |
+| `vendor/` | pdf.js e pdf-lib auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |
+| `regras/` | Regras de cálculo da **Infrequência** (R1 a R4) em linguagem simples. |
+| `REGRA_VALIDACAO_ESCALA.md`, `REGRA_JORNADA_12x36.md` | Regras de validação de atestado do **ponto eletrônico**. |
+| `LIMITACOES_CONHECIDAS.md` | Divergências conhecidas entre código e documentação, com a medição que falta para decidir cada uma. |
+| `tests/` | Suíte Playwright (unitária + ponta a ponta) sobre o `index.html` real. Ver `tests/README.md`. |
+| `validacao/` | Procedimento de regressão contra PDFs reais (`comparar.py`) — os PDFs ficam fora do git. |
 
-## O que a ferramenta faz
+## As duas ferramentas
+
+### Ponto eletrônico (`index.html`)
+
+Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas e escala
+12×36, e exporta PDF anotado, XLSX e TXT. Dois pontos que valem saber antes de mexer:
+
+- Existem **dois motores de detecção de ATM** (tabular e legado), com critérios
+  diferentes de reconhecimento. A divergência entre eles está descrita em
+  `LIMITACOES_CONHECIDAS.md`, junto com a medição que ainda falta para decidir o que
+  fazer com ela — leia antes de alterar qualquer um dos dois.
+- A validação de escala acontece **durante** a extração (`readAtmsFromTable`), não
+  depois: para Convencional, atestado em sábado ou domingo nunca chega a ser
+  registrado. Ver `REGRA_VALIDACAO_ESCALA.md` e `REGRA_JORNADA_12x36.md`.
+
+### Infrequência (`infrequencia.html`)
 
 1. Lê a planilha (detecta cabeçalho, colunas de dia `01/ago`…, CPF, função, empresa…).
 2. Reconta os dias marcados `F` / `A` / `D` e compara com as colunas declaradas.
 3. Deduz a escala pela função (porteiro = 12×36; demais = Convencional).
-4. Descobre o mês/ano de referência (mês anterior ao atual) e o dia da semana de cada dia,
-   pedindo confirmação se o cabeçalho da planilha disser outro mês.
+4. Descobre o mês/ano de referência (mês anterior ao atual) e o dia da semana de cada
+   dia, pedindo confirmação se o cabeçalho da planilha disser outro mês.
 5. Aplica as regras R1–R4 (`regras/`) para chegar à QUANTIDADE e à DSR.
 6. Gera duas planilhas, com filtros de empresa, tipo, escala e "ausência mês completo":
    - **Modelo da folha** — `MATRICULA | Funcionário | [Empresa] | CPF | Escala | QUANTIDADE | DSR | PROVENTO | VALOR | [Observação]`
    - **Detalhada** — tudo acima mais lotação, função, tipo, dias contados e não contados.
-
-## Regras (resumo)
 
 | Regra | Vale para | O que faz |
 |---|---|---|
@@ -39,9 +75,31 @@ leitura/escrita de Excel (xlsx-js-style, Apache-2.0) já está embutida no arqui
 | R3 | F, A, D, Convencional | Sábado e domingo não contam. Exceção: faltas *só* em fim de semana contam, com aviso. |
 | R4 | F | DSR — Convencional: 1 por semana com falta. 12×36: 1 por falta contada. |
 
-Toda regra nova entra em `diasContados()` / `dsrDe()` no HTML **e** em `regras/`.
+Detalhe de cada uma em `regras/REGRAS.md`, `regras/regra-escala-convencional.md` e
+`regras/regra-dsr.md`. **Toda regra nova entra no código e no `regras/` no mesmo
+commit** — documentação que contradiz o código é pior que documentação nenhuma.
 
-## Dados sensíveis
+## Testes
 
-As planilhas de ponto têm nome e CPF. O `.gitignore` bloqueia `*.xlsx`, `*.csv` e a
-pasta `planilhas-teste/`. Não remova essas linhas.
+```bash
+npm install
+npm test          # gera o PDF sintético e roda a suíte completa
+```
+
+Detalhes, incluindo como rodar com um Chromium já instalado e como fazer regressão
+contra PDFs reais, em `tests/README.md`. O CI (`.github/workflows/tests.yml`) roda a
+suíte e confere os checksums do `vendor/` a cada push.
+
+Regra de processo: toda alteração em função pura do `index.html` exige a alteração
+espelhada em `tests/unit.spec.js` **no mesmo commit**.
+
+## Dados sensíveis (LGPD)
+
+Folhas de ponto e planilhas de infrequência trazem nome, CPF e atestado médico — este
+último é dado pessoal sensível de saúde. Por isso:
+
+- o processamento é integralmente local: nenhum arquivo sai do dispositivo;
+- o `.gitignore` bloqueia `*.xlsx`, `*.xlsm`, `*.csv`, os PDFs de `validacao/` e os
+  snapshots gerados a partir de arquivos reais. **Não remova essas linhas**;
+- o site não faz nenhuma requisição a terceiros: fontes e bibliotecas são
+  auto-hospedadas, e a CSP do `_headers` bloqueia o resto.
