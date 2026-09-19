@@ -101,14 +101,6 @@ header.masthead{
 }
 h1{font-size:28px;font-weight:800;letter-spacing:-.025em;margin:0}
 .sub{color:var(--ink-soft);font-size:13.5px;margin-top:6px;max-width:560px}
-.folio{
-  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
-  font-variant-numeric:tabular-nums;text-align:center;
-  border-radius:var(--r);padding:14px 22px;box-shadow:var(--in);min-width:150px;
-}
-.folio:empty{display:none}
-.folio b{color:var(--accent);font-size:30px;display:block;font-weight:800;line-height:1.05;letter-spacing:-.03em;margin-bottom:4px}
-
 /* ---------- seções como cartões ---------- */
 section{
   background:var(--bg); border-radius:var(--r); box-shadow:var(--out);
@@ -348,7 +340,6 @@ section:not(.hide),.actionbar:not(.hide){animation:rise .35s ease both}
     <h1>Infrequência SME</h1>
     <div class="sub">Lê a planilha mensal de ponto, reconta os dias marcados e gera a planilha enxuta para a folha.</div>
   </div>
-  <div class="folio" id="folio"></div>
 </header>
 
 <div class="actionbar hide" id="actionbar">
@@ -966,7 +957,6 @@ function render(){
   const comD = R.filter(r=>r.cD>0).length;
   const graves = R.filter(r=>r.criticas.some(c=>c.grave)).length;
 
-  $('#folio').innerHTML = `<b>${String(R.length).padStart(3,'0')}</b>funcionários lidos`;
   $('#stats').innerHTML = [
     ['Funcionários', R.length],
     ['Com faltas', comF],

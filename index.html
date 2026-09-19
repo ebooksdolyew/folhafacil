@@ -270,6 +270,29 @@ body{
 .theme-toggle:active{box-shadow:var(--nm-in-sm);transform:translateY(0)}
 
 /* ════════════════════════════════════════════════════════════════ */
+/* CABEÇALHO DA FERRAMENTA — nome e o que ela faz                   */
+/* ════════════════════════════════════════════════════════════════ */
+.tool-head{
+  margin:0 0 24px;
+  animation:rise .5s var(--ease) both
+}
+
+.tool-head h2{
+  font-family:'Space Grotesk','Outfit',sans-serif;
+  font-size:26px;font-weight:800;letter-spacing:-.6px;
+  color:var(--text-primary);
+  margin:0 0 6px;
+  transition:color .35s var(--ease)
+}
+
+.tool-head p{
+  color:var(--text-secondary);
+  font-size:13.5px;font-weight:500;line-height:1.55;
+  max-width:620px;margin:0;
+  transition:color .35s var(--ease)
+}
+
+/* ════════════════════════════════════════════════════════════════ */
 /* UPLOAD AREA — placa neumórfica com poço interno */
 /* ════════════════════════════════════════════════════════════════ */
 .up{
@@ -649,7 +672,18 @@ td strong{
   transition:background .35s var(--ease),box-shadow .35s var(--ease)
 }
 
-.dlist{padding:18px 20px 20px 54px;display:flex;flex-wrap:wrap;gap:10px}
+.dlist{padding:18px 20px 20px 54px;display:flex;flex-direction:column;gap:12px}
+
+/* uma faixa por tipo de ocorrência, com o rótulo à esquerda */
+.dgrupo{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+
+.dlabel{
+  flex:none;min-width:86px;padding-top:6px;
+  color:var(--text-muted);
+  font-size:10px;font-weight:800;letter-spacing:.9px;text-transform:uppercase
+}
+
+.dchips{display:flex;flex-wrap:wrap;gap:10px;flex:1;min-width:0}
 
 .dchip{
   display:inline-flex;align-items:center;gap:6px;
@@ -664,6 +698,10 @@ td strong{
 .dchip .ico{width:13px;height:13px}
 .dchip:hover{transform:translateY(-2px)}
 .dchip:active{box-shadow:var(--nm-in-sm);transform:translateY(0)}
+
+/* mesma pastilha, cor por tipo — igual à das colunas da tabela */
+.dchip-falta{color:var(--amber)}
+.dchip-atraso{color:var(--red)}
 
 .bsaldo{
   display:inline-flex;align-items:center;gap:5px;
@@ -751,6 +789,8 @@ td strong{
 /* ════════════════════════════════════════════════════════════════ */
 @media(max-width:768px){
   .wrap{padding:20px 16px 48px}
+  .tool-head{margin-bottom:18px}
+  .tool-head h2{font-size:21px}
   .header-top{flex-wrap:wrap;text-align:left;gap:14px;margin-bottom:30px;padding:16px}
   .brand{flex:1}
   .brand-name{font-size:21px}
@@ -929,6 +969,12 @@ body.tool-infreq .wrap{padding-bottom:0}
 
   <!-- Contêiner da ferramenta atual — conteúdo interno inalterado -->
   <div id="toolPonto" role="tabpanel" aria-labelledby="toolBtnPonto">
+
+  <header class="tool-head">
+    <h2>Guardião Sepog</h2>
+    <p>Lê o PDF de frequências do ponto, identifica atestados, faltas, atrasos e escala
+    12×36, e gera o PDF anotado e as planilhas para a folha.</p>
+  </header>
 
   <main>
   <div class="up" id="up" onclick="document.getElementById('fi').click()" role="button" aria-label="Selecionar arquivo PDF de frequências">
@@ -1511,16 +1557,20 @@ function faixaHorizontal(rows, nomeNormalizado) {
 }
 
 /* Tokens de uma faixa horizontal dentro da faixa vertical de um dia,
-   remontados em texto. */
-function textoNaFaixa(rows, faixa, banda) {
+   da esquerda para a direita. */
+function tokensNaFaixa(rows, faixa, banda) {
   const toks = [];
   for (const r of rows) {
     for (const c of r.cells) {
       if (c.y <= banda.yTop && c.y > banda.yBot && c.x >= faixa.esq && c.x < faixa.dir) toks.push(c);
     }
   }
-  toks.sort((a, b) => a.x - b.x);
-  return toks.map(c => c.str).join(' ');
+  return toks.sort((a, b) => a.x - b.x);
+}
+
+/* Os mesmos tokens, remontados em texto. */
+function textoNaFaixa(rows, faixa, banda) {
+  return tokensNaFaixa(rows, faixa, banda).map(c => c.str).join(' ');
 }
 
 /* Número do dia numa célula da coluna DIA ("01 - Sex" → 1).
@@ -1689,6 +1739,49 @@ function resolverFaltas(rows, period, is12, impresso) {
     conferencia: impresso.encontrado ? 'conferido' : 'sem-conferencia',
     impresso: totalImpresso
   };
+}
+
+/* ─── ATRASOS POR DIA — só para exibição ────────────────────────────────
+   A coluna SALDO traz o saldo de cada dia ("00:-10" = dez minutos a menos).
+   A soma dos dias bate com o "SALDO DE HORAS" do rodapé, então dá para
+   mostrar em que dias o atraso aconteceu.
+
+   Isto NÃO entra em conta nenhuma: a coluna Saldo Hrs da tela, a planilha de
+   atrasos e o relatório continuam saindo do total do rodapé, como sempre. */
+
+/* "00:-10" → -10. O sinal pode vir na hora ou no minuto. */
+function saldoDoDia(txt) {
+  const t = String(txt == null ? '' : txt).replace(/\s/g, '');
+  const m = t.match(/^(-?)(\d{1,2}):(-?)(\d{1,2})$/);
+  if (!m) return null;
+  const total = parseInt(m[2], 10) * 60 + parseInt(m[4], 10);
+  if (total === 0) return 0;
+  return (m[1] === '-' || m[3] === '-') ? -total : total;
+}
+
+function readAtrasosDiarios(rows, period) {
+  if (!rows || !rows.length || !period) return [];
+  const faixaDia    = faixaHorizontal(rows, 'DIA');
+  const faixaSaldo  = faixaHorizontal(rows, 'SALDO');
+  if (!faixaDia || !faixaSaldo) return [];
+  const bandas = buildFaltaBands(rows, faixaDia, period);
+
+  const dias = [];
+  for (const b of bandas) {
+    /* Aqui o texto NÃO é remontado: procura-se o token com cara de saldo.
+       A coluna vizinha (LOTAÇÃO) tem o conteúdo à esquerda do próprio
+       cabeçalho e invade esta faixa; num campo de formato fixo, casar pelo
+       formato é mais firme do que depender da borda entre as colunas. */
+    let min = null;
+    for (const t of tokensNaFaixa(rows, faixaSaldo, b)) {
+      const v = saldoDoDia(t.str);
+      if (v !== null) { min = v; break; }
+    }
+    if (min !== null && min < 0) {
+      dias.push({ day: b.day, display: b.anchor.display, minutos: Math.abs(min) });
+    }
+  }
+  return dias.sort((a, b) => a.day - b.day);
 }
 
 /* Acesso tolerante: os testes unitários montam funcionários à mão, sem o
@@ -1999,6 +2092,8 @@ function processPage(pg) {
      cabeçalho e alinhada à esquerda no conteúdo. Ver docs/REGRA_FALTAS_DSR.md. */
   const impresso   = lerTotalFaltasImpresso(pg.rows, pg.text);
   const faltas     = resolverFaltas(pg.rows, period, is12, impresso);
+  /* Dias de atraso: exibição apenas, não alimenta contagem nenhuma. */
+  const atrasoDias = readAtrasosDiarios(pg.rows, period);
   const totalFaltas = impresso.encontrado && impresso.valor > 0 ? impresso.valor : null;
   const detectionReport = {
     motorUsado: tableStruct && tableStruct.diaCol ? 'coluna-horizontal' : 'linha-legacy',
@@ -2024,6 +2119,7 @@ function processPage(pg) {
     saldoHoras,
     totalFaltas,
     faltas,
+    atrasoDias,
     detectionReport
   };
 }
@@ -2166,7 +2262,19 @@ function renderTable() {
   }
   tbody.innerHTML = list.map(({ e, i }) => {
     const exp = expanded.has(i);
-    const chips = e.atmDays.map(d => `<span class="dchip">${ico('agenda')} ${d.display}</span>`).join('');
+    /* Datas por tipo de ocorrência. O atestado já vinha; a falta sai da
+       coluna OBSERVAÇÃO e o atraso da coluna SALDO — as duas só para
+       exibição, sem mexer em contagem nenhuma. */
+    const diasFalta  = (e.faltas && e.faltas.dias) ? e.faltas.dias : [];
+    const diasAtraso = e.atrasoDias || [];
+    const grupo = (rotulo, itens, extra, icone) => itens.length
+      ? `<div class="dgrupo"><span class="dlabel">${rotulo}</span><div class="dchips">${itens.join('')}</div></div>`
+      : '';
+    const chips =
+      grupo('Atestados', e.atmDays.map(d => `<span class="dchip">${ico('agenda')} ${d.display}</span>`)) +
+      grupo('Faltas',    diasFalta.map(d => `<span class="dchip dchip-falta">${ico('agenda')} ${d.display}</span>`)) +
+      grupo('Atrasos',   diasAtraso.map(d => `<span class="dchip dchip-atraso">${ico('relogio')} ${d.display} · ${d.minutos} min</span>`));
+    const temDetalhe = e.atm > 0 || diasFalta.length > 0 || diasAtraso.length > 0;
     const saldoFmt = formatSaldoHoras(e.saldoHoras);
     const saldoCell = saldoFmt
       ? `<span class="bsaldo">${ico('relogio')} ${saldoFmt}</span>`
@@ -2182,8 +2290,8 @@ function renderTable() {
       <td>${faltasCell}</td>
       <td>${saldoCell}</td>
       <td style="color:#a8adc7;font-size:12px;font-weight:500">${e.pages.join(', ')}</td>
-      <td style="text-align:center;font-size:11px;color:#7a8fa8">${e.atm > 0 ? (exp ? '▲' : '▼') : ''}</td>
-    </tr>${exp && e.atm > 0 ? `<tr class="dr"><td colspan="8"><div class="dlist">${chips}</div></td></tr>` : ''}`;
+      <td style="text-align:center;font-size:11px;color:#7a8fa8">${temDetalhe ? (exp ? '▲' : '▼') : ''}</td>
+    </tr>${exp && temDetalhe ? `<tr class="dr"><td colspan="8"><div class="dlist">${chips}</div></td></tr>` : ''}`;
   }).join('');
   updateButtonStates();
 }

@@ -41,6 +41,9 @@ async function processar(page, pdf = PDF) {
       faltaConf: e.faltas.conferencia,
       faltaLidos: e.faltas.dias.map(d => d.day),
       faltaPulados: e.faltas.pulados,
+      faltaDatas: e.faltas.dias.map(d => d.display),
+      atrasoDatas: (e.atrasoDias || []).map(d => d.display),
+      atrasoMin: (e.atrasoDias || []).reduce((t, d) => t + d.minutos, 0),
     })),
     tabela: [...document.querySelectorAll('#tbd tr')]
       .map(tr => [...tr.querySelectorAll('td')].map(td => td.textContent.trim()).join('|')).join('\n'),
@@ -106,6 +109,47 @@ test.describe('Layout de produção', () => {
     const r = await processar(page, PDF_LAYOUT);
     const emp = r.emps.find(e => e.nome === LAYOUT_PRODUCAO.nome);
     expect(emp.faltaLidos.length).toBe(6);
+  });
+
+  /* A coluna SALDO traz o saldo de cada dia. A soma dos dias negativos tem
+     de fechar com o SALDO DE HORAS do rodapé — é o que garante que a leitura
+     por dia é a mesma coisa que o total já conhecido. */
+  test('os dias de atraso saem da coluna SALDO e somam o total do rodapé', async ({ page }) => {
+    const r = await processar(page, PDF_LAYOUT);
+    const emp = r.emps.find(e => e.nome === LAYOUT_PRODUCAO.nome);
+    expect(emp.atrasoDatas).toEqual(LAYOUT_PRODUCAO.esperado.atrasoDatas);
+    expect(emp.atrasoMin).toBe(LAYOUT_PRODUCAO.esperado.atrasoMinutos);
+  });
+
+  /* A LOTAÇÃO tem o conteúdo à esquerda do próprio cabeçalho e invade a faixa
+     do SALDO; o saldo é achado pelo formato, não pela borda da coluna. */
+  test('a LOTAÇÃO não é confundida com o saldo do dia', async ({ page }) => {
+    const r = await processar(page, PDF_LAYOUT);
+    const emp = r.emps.find(e => e.nome === LAYOUT_PRODUCAO.nome);
+    expect(emp.atrasoDatas.length).toBe(3);
+  });
+});
+
+/* As datas das três ocorrências aparecem ao expandir a linha. */
+test.describe('Datas na linha expandida', () => {
+  test('atestados, faltas e atrasos aparecem cada um no seu grupo', async ({ page }) => {
+    await processar(page, PDF_LAYOUT);
+    await page.locator('#tbd tr.mr').first().click();
+    const detalhe = page.locator('#tbd tr.dr');
+    await expect(detalhe).toBeVisible();
+    const texto = await detalhe.textContent();
+    expect(texto).toContain('Faltas');
+    expect(texto).toContain('Atrasos');
+    for (const d of LAYOUT_PRODUCAO.esperado.faltaDatas)  expect(texto).toContain(d);
+    for (const d of LAYOUT_PRODUCAO.esperado.atrasoDatas) expect(texto).toContain(d);
+    expect(texto, 'o atraso mostra os minutos do dia').toContain('45 min');
+  });
+
+  test('funcionário sem ocorrência nenhuma não abre detalhe', async ({ page }) => {
+    await processar(page);                       // fixture principal
+    const linha = page.locator('#tbd tr.mr', { hasText: 'EDUARDO SANTOS RIBEIRO' });
+    await linha.click();
+    expect(await page.locator('#tbd tr.dr').count()).toBe(0);
   });
 });
 

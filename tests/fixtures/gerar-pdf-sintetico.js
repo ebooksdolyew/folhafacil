@@ -319,10 +319,16 @@ const LAYOUT_PRODUCAO = {
   escala: '12x36',
   faltas: [7, 8, 13, 14, 23, 24],
   obs: { 3: 'BATIDAS FORA DA MARGEM', 19: 'PONTO ABONADO COM ACORDO DA DIRECAO' },
+  /* Saldo por dia na coluna SALDO. A soma (-135) é exatamente o
+     "-2 HORA(S) E 15 MINUTO(S)" do rodapé, como no documento real. */
+  saldoDia: { 5: '00:-45', 11: '00:-45', 19: '00:-45' },
   esperado: {
     faltaQtd: 3, faltaDsr: 3, faltaConf: 'conferido',
     faltaImpresso: 6,          // o que o relatório e a tela continuam mostrando
     atrasoMinutos: 135,        // -2h15 convertido e positivo, na planilha
+    faltaDatas:  ['07/05/2026 (Qui)', '08/05/2026 (Sex)', '13/05/2026 (Qua)',
+                  '14/05/2026 (Qui)', '23/05/2026 (Sáb)', '24/05/2026 (Dom)'],
+    atrasoDatas: ['05/05/2026 (Ter)', '11/05/2026 (Seg)', '19/05/2026 (Ter)'],
   },
   /* h = cabeçalho, c = conteúdo. Não alinhe: o desencontro é o teste. */
   cols: {
@@ -368,7 +374,7 @@ async function gerarLayoutProducao(destino) {
       put('06:53', p.cols.ENT1.c, y);
       put('19:01', p.cols.SAI1.c, y);
     }
-    put('00:00', p.cols.SALDO.c, y);
+    put(p.saldoDia[dia] || '00:00', p.cols.SALDO.c, y);
     put('HDEBO -', p.cols['LOTAÇÃO'].c, y);
     /* O valor largo da JORNADA, começando à esquerda do cabeçalho. */
     put('07:00-12:00/13:00-17:00-N', p.cols.JORNADA.c, y);

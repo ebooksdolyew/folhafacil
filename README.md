@@ -62,6 +62,9 @@ Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas 
   o oposto do que o atestado faz. A QUANTIDADE exportada é a que sai das regras de
   escala, não o `TOTAL DE FALTAS` impresso no PDF, que serve de conferência. Ver
   `docs/REGRA_FALTAS_DSR.md`.
+- **A contagem tratada existe só na planilha.** A tabela na tela e o relatório TXT
+  mostram o número cru do PDF, de propósito: são a conferência contra o documento em
+  mãos. Expandir a linha mostra as datas de atestado, de falta e de atraso.
 
 ### Infrequência SME (`infrequencia.html`)
 

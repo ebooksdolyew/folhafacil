@@ -340,6 +340,26 @@ com o do atestado.
 
 ---
 
+## Extra: datas de atraso (só exibição)
+
+A coluna `SALDO` traz o saldo de **cada dia** (`00:-10` = dez minutos a menos). A soma
+dos dias negativos fecha exatamente com o `SALDO DE HORAS` do rodapé — a mesma relação
+que as faltas têm com o `TOTAL DE FALTAS`.
+
+`readAtrasosDiarios()` usa as mesmas faixas da leitura de falta para devolver em que dias
+o atraso aconteceu e de quantos minutos foi cada um. Isso alimenta **apenas** as
+pastilhas da linha expandida na tela, ao lado das datas de atestado e de falta.
+
+**Não entra em conta nenhuma.** A coluna Saldo Hrs, a planilha de atrasos e o relatório
+continuam saindo do total do rodapé, exatamente como antes.
+
+Um detalhe da leitura: ali o texto **não** é remontado. A coluna LOTAÇÃO tem o conteúdo
+à esquerda do próprio cabeçalho e invade a faixa do SALDO, então o saldo é achado pelo
+**formato** (`hh:mm`, com o sinal na hora ou no minuto) em vez de pela borda entre as
+colunas. Num campo de formato fixo isso é mais firme do que depender da geometria.
+
+---
+
 ## Pendências
 
 1. **Funcionário dividido em páginas.** Quando ocorre, os dias das páginas precisam ser
