@@ -1,4 +1,4 @@
-# Limitações conhecidas — GHUB
+# Limitações conhecidas — Folha Fácil
 
 Documento de honestidade técnica. Registra divergências reais entre o código
 e a documentação de regras, para que nenhuma delas seja descoberta primeiro
@@ -166,7 +166,7 @@ confira **manualmente** quantos ATMs o funcionário tem de verdade:
 | página | funcionário | escala | ATM real | ATM GHUB | correto? |
 |--------|-------------|--------|----------|----------|----------|
 
-- GHUB correto em todos os casos → o motor legado está compensando um layout
+- programa correto em todos os casos → o motor legado está compensando um layout
   que o tabular não pega. Não mexa nele; mantenha este documento.
 - Falso positivo → seção 2 (regex frouxo). Revalide tudo depois.
 - Falso negativo em 12×36 com Folga → vire `REGRA2_ACEITA_FOLGA` para `true`.

@@ -1,4 +1,4 @@
-# robots.txt — Ghub · Análise de ponto eletrônico e Infrequência
+# robots.txt — Folha Fácil · Ponto eletrônico e Infrequência
 # Aplicação corporativa de acesso restrito: nenhuma página deve ser indexada,
 # nem a inicial nem a /infrequencia.html.
 

@@ -1,0 +1,125 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Folha Fácil — camada de interface neumórfica
+   Usada pelas duas ferramentas (index.html e infrequencia.html).
+
+   Só mexe na aparência e no retorno visual dos controles: seletor, botão,
+   campo, caixa de marcação. Nenhuma regra de cálculo passa por aqui.
+
+   Os tons vêm das variáveis que cada página já define; o segundo valor de
+   cada var() é o nome usado na outra página, para o arquivo servir nas duas.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --neu-bg:    var(--bg, #e6eaf2);
+  --neu-ink:   var(--ink, var(--text-primary, #2d3440));
+  --neu-soft:  var(--ink-soft, var(--text-secondary, #5c6677));
+  --neu-faint: var(--ink-faint, var(--text-muted, #8a93a6));
+  --neu-out:   var(--out-sm, var(--nm-out-sm, 4px 4px 8px rgba(163,177,198,.65), -4px -4px 8px rgba(255,255,255,.95)));
+  --neu-in:    var(--in-sm,  var(--nm-in-sm,  inset 3px 3px 6px rgba(163,177,198,.65), inset -3px -3px 6px rgba(255,255,255,.95)));
+  --neu-accent:var(--accent, #4f7df9);
+  --neu-r:     var(--r-sm, 12px);
+  --neu-mola:  cubic-bezier(.34,1.3,.5,1);
+}
+
+/* ── Seletor: a caixa fechada ──────────────────────────────────────────── */
+select{
+  cursor:pointer;
+  transition:box-shadow .18s ease, transform .18s var(--neu-mola), color .18s ease;
+}
+select:hover:not(:disabled){ box-shadow:var(--neu-out); transform:translateY(-1px) }
+select.neu-aberto{
+  box-shadow:var(--neu-in), 0 0 0 3px color-mix(in srgb, var(--neu-accent) 30%, transparent);
+  transform:translateY(0);
+}
+
+/* ── Seletor: a lista, no lugar da nativa ──────────────────────────────── */
+.neu-pop{
+  position:fixed; z-index:9999; margin:0; padding:6px;
+  box-sizing:border-box; max-height:min(52vh, 380px); overflow-y:auto; overscroll-behavior:contain;
+  background:var(--neu-bg); border-radius:calc(var(--neu-r) + 4px);
+  box-shadow:var(--neu-out), 0 18px 40px rgba(0,0,0,.18);
+  font-family:inherit; color:var(--neu-ink);
+  opacity:0; transform:translateY(-6px) scale(.98); transform-origin:top center;
+  transition:opacity .16s ease, transform .18s var(--neu-mola);
+}
+.neu-pop.neu-visivel{ opacity:1; transform:translateY(0) scale(1) }
+.neu-pop.neu-acima{ transform-origin:bottom center }
+
+.neu-opt{
+  display:flex; align-items:center; gap:10px; width:100%;
+  padding:10px 12px; margin:0; border:0; border-radius:var(--neu-r);
+  background:transparent; color:var(--neu-ink);
+  font:inherit; font-size:13.5px; font-weight:600; text-align:left; line-height:1.35;
+  cursor:pointer; box-shadow:none;
+  transition:background .14s ease, box-shadow .16s ease, transform .16s var(--neu-mola), color .14s ease;
+}
+.neu-opt + .neu-opt{ margin-top:2px }
+.neu-opt:hover, .neu-opt.neu-ativo{
+  background:color-mix(in srgb, var(--neu-ink) 6%, transparent);
+  transform:translateX(2px);
+}
+.neu-opt:active{ box-shadow:var(--neu-in); transform:translateX(2px) scale(.99) }
+.neu-opt[aria-selected="true"]{ color:var(--neu-accent) }
+.neu-opt[disabled]{ opacity:.45; cursor:default; transform:none; background:none }
+
+/* marcador: vazio quando não escolhido, cheio quando é o valor atual */
+.neu-opt::before{
+  content:''; flex:none; width:8px; height:8px; border-radius:50%;
+  background:transparent; box-shadow:var(--neu-in);
+  transition:background .16s ease, box-shadow .16s ease, transform .2s var(--neu-mola);
+}
+.neu-opt[aria-selected="true"]::before{
+  background:var(--neu-accent); box-shadow:none; transform:scale(1.15);
+}
+
+/* ── Campos de texto e número ──────────────────────────────────────────── */
+input[type=text], input[type=number], input[type=search]{
+  transition:box-shadow .18s ease, transform .18s var(--neu-mola);
+}
+input[type=text]:hover:not(:focus), input[type=number]:hover:not(:focus),
+input[type=search]:hover:not(:focus){ transform:translateY(-1px) }
+/* some com as setinhas nativas do campo numérico */
+input[type=number]{ -moz-appearance:textfield }
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
+
+/* ── Botões: afunda ao apertar ─────────────────────────────────────────── */
+button:not(:disabled){ transition:box-shadow .18s ease, transform .18s var(--neu-mola), color .18s ease }
+button:not(:disabled):active{ transform:translateY(1px) scale(.985) }
+
+/* ── Caixa de marcação (filtros da ferramenta de ponto) ────────────────── */
+.ck input[type=checkbox]{
+  appearance:none; -webkit-appearance:none;
+  width:19px; height:19px; flex:none; margin:0; border:0; border-radius:7px;
+  background:var(--neu-bg); box-shadow:var(--neu-in); cursor:pointer;
+  display:inline-grid; place-content:center; position:relative;
+  transition:box-shadow .18s ease, transform .18s var(--neu-mola), background .18s ease;
+}
+.ck input[type=checkbox]:hover{ transform:translateY(-1px) }
+.ck input[type=checkbox]:active{ transform:translateY(0) scale(.94) }
+.ck input[type=checkbox]::after{
+  content:''; width:5px; height:9px; margin-top:-2px;
+  border:solid var(--neu-bg); border-width:0 2.5px 2.5px 0; border-radius:1px;
+  transform:rotate(45deg) scale(0); opacity:0;
+  transition:transform .2s var(--neu-mola), opacity .14s ease;
+}
+.ck input[type=checkbox]:checked{ background:var(--neu-accent); box-shadow:var(--neu-out) }
+.ck input[type=checkbox]:checked::after{ transform:rotate(45deg) scale(1); opacity:1 }
+.ck input[type=checkbox]:focus-visible{ outline:2px solid var(--neu-accent); outline-offset:3px }
+
+/* ── Quem prefere menos movimento não recebe movimento ─────────────────── */
+@media (prefers-reduced-motion: reduce){
+  select, button, input, .neu-opt, .neu-pop, .ck input[type=checkbox]{
+    transition-duration:.01ms !important;
+  }
+  select:hover:not(:disabled), .neu-opt:hover, .neu-opt.neu-ativo,
+  input:hover, .ck input[type=checkbox]:hover{ transform:none !important }
+}
+
+/* ── Celular: as abas da Conferência não cabiam numa linha e empurravam a
+      página inteira para o lado (a tela chegava a diminuir de zoom). Agora
+      quebram em duas linhas e ocupam metade da largura cada. ───────────── */
+@media (max-width:640px){
+  .tabs{ flex-wrap:wrap }
+  .tabs button{ flex:1 1 calc(50% - 4px); min-width:0; white-space:normal; text-align:center }
+}

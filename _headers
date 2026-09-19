@@ -16,6 +16,12 @@
   Cache-Control: public, max-age=0, must-revalidate
 /404.html
   Cache-Control: public, max-age=0, must-revalidate
+/infrequencia.html
+  Cache-Control: public, max-age=0, must-revalidate
+/ui-neu.css
+  Cache-Control: public, max-age=0, must-revalidate
+/ui-neu.js
+  Cache-Control: public, max-age=0, must-revalidate
 
 # Imagens e ícones: cache longo
 /assets/*

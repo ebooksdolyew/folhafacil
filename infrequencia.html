@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Infrequência — Ghub</title>
+<title>Infrequência — Folha Fácil</title>
 
 <!-- ═══════════ SEO — identidade da página ═══════════ -->
 <meta name="description" content="Lê a planilha mensal de ponto, reconta faltas, atestados e TRE por funcionário, aplica as regras de escala e de DSR e gera a planilha enxuta para a folha. Processamento 100% no navegador.">
-<meta name="author" content="Ghub">
-<meta name="application-name" content="Ghub">
+<meta name="author" content="Folha Fácil">
+<meta name="application-name" content="Folha Fácil">
 
 <!-- Indexação: mesma regra do index.html — aplicação de acesso restrito -->
 <meta name="robots" content="noindex, nofollow">
@@ -25,10 +25,10 @@
 
 <!-- Compartilhamento do link direto (WhatsApp, Teams, e-mail) -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Ghub">
+<meta property="og:site_name" content="Folha Fácil">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://ghub-66j.pages.dev/infrequencia.html">
-<meta property="og:title" content="Infrequência — Ghub">
+<meta property="og:title" content="Infrequência — Folha Fácil">
 <meta property="og:description" content="Conferência da planilha mensal de ponto e geração da planilha da folha, com as regras de escala e de DSR.">
 <meta property="og:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -244,7 +244,9 @@ button:disabled{opacity:.4;cursor:not-allowed;transform:none}
 
 /* ---------- barra de ações fixa ---------- */
 .actionbar{
-  position:sticky; top:14px; z-index:20;
+  /* rola junto com a página: antes era position:sticky e a barra
+     acompanhava o scroll até o fim da tabela */
+  position:relative; z-index:20;
   background:var(--bg); border-radius:var(--r);
   box-shadow:var(--out); padding:14px 20px; margin:6px 0 10px;
 }
@@ -315,7 +317,7 @@ section:not(.hide),.actionbar:not(.hide){animation:rise .35s ease both}
   section{padding:18px 16px;border-radius:14px;margin:18px 0}
   header.masthead{padding:26px 0 14px}
   h1{font-size:22px}
-  .actionbar{top:8px;padding:12px 14px}
+  .actionbar{padding:12px 14px}
   .actionbar-in,.actionbar-mais{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
   .actionbar-in>button{justify-content:center;white-space:normal;min-width:0}
   .actionbar-in>button.primary{grid-column:1/-1}
@@ -332,6 +334,11 @@ section:not(.hide),.actionbar:not(.hide){animation:rise .35s ease both}
   *{animation:none!important;transition:none!important}
 }
 </style>
+
+<!-- Camada de interface neumórfica compartilhada com o index.html.
+     Sem ela, os seletores voltam a abrir a lista nativa do navegador. -->
+<link rel="stylesheet" href="./ui-neu.css">
+<script src="./ui-neu.js" defer></script>
 </head>
 <body>
 <div class="wrap">

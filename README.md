@@ -1,4 +1,4 @@
-# Ghub
+# Folha Fácil
 
 Site estático com **duas ferramentas de departamento pessoal**, escolhidas por um
 seletor no topo da página. Nenhuma das duas envia arquivo para servidor: tudo é
@@ -32,6 +32,7 @@ produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_head
 |---|---|
 | `index.html` | A ferramenta de ponto inteira (HTML + CSS + JS) e o seletor que carrega a Infrequência. |
 | `infrequencia.html` | A Infrequência inteira, com a biblioteca xlsx-js-style (Apache-2.0) embutida. |
+| `ui-neu.css`, `ui-neu.js` | Camada de interface usada pelas duas: lista neumórfica no lugar da lista nativa do `<select>`, caixas de marcação e retorno visual dos controles. Se não carregar, os seletores voltam a abrir a lista do navegador e nada quebra. |
 | `404.html`, `_headers`, `robots.txt`, `site.webmanifest`, `favicon.svg` | Página de erro, cabeçalhos HTTP (CSP inclusive), SEO e PWA. |
 | `assets/` | Ícones, imagem de compartilhamento e as fontes auto-hospedadas (Inter, Outfit, Space Grotesk). |
 | `vendor/` | pdf.js e pdf-lib auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |

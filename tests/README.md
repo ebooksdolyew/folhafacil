@@ -1,4 +1,4 @@
-# Testes do GHUB
+# Testes do Folha Fácil
 
 Duas camadas, ambas em Playwright sobre o `index.html` real — sem mock do
 motor e sem refatorar o app, que continua single-file.

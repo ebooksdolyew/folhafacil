@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <!-- ═══════════ SEO — Identidade da página ═══════════ -->
-<title>Ghub — Análise de Ponto Eletrônico e Infrequência</title>
+<title>Folha Fácil — Ponto Eletrônico e Infrequência</title>
 <meta name="description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador. Acesso mediante licenciamento.">
 <meta name="keywords" content="análise de ponto, ponto eletrônico, folha de ponto, espelho de ponto, infrequência, atestado médico, faltas, atrasos, DSR, escala 12x36, planilha da folha, leitor de PDF, departamento pessoal, RH">
-<meta name="author" content="Ghub">
-<meta name="application-name" content="Ghub">
-<meta name="generator" content="Ghub v2.2">
+<meta name="author" content="Folha Fácil">
+<meta name="application-name" content="Folha Fácil">
+<meta name="generator" content="Folha Fácil v2.2">
 <link rel="canonical" href="https://ghub-66j.pages.dev/">
 
 <!-- Indexação -->
@@ -33,30 +33,30 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png">
 <link rel="manifest" href="./site.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Ghub">
+<meta name="apple-mobile-web-app-title" content="Folha Fácil">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
 
 <!-- ═══════════ Open Graph (Facebook, LinkedIn, WhatsApp) ═══════════ -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Ghub">
+<meta property="og:site_name" content="Folha Fácil">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://ghub-66j.pages.dev/">
-<meta property="og:title" content="Ghub — Análise de Ponto Eletrônico e Infrequência">
+<meta property="og:title" content="Folha Fácil — Ponto Eletrônico e Infrequência">
 <meta property="og:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
 <meta property="og:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Ghub — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
+<meta property="og:image:alt" content="Folha Fácil — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
 
 <!-- ═══════════ Twitter / X ═══════════ -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Ghub — Análise de Ponto Eletrônico e Infrequência">
+<meta name="twitter:title" content="Folha Fácil — Ponto Eletrônico e Infrequência">
 <meta name="twitter:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
 <meta name="twitter:image" content="https://ghub-66j.pages.dev/assets/og-image.png">
-<meta name="twitter:image:alt" content="Ghub — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
+<meta name="twitter:image:alt" content="Folha Fácil — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
 
 <!-- Bibliotecas e fontes auto-hospedadas: nenhuma requisição a terceiros. -->
 <script src="./vendor/pdf.min.js"></script>
@@ -642,16 +642,14 @@ td strong{
 /* ════════════════════════════════════════════════════════════════ */
 .footer{
   text-align:center;margin-top:56px;
-  padding:26px;
-  border-radius:var(--r-lg);
-  background:var(--bg);
-  box-shadow:var(--nm-in-sm);
+  padding:0;
   color:var(--text-muted);font-size:12px;font-weight:500;line-height:1.9;
-  transition:background .35s var(--ease),box-shadow .35s var(--ease)
+  display:flex;flex-direction:column;align-items:center;
+  transition:color .35s var(--ease)
 }
 
 .footer strong{color:var(--text-primary);font-weight:800}
-.footer .privacy{margin-top:18px}
+.footer .privacy{margin-top:0;width:100%;max-width:760px}
 .footer .privacy summary{
   cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;
   color:var(--accent);font-weight:700;font-size:12px;
@@ -739,7 +737,7 @@ td strong{
       "@type": "WebSite",
       "@id": "https://ghub-66j.pages.dev/#website",
       "url": "https://ghub-66j.pages.dev/",
-      "name": "Ghub",
+      "name": "Folha Fácil",
       "description": "Ferramentas de departamento pessoal que rodam no navegador: análise do PDF do ponto eletrônico e conferência da planilha mensal de infrequência.",
       "inLanguage": "pt-BR",
       "publisher": { "@id": "https://ghub-66j.pages.dev/#organization" }
@@ -747,7 +745,7 @@ td strong{
     {
       "@type": "Organization",
       "@id": "https://ghub-66j.pages.dev/#organization",
-      "name": "Ghub",
+      "name": "Folha Fácil",
       "url": "https://ghub-66j.pages.dev/",
       "logo": {
         "@type": "ImageObject",
@@ -759,7 +757,7 @@ td strong{
     {
       "@type": "WebApplication",
       "@id": "https://ghub-66j.pages.dev/#app",
-      "name": "Ghub — Análise de Ponto Eletrônico e Infrequência",
+      "name": "Folha Fácil — Ponto Eletrônico e Infrequência",
       "url": "https://ghub-66j.pages.dev/",
       "description": "Reúne duas ferramentas. A primeira lê o PDF do ponto eletrônico e identifica atestados, faltas, atrasos, saldo de horas e escalas 12×36, exportando em PDF e planilha XLSX. A segunda, Infrequência, lê a planilha mensal de ponto, reconta faltas, atestados e TRE por funcionário, aplica as regras de escala e de DSR e gera a planilha enxuta para a folha. O processamento acontece integralmente no navegador do usuário; os arquivos e os dados extraídos não são transmitidos a nenhum servidor.",
       "applicationCategory": "BusinessApplication",
@@ -839,13 +837,17 @@ body.tool-infreq .wrap{padding-bottom:0}
   .tool-frame{height:calc(100vh - 175px)}
 }
 </style>
+
+<!-- Camada de interface neumórfica compartilhada pelas duas ferramentas -->
+<link rel="stylesheet" href="./ui-neu.css">
+<script src="./ui-neu.js" defer></script>
 </head>
 <body>
 <div class="wrap">
   <header class="header-top">
     <div class="brand">
       <span class="brand-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" style="display:block;transition:all .35s cubic-bezier(.4,0,.2,1)" aria-label="Ghub">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" style="display:block;transition:all .35s cubic-bezier(.4,0,.2,1)" aria-label="Folha Fácil">
           <defs>
             <linearGradient id="logo-g" x1="10%" y1="0%" x2="90%" y2="100%">
               <stop offset="0%" stop-color="var(--logo-g-1)"/>
@@ -860,9 +862,8 @@ body.tool-infreq .wrap{padding-bottom:0}
       </span>
       <div class="brand-info">
         <h1 class="brand-name">
-          Ghub<span class="sr-only"> — análise inteligente de ponto eletrônico em PDF</span>
+          Folha Fácil<span class="sr-only"> — ponto eletrônico e infrequência</span>
         </h1>
-        <p class="sub">Análise inteligente de ponto</p>
       </div>
     </div>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar entre tema claro e noturno" title="Alternar tema">🌙</button>
@@ -957,8 +958,6 @@ body.tool-infreq .wrap{padding-bottom:0}
   </main>
 
   <footer class="footer">
-    <strong>Ghub v2.2</strong> — Análise inteligente de ponto<br>
-    Processamento 100% no navegador · O arquivo PDF e os dados extraídos não são enviados a nenhum servidor
     <details class="privacy">
       <summary>Política de Privacidade</summary>
       <div class="privacy-body">
@@ -2094,8 +2093,8 @@ function _buildXlsx(rows, sheetName, colWidths) {
   const coreXml =
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
-    '<dc:creator>Ghub</dc:creator>' +
-    '<cp:lastModifiedBy>Ghub</cp:lastModifiedBy>' +
+    '<dc:creator>Folha Fácil</dc:creator>' +
+    '<cp:lastModifiedBy>Folha Fácil</cp:lastModifiedBy>' +
     `<dcterms:created xsi:type="dcterms:W3CDTF">${nowIso}</dcterms:created>` +
     `<dcterms:modified xsi:type="dcterms:W3CDTF">${nowIso}</dcterms:modified>` +
     '</cp:coreProperties>';
@@ -2268,7 +2267,7 @@ function dlReport() {
   const list = getFilteredEmps();
   const lines = [];
 
-  lines.push(`📈 RELATÓRIO — ${ctx.title.toUpperCase()} — Ghub v2.2`);
+  lines.push(`📈 RELATÓRIO — ${ctx.title.toUpperCase()} — Folha Fácil v2.2`);
   lines.push('');
   lines.push(`Data: ${new Date().toLocaleString('pt-BR')}`);
   lines.push(`Arquivo: ${curFile?.name || 'N/A'}`);

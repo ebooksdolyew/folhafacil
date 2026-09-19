@@ -1,4 +1,4 @@
-# Amostra de validação — GHUB
+# Amostra de validação — Folha Fácil
 
 > ⚠️ **LGPD:** os PDFs em `validacao/pdfs/` e os exports em `validacao/baseline/`
 > e `validacao/atual/` contêm nome de funcionário e dado de saúde (ATM).
