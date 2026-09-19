@@ -35,6 +35,11 @@ async function processar(page, pdf = PDF) {
     emps: (typeof allEmps !== 'undefined' ? allEmps : []).map(e => ({
       nome: e.name, cpf: e.cpf, atm: e.atm, is12: e.is12,
       dias: e.atmDays.map(d => d.display), motor: e.detectionReport?.motorUsado,
+      faltaQtd: e.faltas.quantidade,
+      faltaDsr: e.faltas.dsr,
+      faltaConf: e.faltas.conferencia,
+      faltaLidos: e.faltas.dias.map(d => d.day),
+      faltaPulados: e.faltas.pulados,
     })),
     tabela: [...document.querySelectorAll('#tbd tr')]
       .map(tr => [...tr.querySelectorAll('td')].map(td => td.textContent.trim()).join('|')).join('\n'),
@@ -54,6 +59,11 @@ test.describe('Regras de negócio ponta a ponta', () => {
       expect(emp.dias).toEqual(p.esperado.dias);
       /* CPF completo, só dígitos, com o zero à esquerda preservado. */
       expect(emp.cpf).toBe(p.esperado.cpf);
+      /* Faltas: QUANTIDADE depois das regras de escala, DSR e conferência.
+         Ver docs/REGRA_FALTAS_DSR.md. */
+      expect(emp.faltaQtd,  'QUANTIDADE de faltas').toBe(p.esperado.faltaQtd);
+      expect(emp.faltaDsr,  'DSR').toBe(p.esperado.faltaDsr);
+      expect(emp.faltaConf, 'conferência').toBe(p.esperado.faltaConf);
     });
   }
 
@@ -61,6 +71,7 @@ test.describe('Regras de negócio ponta a ponta', () => {
     const r = await processar(page);
     expect(r.stats.comAtm).toBe(String(PAGINAS.filter(p => p.esperado.atm > 0).length));
     expect(r.stats.em12x36).toBe(String(PAGINAS.filter(p => p.esperado.is12).length));
+    expect(r.stats.comFaltas).toBe(String(PAGINAS.filter(p => p.esperado.faltaQtd > 0).length));
   });
 
   test('snapshot da tabela renderizada, célula a célula', async ({ page }) => {
@@ -82,10 +93,15 @@ test.describe('Fluxo completo', () => {
     expect(await page.locator('#tbd tr').count()).toBe(PAGINAS.filter(p => p.esperado.atm > 0).length);
     await page.uncheck('#fa');
 
-    /* Regressão do bug `only`: lista vazia com busca vazia derrubava o render. */
-    await page.check('#ff');   // ninguém na amostra tem faltas
-    await expect(page.locator('#tbd tr').first()).toContainText('filtros selecionados');
+    await page.check('#ff');
+    expect(await page.locator('#tbd tr').count()).toBe(PAGINAS.filter(p => p.esperado.faltaQtd > 0).length);
     await page.uncheck('#ff');
+
+    /* Regressão do bug `only`: lista vazia com busca vazia derrubava o render.
+       Ninguém na amostra tem saldo de horas negativo. */
+    await page.check('#fd');
+    await expect(page.locator('#tbd tr').first()).toContainText('filtros selecionados');
+    await page.uncheck('#fd');
 
     await page.click('th.sortable[data-col="name"]');
     await page.locator('#tbd tr.mr').first().click();

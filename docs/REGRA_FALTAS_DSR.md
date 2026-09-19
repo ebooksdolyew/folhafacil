@@ -1,11 +1,8 @@
 # REGRA DE FALTAS E DSR — Guardião Sepog
 
-**Estado: especificação aprovada, implementação pendente.**
-
-Este arquivo descreve como o Guardião Sepog passa a ler faltas dia a dia, a partir da
-coluna OBSERVAÇÃO do PDF de frequências, e a calcular a QUANTIDADE e a DSR. Nada disso
-está no código ainda — o documento vem antes para que a regra seja conferida antes de
-virar número em folha de pagamento.
+O Guardião Sepog lê as faltas dia a dia, a partir da coluna OBSERVAÇÃO do PDF de
+frequências, e calcula a QUANTIDADE e a DSR. Este arquivo é a referência em linguagem
+simples; **toda alteração na regra entra aqui e no código no mesmo commit.**
 
 ## Escopo
 
@@ -24,6 +21,10 @@ de coisas opostas.** O atestado descarta sábado e domingo já na extração (ve
 semana inclusive, e ignorar a JORNADA por completo. Os dois caminhos não compartilham
 função nenhuma.
 
+A Infrequência SME tem regras próprias, documentadas em `regras/`. Elas se parecem com
+estas, mas são outro programa: os números podem divergir de propósito, e nenhuma
+mudança aqui atravessa para lá.
+
 ---
 
 ## Por que a coluna OBSERVAÇÃO
@@ -31,15 +32,10 @@ função nenhuma.
 Toda falta aparece na coluna OBSERVAÇÃO, escrita como `FALTA`. Nas colunas de marcação
 (ENT/SAI) a falta em geral **não** deixa rastro: o dia fica com as células vazias.
 
-Dois documentos reais de maio/2026 confirmaram que a coluna é fiel ao que o próprio
-sistema de ponto contabiliza:
-
-| Caso | Linhas com `FALTA` na OBSERVAÇÃO | `TOTAL DE FALTAS` impresso no rodapé |
-|---|---|---|
-| A — Convencional | 6 (dias 06, 15, 20, 22, 27, 29) | 6 |
-| B — 12×36 | 2 (dias 03, 04) | 2 |
-
-É essa coincidência que sustenta a validação descrita mais abaixo.
+Documentos reais confirmaram que a coluna é fiel ao que o próprio sistema de ponto
+contabiliza — em todos os casos conferidos, o número de linhas com `FALTA` na coluna é
+igual ao `TOTAL DE FALTAS` impresso no rodapé. É essa coincidência que sustenta a
+conferência da Etapa 4.
 
 ### Estrutura da tabela
 
@@ -62,13 +58,12 @@ um dia — ver Etapa 1, passo 2.
 
 ### Passo 1: localizar a coluna
 
-`identifyTableColumns()` já monta `allColumns` com todos os cabeçalhos da linha de
-título. Procura-se ali a chave que, normalizada (maiúscula, sem acento), seja
-`OBSERVACAO` — no **singular**.
+`identifyTableColumns()` monta `allColumns` com todos os cabeçalhos da linha de título.
+`findObsCol()` procura ali a chave que, normalizada (maiúscula, sem acento), seja
+`OBSERVACAO` — no **singular**, para não pegar o bloco `OBSERVAÇÕES:` do rodapé.
 
 Se a coluna não for encontrada, ou se a tabela não for identificada, a página **não**
-devolve zero faltas: devolve *não foi possível ler*. São estados diferentes e não podem
-ser confundidos (ver Etapa 4).
+devolve zero faltas: devolve *não foi possível ler* (ver Etapa 4).
 
 ### Passo 2: delimitar a faixa de cada dia
 
@@ -79,8 +74,8 @@ meia linha para fora.
 
 Um token pertence a um dia quando sua posição vertical cai dentro da faixa daquele dia.
 
-Isso substitui a tolerância fixa que a detecção de ATM usa, e resolve dois problemas de
-uma vez:
+Isso substitui a tolerância fixa (`ROW_TOL`) que a detecção de ATM usa, estreita demais
+para uma coluna de texto livre, e resolve dois problemas de uma vez:
 
 - absorve variação de altura de linha sem depender de constante ajustada à mão;
 - **tudo que está abaixo do último dia fica fora de qualquer faixa** — é o que descarta
@@ -98,42 +93,35 @@ isolado levaria à conclusão errada.
 
 ### Passo 4: classificar
 
-O texto remontado é normalizado — maiúscula, sem acento, espaços colapsados, pontuação
-final (`*`, `.`, `:`) removida — e então:
+O texto remontado é normalizado por `normObs()` — maiúscula, sem acento, espaços
+colapsados, pontuação final (`.`, `:`, `;`, `*`) removida — e então:
 
 | Conteúdo da célula | Resultado |
 |---|---|
 | exatamente `FALTA` | **conta como falta** |
-| contém a palavra FALTA mas não é só ela | **não conta** — registrado como variante e reportado |
 | qualquer outro texto | ignorado |
 | vazio | ignorado |
 
-O casamento é por **igualdade**, nunca por "contém". É o que impede que um eventual
-`FALTA JUSTIFICADA` ou `FALTA ABONADA` entre na conta. E é também por isso que existe o
-registro de variantes: em vez de contar errado ou ignorar em silêncio, o programa mostra
-na tela o texto que encontrou, para decisão humana. É assim que o vocabulário desconhecido
-aparece em vez de se esconder.
+**Só a palavra FALTA importa.** O casamento é por igualdade, nunca por "contém": é o
+que impede que `FALTA JUSTIFICADA`, `FALTA ABONADA` ou qualquer outra observação entre
+na conta. Nenhum outro texto da coluna é interpretado, rastreado ou reportado — o que
+está em jogo aqui é falta, e só.
 
-Textos já observados nos documentos reais que **não** contam, e que servem de caso de
-teste negativo:
-
-- `FERIADO (Dia do Trabalho)`
-- `BATIDAS FORA DA MARGEM`
-- `ATESTADO 2 DIAS*`
-- `PONTO ABONADO COM ACORDO DA DIREÇÃO`
-- `Permuta do dia 22 e 24 acordado com a chefe do` (texto cortado na largura da coluna)
+Textos reais que aparecem na coluna e **não** contam, usados como teste negativo:
+`FERIADO (Dia do Trabalho)`, `BATIDAS FORA DA MARGEM`, `batida fora de margem.`,
+`ATESTADO 2 DIAS*`, `PONTO ABONADO COM ACORDO DA DIREÇÃO`, `FALTA JUSTIFICADA`.
 
 ### Resultado da Etapa 1
 
 Uma lista de dias, não um total:
 
 ```
-Caso A (Convencional) → [6, 15, 20, 22, 27, 29]
-Caso B (12×36)        → [3, 4]
+12×36        → [7, 8, 13, 14, 23, 24]
+Convencional → [6, 15, 20, 22, 27, 29]
 ```
 
 O total é subproduto da lista. **A lista é o dado**, porque sem saber *quais* dias são
-não há como aplicar as regras de dias corridos nem calcular a DSR.
+não há como aplicar a regra de dias corridos nem calcular a DSR.
 
 ---
 
@@ -145,7 +133,8 @@ O calendário vem do período do documento.
 ### Conferência do período
 
 A coluna `DIA` imprime o dia da semana de cada linha. Antes de aplicar qualquer regra,
-compara-se o dia da semana impresso com o calculado a partir do período lido.
+`conferirDiaDaSemana()` compara o dia da semana impresso com o calculado a partir do
+período lido.
 
 Se discordarem, o mês foi lido errado. A página é **sinalizada** em vez de produzir uma
 DSR silenciosamente errada — a DSR depende de em qual semana o dia cai, então mês errado
@@ -155,29 +144,35 @@ significa DSR errada.
 
 A primeira que se aplicar encerra o cálculo.
 
-**F1 — Mês cheio (31).** 31 faltas saem como 31, sem passar por escala e **sem DSR**.
+**F1 — Mês inteiro (29, 30 ou 31).** Quem tem 29 faltas ou mais sai com a quantidade
+**integral**, sem passar pela regra de dias corridos e **sem DSR**.
 
-> Pendência: a regra é pelo número 31, não por "mês inteiro" — é como está definido para
-> a Infrequência em `regras/REGRAS.md`. Em fevereiro, 28 faltas não acionam F1. O Guardião
-> conhece o tamanho real do mês e poderia decidir melhor, mas mudar isso faria os dois
-> programas devolverem números diferentes para a mesma pessoa. Fica como está até haver
-> decisão explícita.
+> O limite é 29, e não 31, porque num mês de 31 dias uma ausência do mês inteiro dificilmente
+> marca todos os dias — descanso, folga ou um dia trabalhado no começo derrubam o número
+> para 29 ou 30. Sem esse limite, 30 faltas corridas em 12×36 cairiam para 15 pela F2
+> enquanto 31 continuariam 31: um dia de diferença dobraria o valor na folha.
 
 **F2 — 12×36: dia sim, dia não.** Dentro de cada sequência de dias corridos de falta,
 conta o 1º, pula o 2º, conta o 3º, pula o 4º. A sequência recomeça quando há um dia sem
 falta no meio. Falta isolada conta sempre. Fim de semana conta normalmente.
 
-**F3 — Convencional: fim de semana não conta.** Sábado e domingo são descartados.
+Quem trabalha dia sim, dia não só pode faltar dia sim, dia não.
 
-**F3-exceção — todas em fim de semana.** Se *todas* as faltas do funcionário caírem em
-sábado ou domingo, todas contam, e a linha recebe o aviso
-*"Faltas apenas em fim de semana (dias X, Y) — verificar"*. Basta uma falta em dia útil
-para a exceção não valer.
+| Dias marcados (12×36) | Contam | Não contam | QUANTIDADE |
+|---|---|---|---|
+| 7, 8 | 7 | 8 | 1 |
+| 5, 6, 7 | 5, 7 | 6 | 2 |
+| 5, 12, 19 | 5, 12, 19 | — | 3 |
+| 7, 8, 13, 14, 23, 24 | 7, 13, 23 | 8, 14, 24 | 3 |
+| 1 a 30 | todos (F1) | — | 30 |
 
-> É por causa desta exceção que a extração **não pode** filtrar fim de semana. Se o
-> sábado nunca for registrado, o programa não tem como saber que todas as faltas caíram
-> em fim de semana. Este é o ponto em que a falta se comporta de maneira oposta ao
-> atestado, que descarta o fim de semana logo na leitura.
+**F3 — Convencional: todos os dias contam.** Não há filtro de fim de semana.
+
+> O documento de ponto já só marca falta em dia de trabalho: para quem é Convencional,
+> sábado e domingo simplesmente não aparecem como falta, salvo em ausência do mês
+> inteiro — e nesse caso a F1 já resolveu. Descartar fim de semana aqui seria corrigir
+> um problema que o próprio documento não tem, com o risco de derrubar um número
+> legítimo. **Esta é uma diferença deliberada em relação à Infrequência SME.**
 
 ---
 
@@ -189,12 +184,13 @@ Calculada **só sobre os dias que contaram** depois da Etapa 2.
 |---|---|
 | 12×36 | uma por falta contada |
 | Convencional | uma por semana distinta com falta contada |
-| Mês cheio (F1) | nenhuma |
+| Mês inteiro (F1) | nenhuma |
 
-Semana, para a Convencional, é identificada pela segunda-feira correspondente ao dia.
-Duas faltas na mesma semana geram uma DSR; duas em semanas diferentes geram duas.
+Semana, para a Convencional, é identificada pela segunda-feira correspondente ao dia —
+sábado e domingo pertencem à semana da segunda anterior. Duas faltas na mesma semana
+geram uma DSR; duas em semanas diferentes geram duas.
 
-Exemplo do Caso A — faltas em 06-Qua, 15-Sex, 20-Qua, 22-Sex, 27-Qua, 29-Sex:
+Exemplo — Convencional com faltas em 06-Qua, 15-Sex, 20-Qua, 22-Sex, 27-Qua, 29-Sex:
 
 ```
 06  → semana de 04    ┐
@@ -211,32 +207,38 @@ Seis faltas, quatro DSR — porque 20 e 22 caem na mesma semana, e 27 e 29 tamb�
 
 ---
 
-## Etapa 4 — Validação
+## Etapa 4 — Conferência
 
 São **quatro números diferentes**, e confundi-los é o erro mais fácil de cometer aqui:
 
-| | Caso A (Convencional) | Caso B (12×36) |
+| | 12×36 | Convencional |
 |---|---|---|
-| impresso no rodapé (`TOTAL DE FALTAS`) | 6 | 2 |
-| contado na coluna OBSERVAÇÃO | 6 | 2 |
-| QUANTIDADE depois das regras | 6 | **1** |
-| DSR | **4** | **1** |
+| dias de falta | 7, 8, 13, 14, 23, 24 | 6, 15, 20, 22, 27, 29 |
+| impresso no rodapé (`TOTAL DE FALTAS`) | 6 | 6 |
+| contado na coluna OBSERVAÇÃO | 6 | 6 |
+| QUANTIDADE depois das regras | **3** | 6 |
+| DSR | **3** | **4** |
 
-**A validação compara impresso × contado** — os dois primeiros, ambos crus, antes de
+**A conferência compara impresso × contado** — os dois primeiros, ambos crus, antes de
 qualquer regra. Nunca compara com a QUANTIDADE final.
 
-Isso é essencial. No Caso B o impresso (2) é diferente da QUANTIDADE (1), e isso **não é
-divergência**: é a F2 fazendo o trabalho dela. Se a validação comparasse com a
-QUANTIDADE, ela acusaria erro em todo funcionário 12×36 com faltas em dias corridos e em
-todo Convencional com falta em fim de semana.
+Isso é essencial. No 12×36 o impresso (6) é diferente da QUANTIDADE (3), e isso **não é
+divergência**: é a F2 fazendo o trabalho dela. Se a conferência comparasse com a
+QUANTIDADE, ela acusaria erro em todo funcionário 12×36 com faltas em dias corridos.
 
 ### Estados possíveis
 
 | Estado | Quando | O que acontece |
 |---|---|---|
-| **Conferido** | rodapé lido e igual ao contado | segue normal |
-| **Divergente** | rodapé lido e diferente do contado | mostra os dois números e a lista de dias lidos; a DSR é calculada, mas a linha é marcada para conferência |
-| **Sem conferência** | rodapé não encontrado, ou tabela/coluna não identificada | linha marcada; diferente de "zero faltas" |
+| `conferido` | rodapé lido e igual ao contado | segue normal |
+| `divergente` | rodapé lido e diferente do contado | a planilha ganha a coluna **Conferência** com os dois números; a DSR é calculada, mas a linha fica marcada |
+| `sem-conferencia` | o PDF não traz `TOTAL DE FALTAS` | linha marcada; a leitura vale, mas não houve como conferir |
+| `sem-leitura` | coluna OBSERVAÇÃO ou tabela não identificada | a QUANTIDADE cai para o total impresso e a DSR fica vazia |
+| `periodo-divergente` | o dia da semana impresso não bate com o período | linha marcada; o mês provavelmente foi lido errado |
+
+Na tela, qualquer estado diferente de `conferido` acende uma marca ao lado da
+quantidade, com a explicação no título. Na planilha, a coluna **Conferência** só é
+criada quando alguma linha precisa dela.
 
 ### A regra que não se negocia
 
@@ -247,30 +249,63 @@ Se o rodapé disser 6 e a leitura encontrar 5 dias, o programa **não inventa um
 dia**: ele marca a página. Um dia que não se sabe qual é não tem semana, e sem semana não
 há DSR.
 
+A única exceção é o estado `sem-leitura`, em que não há lista nenhuma: aí a QUANTIDADE
+cai para o total impresso, nunca para zero. Uma página com layout diferente não pode
+fazer a planilha perder faltas em silêncio — ela degrada para o comportamento antigo,
+com a linha marcada.
+
 ---
 
-## Mudança necessária fora da falta
+## Onde está no código
 
-`extractTotalFaltas()` hoje devolve `null` tanto para "o total é zero" quanto para "não
-encontrei o rótulo". Sem separar os dois, o estado *Sem conferência* não pode existir.
-É a única alteração que esta regra exige em código já existente.
+Tudo em `index.html`, numa seção própria marcada `FALTAS — leitura pela coluna
+OBSERVAÇÃO`, sem nenhuma função em comum com a detecção de atestado.
+
+| Função | Responsabilidade |
+|---|---|
+| `lerTotalFaltasImpresso(rows, text)` | lê o rodapé; devolve `{ encontrado, valor }` para separar zero de ausente |
+| `normObs(txt)` | maiúscula, sem acento, espaços colapsados, pontuação final removida |
+| `findObsCol(tableStruct)` | acha a coluna OBSERVAÇÃO no singular |
+| `buildFaltaBands(diaCol, period)` | faixa vertical de cada dia |
+| `textoNaFaixa(col, banda)` | remonta o texto de uma célula |
+| `conferirDiaDaSemana(diaCol, bandas)` | confere o dia da semana impresso com o período |
+| `readFaltasFromTable(tableStruct, period)` | devolve os dias com `FALTA` |
+| `contarFaltasPorEscala(dias, is12)` | F1, F2 e F3 |
+| `dsrDeFaltas(contados, is12, period, mesCheio)` | Etapa 3 |
+| `resolverFaltas(...)` | junta tudo e decide o estado da conferência |
+| `faltaQtd/faltaDsr/faltaConf(e)` | acesso tolerante, para quem monta funcionário à mão |
+
+A constante `FALTA_MES_CHEIO = 29` é o limite da F1.
+
+`processPage()` chama `identifyTableColumns(pg.rows)` **de novo** para as faltas, em vez
+de reaproveitar a estrutura do ATM: `detectAtmByRow` só devolve `tableStruct` quando
+encontrou algum atestado, e a falta precisa da tabela mesmo numa página sem ATM nenhum.
+Identificar duas vezes custa pouco e mantém os dois caminhos sem ponto de contato.
+
+### Testes
+
+- `tests/unit.spec.js` — `normObs`, `contarFaltasPorEscala`, `dsrDeFaltas`,
+  `lerTotalFaltasImpresso` e `findObsCol`, incluindo o limite 28 vs 29 da F1 e o plural
+  `OBSERVAÇÕES`.
+- `tests/fixtures/gerar-pdf-sintetico.js` — seis páginas de falta com a verdade
+  conferida à mão: pares corridos em 12×36, semanas distintas em Convencional, mês
+  inteiro com 30, falta em fim de semana, uma página só de observações que não são falta,
+  e uma com o rodapé mentindo (conferência divergente).
+- `tests/e2e.spec.js` — QUANTIDADE, DSR e estado de conferência por funcionário, mais o
+  snapshot da tabela.
 
 ---
 
 ## Pendências
 
-Itens que só podem ser resolvidos com um PDF que tenha camada de texto — os documentos
-recebidos até agora passaram por "Microsoft: Print To PDF", que converte todo o texto em
-curvas e não deixa nada para extrair.
-
 1. **Funcionário dividido em páginas.** Quando ocorre, os dias das páginas precisam ser
    juntados (chave: CPF) **antes** das regras — senão a mesma semana é contada duas vezes
-   e a F1 nunca dispara. Falta saber se o `TOTAL DE FALTAS` repete o total do mês em cada
-   página ou se divide.
-2. **Fatiamento dos tokens.** Se `01 - Sex` chega como um item ou como três, e se o texto
-   da OBSERVAÇÃO chega inteiro ou cortado na largura da coluna.
-3. **Vocabulário completo da coluna.** Os textos listados na Etapa 1 vieram de dois
-   documentos. O registro de variantes existe justamente para revelar o resto.
+   e a F1 nunca dispara. Hoje cada página vira uma linha. Falta saber se o
+   `TOTAL DE FALTAS` repete o total do mês em cada página ou se divide.
+2. **Conferência contra PDF real.** Os PDFs recebidos até agora passaram por
+   "Microsoft: Print To PDF", que converte todo o texto em curvas e não deixa nada para
+   extrair. A implementação foi construída e validada contra o fixture sintético, que
+   reproduz o layout de produção; falta a rodada contra um arquivo original.
 
 ---
 
@@ -283,11 +318,3 @@ aparecesse numa observação ou na linha de LEGENDAS. Ancorar no CARGO seria mai
 Não entra aqui porque o `is12` também governa a detecção de atestado — mudá-lo altera a
 contagem de ATM, e alterar contagem sem medição é exatamente o que
 `LIMITACOES_CONHECIDAS.md` pede para não fazer.
-
----
-
-## Onde estará no código
-
-A preencher quando a implementação entrar. Cada função nova desta regra fica separada das
-funções de atestado, e a alteração de qualquer regra acima entra neste arquivo no mesmo
-commit.

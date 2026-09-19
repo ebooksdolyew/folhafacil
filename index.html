@@ -677,6 +677,29 @@ td strong{
   transition:background .35s var(--ease),box-shadow .35s var(--ease)
 }
 
+.bdsr{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:30px;padding:6px 12px;border-radius:var(--r-pill);
+  font-size:12px;font-weight:800;
+  font-family:'Outfit',monospace;letter-spacing:.3px;
+  color:var(--accent-2);
+  background:var(--bg);
+  box-shadow:var(--nm-out-sm);
+  transition:background .35s var(--ease),box-shadow .35s var(--ease)
+}
+
+/* marca de conferência: só aparece quando a leitura não fechou com o
+   TOTAL DE FALTAS impresso no PDF */
+.bconf{
+  display:inline-flex;align-items:center;
+  margin-left:6px;padding:4px;border-radius:50%;
+  color:var(--amber);
+  background:var(--bg);
+  box-shadow:var(--nm-in-sm);
+  cursor:help
+}
+.bconf .ico{width:13px;height:13px}
+
 .bfaltas{
   display:inline-flex;align-items:center;gap:5px;
   padding:6px 14px;border-radius:var(--r-pill);
@@ -999,7 +1022,8 @@ body.tool-infreq .wrap{padding-bottom:0}
             <th class="sortable" data-col="name" aria-sort="none">Funcionário <span class="sort-arrow"></span></th>
             <th class="sortable" data-col="scale" aria-sort="none">Escala <span class="sort-arrow"></span></th>
             <th class="sortable" data-col="atm" aria-sort="none">ATM (dias) <span class="sort-arrow"></span></th>
-            <th class="sortable" data-col="faltas" aria-sort="none" style="width:140px">Faltas <span class="sort-arrow"></span></th>
+            <th class="sortable" data-col="faltas" aria-sort="none" style="width:150px">Faltas <span class="sort-arrow"></span></th>
+            <th class="sortable" data-col="dsr" aria-sort="none" style="width:80px">DSR <span class="sort-arrow"></span></th>
             <th class="sortable" data-col="saldo" aria-sort="none" style="width:110px">Saldo Hrs <span class="sort-arrow"></span></th>
             <th style="width:70px">Páginas</th>
             <th style="width:32px"></th>
@@ -1409,24 +1433,24 @@ function extractSaldoHoras(rows, fullText) {
   return null;
 }
 
-function extractTotalFaltas(rows, fullText) {
+/* Lê o "TOTAL DE FALTAS" impresso no rodapé da página.
+
+   Devolve { encontrado, valor } em vez de um número: zero faltas e rótulo
+   ausente precisam ser distinguíveis, senão a conferência da Etapa 4 (ver
+   docs/REGRA_FALTAS_DSR.md) não tem como existir — um funcionário sem falta
+   nenhuma ficaria indistinguível de uma página que não pôde ser lida. */
+function lerTotalFaltasImpresso(rows, fullText) {
+  const ausente = { encontrado: false, valor: 0 };
+
   // Tentativa 1: varrer linhas procurando a label "TOTAL DE FALTAS"
   for (const row of rows) {
     if (!/TOTAL\s+DE\s+FALTAS/i.test(row.text)) continue;
     // Captura o número que aparece na mesma linha (pode estar à direita da label)
     const m = row.text.match(/TOTAL\s+DE\s+FALTAS[:\s]*(\d+)/i);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n === 0) return null; // zero → ignorar
-      return n;
-    }
+    if (m) return { encontrado: true, valor: parseInt(m[1], 10) };
     // Número pode estar tokenizado separado — busca só dígito(s) na mesma linha
     const digits = row.text.match(/\b(\d+)\s*$/);
-    if (digits) {
-      const n = parseInt(digits[1], 10);
-      if (n === 0) return null;
-      return n;
-    }
+    if (digits) return { encontrado: true, valor: parseInt(digits[1], 10) };
   }
 
   // Tentativa 2: regex direto no texto completo da página
@@ -1434,15 +1458,219 @@ function extractTotalFaltas(rows, fullText) {
   if (labelIdx !== -1) {
     const snippet = fullText.slice(labelIdx, labelIdx + 60);
     const m = snippet.match(/\b(\d+)\b/);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n === 0) return null;
-      return n;
-    }
+    if (m) return { encontrado: true, valor: parseInt(m[1], 10) };
   }
 
+  return ausente;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FALTAS — leitura pela coluna OBSERVAÇÃO
+   Especificação completa em docs/REGRA_FALTAS_DSR.md.
+
+   Caminho próprio, sem nenhuma função em comum com a detecção de
+   atestado. Não é organização: as duas precisam de coisas opostas.
+   O atestado descarta sábado e domingo já na extração e, no 12×36,
+   exige JORNADA preenchida. A falta precisa registrar todo dia —
+   fim de semana inclusive — e ignorar a JORNADA por completo.
+   ════════════════════════════════════════════════════════════════ */
+
+/* 29, 30 ou 31 faltas contam como ausência do mês inteiro: saem integrais,
+   sem passar pela regra de dias corridos e sem DSR. */
+const FALTA_MES_CHEIO = 29;
+
+const FALTA_CONF_TITULO = {
+  'conferido':          'Confere com o TOTAL DE FALTAS impresso no PDF',
+  'divergente':         'O TOTAL DE FALTAS impresso não bate com os dias lidos na coluna OBSERVAÇÃO',
+  'sem-conferencia':    'O PDF não traz TOTAL DE FALTAS — não houve como conferir a leitura',
+  'sem-leitura':        'A coluna OBSERVAÇÃO não pôde ser lida; a quantidade veio do total impresso',
+  'periodo-divergente': 'O dia da semana impresso não bate com o período lido — mês provavelmente errado'
+};
+
+/* Maiúscula, sem acento, espaços colapsados e pontuação final removida.
+   É o que faz "batida fora de margem." e "BATIDAS FORA DA MARGEM" serem
+   comparáveis, e o que permite comparar FALTA por igualdade. */
+function normObs(txt) {
+  return String(txt == null ? '' : txt)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[\s.:;*]+$/, '')
+    .trim();
+}
+
+/* A coluna de observação, no singular. O rodapé traz um bloco livre
+   "OBSERVAÇÕES:" que não pode ser confundido com ela. */
+function findObsCol(tableStruct) {
+  if (!tableStruct || !tableStruct.allColumns) return null;
+  for (const h of Object.keys(tableStruct.allColumns)) {
+    if (normObs(h) === 'OBSERVACAO') return tableStruct.allColumns[h];
+  }
   return null;
 }
+
+/* Faixa vertical de cada dia: do ponto médio para o dia de cima até o ponto
+   médio para o dia de baixo. Substitui a tolerância fixa do ROW_TOL, que é
+   estreita demais para uma coluna de texto livre, e de quebra deixa fora de
+   qualquer dia tudo que vem abaixo da tabela — LEGENDAS, SALDO DE HORAS,
+   TOTAL DE FALTAS e o bloco de observações do rodapé. */
+function buildFaltaBands(diaCol, period) {
+  if (!diaCol || !diaCol.cells) return [];
+  const vistos = new Set();
+  const dias = [];
+  for (const cel of diaCol.cells) {
+    const m = String(cel.text == null ? '' : cel.text).match(/\d{1,2}/);
+    if (!m) continue;
+    const day = parseInt(m[0], 10);
+    if (!(day >= 1 && day <= 31) || vistos.has(day)) continue;
+    const anchor = dateFromDayNumber(day, period);
+    if (!anchor) continue;
+    vistos.add(day);
+    dias.push({ day, y: cel.y, anchor });
+  }
+  if (!dias.length) return [];
+  dias.sort((a, b) => b.y - a.y);          // topo da página primeiro
+
+  const vaos = [];
+  for (let i = 1; i < dias.length; i++) vaos.push(dias[i - 1].y - dias[i].y);
+  vaos.sort((a, b) => a - b);
+  const meia = Math.max((vaos[Math.floor(vaos.length / 2)] || ROW_TOL * 2) / 2, 1);
+
+  for (let i = 0; i < dias.length; i++) {
+    const cima = dias[i - 1], baixo = dias[i + 1];
+    dias[i].yTop = cima  ? (dias[i].y + cima.y)  / 2 : dias[i].y + meia;
+    dias[i].yBot = baixo ? (dias[i].y + baixo.y) / 2 : dias[i].y - meia;
+  }
+  return dias;
+}
+
+/* Junta os tokens de uma coluna que caem dentro da faixa de um dia e devolve
+   o texto da célula. Remontado, e não testado token a token, porque o extrator
+   fatia a frase: "BATIDAS FORA DA MARGEM" pode chegar em quatro pedaços. */
+function textoNaFaixa(col, banda) {
+  if (!col || !col.cells) return '';
+  return col.cells
+    .filter(c => c.y <= banda.yTop && c.y > banda.yBot)
+    .sort((a, b) => a.x - b.x)
+    .map(c => c.text)
+    .join(' ');
+}
+
+/* A coluna DIA imprime o dia da semana ("03 - Dom"). Se ele não bater com o
+   dia da semana calculado pelo período, o mês foi lido errado — e mês errado
+   significa semana errada, logo DSR errada. Melhor sinalizar que calcular. */
+function conferirDiaDaSemana(diaCol, bandas) {
+  for (const b of bandas) {
+    const lido = normObs(textoNaFaixa(diaCol, b)).match(/\b(SEG|TER|QUA|QUI|SEX|SAB|DOM)\b/);
+    if (!lido) continue;
+    const esperado = (b.anchor.display.match(/\(([^)]+)\)/) || [])[1];
+    if (!esperado) continue;
+    if (lido[1] !== normObs(esperado)) return true;
+  }
+  return false;
+}
+
+/* Lê os dias de falta. Só a palavra FALTA importa, e por igualdade: qualquer
+   outro texto da coluna é ignorado. */
+function readFaltasFromTable(tableStruct, period) {
+  const vazio = { lido: false, dias: [], periodoDivergente: false };
+  if (!tableStruct || !tableStruct.diaCol || !period) return vazio;
+  const obsCol = findObsCol(tableStruct);
+  if (!obsCol) return vazio;
+  const bandas = buildFaltaBands(tableStruct.diaCol, period);
+  if (!bandas.length) return vazio;
+
+  const dias = [];
+  for (const b of bandas) {
+    if (normObs(textoNaFaixa(obsCol, b)) === 'FALTA') {
+      dias.push({ day: b.day, display: b.anchor.display });
+    }
+  }
+  dias.sort((a, b) => a.day - b.day);
+  return { lido: true, dias, periodoDivergente: conferirDiaDaSemana(tableStruct.diaCol, bandas) };
+}
+
+/* Regras de contagem, na ordem. A primeira que se aplicar encerra o cálculo.
+
+   F1 — 29, 30 ou 31 faltas: ausência do mês inteiro, sai integral.
+   F2 — 12×36: dentro de cada sequência de dias corridos, conta o 1º, pula o
+        2º, conta o 3º. Quem trabalha dia sim, dia não só falta dia sim, dia não.
+   F3 — Convencional: todos os dias contam. O documento de ponto já só marca
+        falta em dia de trabalho, então não há fim de semana a descartar. */
+function contarFaltasPorEscala(dias, is12) {
+  const nums = dias.map(d => d.day).sort((a, b) => a - b);
+  if (nums.length >= FALTA_MES_CHEIO) return { contados: nums, pulados: [], mesCheio: true };
+  if (!is12) return { contados: nums, pulados: [], mesCheio: false };
+
+  const contados = [], pulados = [];
+  let anterior = null, contouAnterior = false;
+  for (const d of nums) {
+    const emSequencia = anterior !== null && d === anterior + 1;
+    const conta = !(emSequencia && contouAnterior);
+    (conta ? contados : pulados).push(d);
+    anterior = d; contouAnterior = conta;
+  }
+  return { contados, pulados, mesCheio: false };
+}
+
+/* DSR, sobre os dias que sobraram da contagem.
+   12×36: uma por falta contada. Convencional: uma por semana distinta.
+   Mês inteiro: nenhuma. */
+function dsrDeFaltas(contados, is12, period, mesCheio) {
+  if (mesCheio || !contados.length || !period) return null;
+  if (is12) return contados.length;
+  const semanas = new Set();
+  for (const dia of contados) {
+    const dt = new Date(period.year, period.month - 1, dia);
+    dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));   // recua até a segunda-feira
+    semanas.add(dt.getFullYear() + '-' + dt.getMonth() + '-' + dt.getDate());
+  }
+  return semanas.size;
+}
+
+/* Junta leitura, regras e conferência numa estrutura só.
+
+   A conferência compara o total IMPRESSO com o total CONTADO — ambos crus,
+   antes das regras. Nunca com a quantidade final: no 12×36 com dias corridos
+   ela é menor de propósito, e comparar com ela acusaria erro em todo mundo.
+
+   Quando a coluna não pôde ser lida, a quantidade cai para o total impresso,
+   nunca para zero: uma página com layout diferente não pode fazer a planilha
+   perder faltas em silêncio. */
+function resolverFaltas(tableStruct, period, is12, impresso) {
+  const leitura = readFaltasFromTable(tableStruct, period);
+  const totalImpresso = impresso.encontrado ? impresso.valor : null;
+
+  if (!leitura.lido) {
+    return {
+      dias: [], contados: [], pulados: [],
+      quantidade: impresso.encontrado ? impresso.valor : 0,
+      dsr: null, mesCheio: false,
+      conferencia: 'sem-leitura', impresso: totalImpresso
+    };
+  }
+
+  const { contados, pulados, mesCheio } = contarFaltasPorEscala(leitura.dias, is12);
+
+  let conferencia;
+  if (leitura.periodoDivergente)                    conferencia = 'periodo-divergente';
+  else if (!impresso.encontrado)                    conferencia = 'sem-conferencia';
+  else if (impresso.valor === leitura.dias.length)  conferencia = 'conferido';
+  else                                              conferencia = 'divergente';
+
+  return {
+    dias: leitura.dias, contados, pulados,
+    quantidade: contados.length,
+    dsr: dsrDeFaltas(contados, is12, period, mesCheio),
+    mesCheio, conferencia, impresso: totalImpresso
+  };
+}
+
+/* Acesso tolerante: os testes unitários montam funcionários à mão, sem o
+   bloco de faltas. */
+function faltaQtd(e)  { return (e && e.faltas) ? e.faltas.quantidade : 0; }
+function faltaDsr(e)  { return (e && e.faltas) ? e.faltas.dsr : null; }
+function faltaConf(e) { return (e && e.faltas) ? e.faltas.conferencia : null; }
 
 function formatSaldoHoras(saldo) {
   if (!saldo) return null;
@@ -1739,7 +1967,15 @@ function processPage(pg) {
     atmDays = validateAtm12x36ByJornada(atmDays, tableStruct, rowYByKey);
   }
   const saldoHoras = extractSaldoHoras(pg.rows, pg.text);
-  const totalFaltas = extractTotalFaltas(pg.rows, pg.text);
+
+  /* FALTAS — caminho próprio, do zero.
+     A estrutura de tabela do ATM não serve aqui: detectAtmByRow só devolve
+     tableStruct quando encontrou algum atestado, e a falta precisa da tabela
+     mesmo numa página sem ATM nenhum. Identificar de novo custa pouco e
+     mantém os dois caminhos sem ponto de contato. */
+  const impresso   = lerTotalFaltasImpresso(pg.rows, pg.text);
+  const faltas     = resolverFaltas(identifyTableColumns(pg.rows), period, is12, impresso);
+  const totalFaltas = impresso.encontrado && impresso.valor > 0 ? impresso.valor : null;
   const detectionReport = {
     motorUsado: tableStruct && tableStruct.diaCol ? 'coluna-horizontal' : 'linha-legacy',
     tabelaEncontrada: !!tableStruct,
@@ -1763,6 +1999,7 @@ function processPage(pg) {
     period,
     saldoHoras,
     totalFaltas,
+    faltas,
     detectionReport
   };
 }
@@ -1858,7 +2095,7 @@ function renderStats() {
   document.getElementById('sa').textContent = allEmps.filter(e => e.atm > 0).length;
   document.getElementById('satr').textContent = allEmps.filter(e => e.saldoHoras && e.saldoHoras.negative).length;
   document.getElementById('s1').textContent = allEmps.filter(e => e.is12).length;
-  document.getElementById('sft').textContent = allEmps.filter(e => e.totalFaltas > 0).length;
+  document.getElementById('sft').textContent = allEmps.filter(e => faltaQtd(e) > 0).length;
   updateButtonStates();
 }
 
@@ -1872,7 +2109,7 @@ function renderTable() {
     .filter(({ e }) => 
       (!q || e.name.toLowerCase().includes(q)) && 
       (!onlyAtm || e.atm > 0) &&
-      (!onlyFaltas || e.totalFaltas > 0) &&
+      (!onlyFaltas || faltaQtd(e) > 0) &&
       (!onlyAtrasos || (e.saldoHoras && e.saldoHoras.negative))
     );
   if (sortCol) {
@@ -1881,7 +2118,8 @@ function renderTable() {
       if (sortCol === 'name') { va = a.e.name; vb = b.e.name; return sortDir * va.localeCompare(vb, 'pt-BR'); }
       if (sortCol === 'scale') { va = a.e.is12 ? 1 : 0; vb = b.e.is12 ? 1 : 0; }
       if (sortCol === 'atm') { va = a.e.atm; vb = b.e.atm; }
-      if (sortCol === 'faltas') { va = a.e.totalFaltas || 0; vb = b.e.totalFaltas || 0; }
+      if (sortCol === 'faltas') { va = faltaQtd(a.e); vb = faltaQtd(b.e); }
+      else if (sortCol === 'dsr') { va = faltaDsr(a.e) || 0; vb = faltaDsr(b.e) || 0; }
       if (sortCol === 'saldo') {
         const totalMinutes = s => s ? (s.hours * 60 + s.minutes) * (s.negative ? -1 : 1) : 0;
         va = totalMinutes(a.e.saldoHoras);
@@ -1900,7 +2138,7 @@ function renderTable() {
     } else {
       msg = 'Nenhum funcionário reconhecido neste PDF. Verifique se o arquivo é uma folha de ponto com texto selecionável (PDFs escaneados ainda não são suportados).';
     }
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="8">${msg}</td></tr>`;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">${msg}</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(({ e, i }) => {
@@ -1910,19 +2148,32 @@ function renderTable() {
     const saldoCell = saldoFmt
       ? `<span class="bsaldo">${ico('relogio')} ${saldoFmt}</span>`
       : '<span style="color:#7a8fa8">—</span>';
-    const faltasCell = e.totalFaltas > 0
-      ? `<span class="bfaltas">${ico('alerta')} ${e.totalFaltas} dia${e.totalFaltas > 1 ? 's' : ''}</span>`
-      : '<span style="color:#7a8fa8">—</span>';
+    /* QUANTIDADE já passada pelas regras de escala — não é mais o total
+       impresso no PDF. A marca ao lado só aparece quando a leitura não
+       fechou com esse total. */
+    const qf = faltaQtd(e);
+    const conf = faltaConf(e);
+    const marca = (conf && conf !== 'conferido')
+      ? ` <span class="bconf" title="${FALTA_CONF_TITULO[conf] || conf}">${ico('info')}</span>`
+      : '';
+    const faltasCell = (qf > 0
+      ? `<span class="bfaltas">${ico('alerta')} ${qf} dia${qf > 1 ? 's' : ''}</span>`
+      : '<span style="color:#7a8fa8">—</span>') + marca;
+    const dsrVal = faltaDsr(e);
+    const dsrCell = (dsrVal === null || dsrVal === undefined)
+      ? '<span style="color:#7a8fa8">—</span>'
+      : `<span class="bdsr">${dsrVal}</span>`;
     return `<tr class="mr" onclick="toggle(${i})">
       <td style="color:#7a8fa8;font-size:11px;font-weight:600">${i+1}</td>
       <td><strong>${e.name}</strong></td>
       <td><span class="bdg ${e.is12 ? 'b12' : 'bcv'}">${e.is12 ? '12×36' : 'Convencional'}</span></td>
       <td>${e.atm > 0 ? `<span class="batm">${ico('estetoscopio')} ${e.atm} dia${e.atm > 1 ? 's' : ''}</span>` : '<span style="color:#7a8fa8">—</span>'}</td>
       <td>${faltasCell}</td>
+      <td>${dsrCell}</td>
       <td>${saldoCell}</td>
       <td style="color:#a8adc7;font-size:12px;font-weight:500">${e.pages.join(', ')}</td>
       <td style="text-align:center;font-size:11px;color:#7a8fa8">${e.atm > 0 ? (exp ? '▲' : '▼') : ''}</td>
-    </tr>${exp && e.atm > 0 ? `<tr class="dr"><td colspan="8"><div class="dlist">${chips}</div></td></tr>` : ''}`;
+    </tr>${exp && e.atm > 0 ? `<tr class="dr"><td colspan="9"><div class="dlist">${chips}</div></td></tr>` : ''}`;
   }).join('');
   updateButtonStates();
 }
@@ -1956,7 +2207,7 @@ function getFilteredEmps() {
   return allEmps.filter(e =>
     (!q           || e.name.toLowerCase().includes(q)) &&
     (!onlyAtm     || e.atm > 0) &&
-    (!onlyFaltas  || e.totalFaltas > 0) &&
+    (!onlyFaltas  || faltaQtd(e) > 0) &&
     (!onlyAtrasos || (e.saldoHoras && e.saldoHoras.negative))
   );
 }
@@ -2265,7 +2516,7 @@ function _exportVerbas(ctx) {
    está ativa, a coluna da quantidade dessa verba se chama "QUANTIDADE"; com
    mais de uma (ou GERAL), usa nomes descritivos para não repetir o cabeçalho.
    Os valores de quantidade saem sempre positivos (sem sinal de menos). */
-function _exportColumns(ctx) {
+function _exportColumns(ctx, list) {
   const v = _exportVerbas(ctx);
   const single = (v.atm ? 1 : 0) + (v.faltas ? 1 : 0) + (v.atrasos ? 1 : 0) === 1;
   const soAtestados = v.atm && !v.faltas && !v.atrasos;   // planilha só de atestados
@@ -2281,7 +2532,29 @@ function _exportColumns(ctx) {
     cols.push({ header: 'Datas dos ATMs', width: 46, value: e => e.atmDays.map(d => d.display).join(' | ') });
   }
   if (v.faltas) {
-    cols.push({ header: single ? 'QUANTIDADE' : 'Total de Faltas', width: 15, value: e => e.totalFaltas || 0 });
+    /* Quantidade depois das regras de escala, não o total impresso no PDF:
+       no 12×36 com dias corridos os dois são diferentes de propósito. */
+    cols.push({ header: single ? 'QUANTIDADE' : 'Total de Faltas', width: 15, value: e => faltaQtd(e) });
+    cols.push({ header: 'DSR', width: 8, value: e => {
+      const d = faltaDsr(e);
+      return (d === null || d === undefined) ? '' : d;
+    } });
+    /* Coluna de conferência só existe quando alguma linha precisa dela —
+       planilha limpa quando está tudo conferido. */
+    const precisaConferir = (list || []).some(e => {
+      const c = faltaConf(e);
+      return c && c !== 'conferido';
+    });
+    if (precisaConferir) {
+      cols.push({ header: 'Conferência', width: 52, value: e => {
+        const c = faltaConf(e);
+        if (!c || c === 'conferido') return '';
+        const imp = e.faltas && e.faltas.impresso;
+        const lidos = e.faltas ? e.faltas.dias.length : 0;
+        const detalhe = (c === 'divergente') ? ` (impresso ${imp}, lidos ${lidos})` : '';
+        return (FALTA_CONF_TITULO[c] || c) + detalhe;
+      } });
+    }
   }
   if (v.atrasos) {
     cols.push({ header: single ? 'QUANTIDADE' : 'Atraso (min)', width: 14, value: e => {
@@ -2302,7 +2575,7 @@ function _exportColumns(ctx) {
 /* Monta a matriz de dados (1ª linha = cabeçalho) e as larguras de coluna,
    usadas tanto pela planilha XLSX quanto pela exportação CSV. */
 function _buildExportRows(list, ctx) {
-  const cols = _exportColumns(ctx);
+  const cols = _exportColumns(ctx, list);
   const rows = [cols.map(c => c.header)];
   list.forEach((e, i) => rows.push(cols.map(c => c.value(e, i))));
   return { rows, widths: cols.map(c => c.width) };
@@ -2399,11 +2672,17 @@ function dlReport() {
   }
 
   /* ── Seção: Faltas ── */
-  const comFaltas = list.filter(e => e.totalFaltas > 0);
+  const comFaltas = list.filter(e => faltaQtd(e) > 0);
   if (comFaltas.length > 0) {
-    lines.push('─ FALTAS (TOTAL DE FALTAS > 0)');
+    lines.push('─ FALTAS');
     lines.push(`  Com faltas: ${comFaltas.length}`);
-    lines.push(`  Total de dias de falta: ${comFaltas.reduce((s, e) => s + (e.totalFaltas || 0), 0)}`);
+    lines.push(`  Dias lidos na coluna OBSERVAÇÃO: ${list.reduce((t, e) => t + (e.faltas ? e.faltas.dias.length : 0), 0)}`);
+    lines.push(`  QUANTIDADE após as regras de escala: ${list.reduce((t, e) => t + faltaQtd(e), 0)}`);
+    lines.push(`  DSR total: ${list.reduce((t, e) => t + (faltaDsr(e) || 0), 0)}`);
+    const aConferir = list.filter(e => { const c = faltaConf(e); return c && c !== 'conferido'; });
+    if (aConferir.length) {
+      lines.push(`    [!] ${aConferir.length} funcionário(s) com leitura a conferir — ver detalhes abaixo`);
+    }
     lines.push('');
   }
 
@@ -2423,8 +2702,25 @@ function dlReport() {
     if (showAtrasos) {
       lines.push(`    Saldo de Horas: ${formatSaldoHoras(e.saldoHoras) || '—'}`);
     }
-    if (e.totalFaltas > 0) {
-      lines.push(`    Total de Faltas: ${e.totalFaltas} dia${e.totalFaltas > 1 ? 's' : ''}`);
+    const f = e.faltas;
+    if (f && (f.dias.length > 0 || f.quantidade > 0)) {
+      if (f.impresso !== null && f.impresso !== undefined) {
+        lines.push(`    Total de Faltas impresso no PDF: ${f.impresso}`);
+      }
+      if (f.dias.length) {
+        lines.push(`    Dias de falta lidos: ${f.dias.map(d => d.display).join(', ')}`);
+      }
+      if (f.pulados.length) {
+        lines.push(`    Dias não contados (12×36, dia sim/dia não): ${f.pulados.join(', ')}`);
+      }
+      if (f.mesCheio) {
+        lines.push(`    Mês inteiro (${f.dias.length} faltas): contabilizado integral, sem DSR`);
+      }
+      lines.push(`    QUANTIDADE de faltas: ${f.quantidade}`);
+      lines.push(`    DSR: ${f.dsr === null || f.dsr === undefined ? '—' : f.dsr}`);
+      if (f.conferencia && f.conferencia !== 'conferido') {
+        lines.push(`    [!] ${FALTA_CONF_TITULO[f.conferencia] || f.conferencia}`);
+      }
     }
     if (e.detectionReport?.motorUsado === 'linha-legacy') {
       lines.push(`    [!] Motor legado (verifique estrutura do PDF)`);

@@ -6,7 +6,7 @@ processado no navegador de quem usa.
 
 | Ferramenta | Entrada | Saída |
 |---|---|---|
-| **Guardião Sepog** (padrão) | PDF de frequências | Tabela na tela, PDF anotado, planilha XLSX e relatório TXT |
+| **Guardião Sepog** (padrão) | PDF de frequências | Tabela na tela (com faltas e DSR), PDF anotado, planilha XLSX e relatório TXT |
 | **Infrequência SME** | Planilha mensal de ponto (.xlsx, .xlsm ou .csv) | Planilha da folha e planilha detalhada |
 
 A Infrequência SME fica em `infrequencia.html`, um arquivo à parte carregado dentro de um
@@ -38,7 +38,7 @@ produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_head
 | `vendor/` | pdf.js e pdf-lib auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |
 | `docs/regras/` | Regras de cálculo da **Infrequência SME** (R1 a R4) em linguagem simples. |
 | `docs/REGRA_VALIDACAO_ESCALA.md`, `docs/REGRA_JORNADA_12x36.md` | Regras de validação de atestado do **Guardião Sepog**. |
-| `docs/REGRA_FALTAS_DSR.md` | Regra de faltas e DSR do **Guardião Sepog** — leitura da coluna OBSERVAÇÃO. Especificação; implementação pendente. |
+| `docs/REGRA_FALTAS_DSR.md` | Regra de faltas e DSR do **Guardião Sepog** — leitura da coluna OBSERVAÇÃO, contagem por escala e DSR. |
 | `docs/LIMITACOES_CONHECIDAS.md` | Divergências conhecidas entre código e documentação, com a medição que falta para decidir cada uma. |
 | `tests/` | Suíte Playwright (unitária + ponta a ponta) sobre o `index.html` real. Ver `tests/README.md`. |
 | `validacao/` | Procedimento de regressão contra PDFs reais (`comparar.py`) — os PDFs ficam fora do git. |
@@ -48,7 +48,7 @@ produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_head
 ### Guardião Sepog (`index.html`)
 
 Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas e escala
-12×36, e exporta PDF anotado, XLSX e TXT. Dois pontos que valem saber antes de mexer:
+12×36, e exporta PDF anotado, XLSX e TXT. Três pontos que valem saber antes de mexer:
 
 - Existem **dois motores de detecção de ATM** (tabular e legado), com critérios
   diferentes de reconhecimento. A divergência entre eles está descrita em
@@ -57,6 +57,11 @@ Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas 
 - A validação de escala acontece **durante** a extração (`readAtmsFromTable`), não
   depois: para Convencional, atestado em sábado ou domingo nunca chega a ser
   registrado. Ver `docs/REGRA_VALIDACAO_ESCALA.md` e `docs/REGRA_JORNADA_12x36.md`.
+- **Falta e atestado são caminhos separados, sem função em comum.** A falta é lida da
+  coluna OBSERVAÇÃO, registra todo dia (fim de semana inclusive) e ignora a JORNADA —
+  o oposto do que o atestado faz. A QUANTIDADE exportada é a que sai das regras de
+  escala, não o `TOTAL DE FALTAS` impresso no PDF, que serve de conferência. Ver
+  `docs/REGRA_FALTAS_DSR.md`.
 
 ### Infrequência SME (`infrequencia.html`)
 

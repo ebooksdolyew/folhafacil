@@ -2,8 +2,9 @@
  * Gera uma folha de ponto SINTÉTICA para testes de regressão do GHUB.
  *
  * Os dados são fictícios de ponta a ponta — nenhum dado real de funcionário
- * entra no repositório. O layout reproduz o que o motor tabular espera:
- * cabeçalho DIA / ENT1 / SAI1 / ENT2 / SAI2 / JORNADA e uma linha por dia.
+ * entra no repositório. O layout reproduz o do PDF de produção:
+ * DIA / ENT1 / SAI1 / ENT2 / SAI2 / JORNADA / OBSERVAÇÃO, uma linha por dia
+ * do mês, e o rodapé com TOTAL DE FALTAS.
  *
  * Uso:  node tests/fixtures/gerar-pdf-sintetico.js [saida.pdf]
  * Requer: npm i pdf-lib@1.17.1
@@ -13,11 +14,19 @@ const fs = require('fs');
 
 /* Maio/2026 — 01/05 é sexta-feira. Sábados: 2, 9, 16, 23, 30. Domingos: 3, 10, 17, 24, 31. */
 const PERIODO = { mes: '05', ano: '2026' };
+const DIAS_NO_MES = 31;
 
 /**
- * Cada página descreve um funcionário. `atm` lista os dias com ATM na coluna
- * ENT1; `jornada` define o texto da coluna JORNADA por dia (ausente = vazio).
+ * Cada página descreve um funcionário.
+ *
+ *   atm      dias com ATM na coluna ENT1
+ *   jornada  texto da coluna JORNADA por dia (ausente = vazio)
+ *   faltas   dias com "FALTA" na coluna OBSERVAÇÃO
+ *   obs      outros textos da coluna OBSERVAÇÃO, por dia — nenhum deles conta
+ *   impresso força o número do rodapé (ausente = o próprio total de `faltas`)
+ *
  * `esperado` é a verdade conferida à mão — o que o GHUB DEVE produzir.
+ * Regra de faltas e DSR em docs/REGRA_FALTAS_DSR.md.
  */
 const PAGINAS = [
   {
@@ -26,7 +35,12 @@ const PAGINAS = [
     escala: null,                       // Convencional
     atm: [4, 5, 9],                     // 9 é sábado → REGRA 1 rejeita
     jornada: {},
-    esperado: { atm: 2, is12: false, dias: ['04/05/2026 (Seg)', '05/05/2026 (Ter)'], cpf: '01234567890' },
+    faltas: [],
+    obs: {},
+    esperado: {
+      atm: 2, is12: false, dias: ['04/05/2026 (Seg)', '05/05/2026 (Ter)'], cpf: '01234567890',
+      faltaQtd: 0, faltaDsr: null, faltaConf: 'conferido',
+    },
     nota: 'REGRA 1: ATM em dia útil conta; ATM em sábado é descartado. CPF com zero à esquerda.',
   },
   {
@@ -35,7 +49,12 @@ const PAGINAS = [
     escala: '12x36',
     atm: [2, 6],                        // 2 é sábado → válido em 12x36
     jornada: { 2: '07:00-19:00', 6: '07:00-19:00' },
-    esperado: { atm: 2, is12: true, dias: ['02/05/2026 (Sáb)', '06/05/2026 (Qua)'], cpf: '12345678909' },
+    faltas: [],
+    obs: {},
+    esperado: {
+      atm: 2, is12: true, dias: ['02/05/2026 (Sáb)', '06/05/2026 (Qua)'], cpf: '12345678909',
+      faltaQtd: 0, faltaDsr: null, faltaConf: 'conferido',
+    },
     nota: 'REGRA 2: 12x36 com JORNADA preenchida conta, inclusive em fim de semana.',
   },
   {
@@ -44,7 +63,12 @@ const PAGINAS = [
     escala: '12x36',
     atm: [8, 12],
     jornada: { 8: '07:00-19:00' },      // dia 12 sem JORNADA → rejeitado
-    esperado: { atm: 1, is12: true, dias: ['08/05/2026 (Sex)'], cpf: '98765432100' },
+    faltas: [],
+    obs: {},
+    esperado: {
+      atm: 1, is12: true, dias: ['08/05/2026 (Sex)'], cpf: '98765432100',
+      faltaQtd: 0, faltaDsr: null, faltaConf: 'conferido',
+    },
     nota: 'REGRA 2: 12x36 com JORNADA vazia é rejeitado.',
   },
   {
@@ -53,7 +77,12 @@ const PAGINAS = [
     escala: '12x36',
     atm: [14],
     jornada: { 14: 'Folga' },           // caso da divergência da Fase 4
-    esperado: { atm: 1, is12: true, dias: ['14/05/2026 (Qui)'], cpf: '04567891234' },
+    faltas: [],
+    obs: {},
+    esperado: {
+      atm: 1, is12: true, dias: ['14/05/2026 (Qui)'], cpf: '04567891234',
+      faltaQtd: 0, faltaDsr: null, faltaConf: 'conferido',
+    },
     nota: 'FASE 4: 12x36 com JORNADA="Folga". O motor tabular conta; o legado descartaria.',
   },
   {
@@ -62,7 +91,12 @@ const PAGINAS = [
     escala: null,
     atm: [],                            // funcionário limpo
     jornada: {},
-    esperado: { atm: 0, is12: false, dias: [], cpf: '32165498711' },
+    faltas: [],
+    obs: {},
+    esperado: {
+      atm: 0, is12: false, dias: [], cpf: '32165498711',
+      faltaQtd: 0, faltaDsr: null, faltaConf: 'conferido',
+    },
     nota: 'Caso limpo: nenhuma ocorrência. Exercita o gatilho de fallback da Fase 4.',
   },
   {
@@ -71,13 +105,117 @@ const PAGINAS = [
     escala: null,
     atm: [11, 13, 15],
     jornada: {},
-    esperado: { atm: 3, is12: false, dias: ['11/05/2026 (Seg)', '13/05/2026 (Qua)', '15/05/2026 (Sex)'], cpf: '15975348622' },
+    faltas: [],
+    obs: {},
+    esperado: {
+      atm: 3, is12: false, dias: ['11/05/2026 (Seg)', '13/05/2026 (Qua)', '15/05/2026 (Sex)'], cpf: '15975348622',
+      faltaQtd: 0, faltaDsr: null, faltaConf: 'conferido',
+    },
     nota: 'Vários ATMs em dias úteis.',
+  },
+
+  /* ── FALTAS (docs/REGRA_FALTAS_DSR.md) ─────────────────────────────── */
+
+  {
+    nome: 'GISELE ANDRADE PINTO',
+    cpf: '741.852.963-01',
+    escala: '12x36',
+    atm: [],
+    jornada: {},
+    faltas: [7, 8, 13, 14, 23, 24],     // três pares de dias corridos
+    obs: {},
+    esperado: {
+      atm: 0, is12: true, dias: [], cpf: '74185296301',
+      // F2: conta 7, pula 8; conta 13, pula 14; conta 23, pula 24
+      faltaQtd: 3, faltaDsr: 3, faltaConf: 'conferido',
+    },
+    nota: 'F2: 12x36 com dias corridos — conta o 1º, pula o 2º. DSR = 1 por falta contada.',
+  },
+  {
+    nome: 'HELENA BORGES TAVARES',
+    cpf: '852.963.741-02',
+    escala: null,
+    atm: [],
+    jornada: {},
+    faltas: [6, 15, 20, 22, 27, 29],    // 20 e 22 na mesma semana; 27 e 29 também
+    obs: {},
+    esperado: {
+      atm: 0, is12: false, dias: [], cpf: '85296374102',
+      // Convencional conta todos os dias; DSR por semana distinta (4 semanas)
+      faltaQtd: 6, faltaDsr: 4, faltaConf: 'conferido',
+    },
+    nota: 'Convencional: seis faltas em quatro semanas distintas — QUANTIDADE 6, DSR 4.',
+  },
+  {
+    nome: 'IGOR MENEZES CAMPOS',
+    cpf: '963.741.852-03',
+    escala: '12x36',
+    atm: [],
+    jornada: {},
+    faltas: Array.from({ length: 30 }, (_, i) => i + 1),   // dias 1 a 30
+    obs: {},
+    esperado: {
+      atm: 0, is12: true, dias: [], cpf: '96374185203',
+      // F1 vem antes da F2: 30 >= 29 → integral, sem DSR
+      faltaQtd: 30, faltaDsr: null, faltaConf: 'conferido',
+    },
+    nota: 'F1: 29, 30 ou 31 faltas contam integralmente, sem dia sim/dia não e sem DSR.',
+  },
+  {
+    nome: 'JULIANA REIS FONSECA',
+    cpf: '147.258.369-04',
+    escala: null,
+    atm: [],
+    jornada: {},
+    faltas: [2, 4],                     // 2 é sábado — no Guardião ele conta
+    obs: {},
+    esperado: {
+      atm: 0, is12: false, dias: [], cpf: '14725836904',
+      // sábado 02 pertence à semana de 27/04; segunda 04 à semana de 04/05
+      faltaQtd: 2, faltaDsr: 2, faltaConf: 'conferido',
+    },
+    nota: 'Convencional: falta em fim de semana CONTA no Guardião (sem filtro de sábado/domingo).',
+  },
+  {
+    nome: 'KLEBER AZEVEDO PRADO',
+    cpf: '258.369.147-05',
+    escala: null,
+    atm: [],
+    jornada: {},
+    faltas: [],
+    obs: {                              // nada disso pode virar falta
+      1:  'FERIADO (Dia do Trabalho)',
+      5:  'BATIDAS FORA DA MARGEM',
+      7:  'batida fora de margem.',
+      12: 'ATESTADO 2 DIAS*',
+      19: 'PONTO ABONADO COM ACORDO DA DIRECAO',
+      26: 'FALTA JUSTIFICADA',
+    },
+    esperado: {
+      atm: 0, is12: false, dias: [], cpf: '25836914705',
+      faltaQtd: 0, faltaDsr: null, faltaConf: 'conferido',
+    },
+    nota: 'Só a palavra FALTA conta: nenhuma outra observação entra, nem "FALTA JUSTIFICADA".',
+  },
+  {
+    nome: 'LARISSA VIEIRA MOTA',
+    cpf: '369.147.258-06',
+    escala: null,
+    atm: [],
+    jornada: {},
+    faltas: [5, 12],
+    obs: {},
+    impresso: 4,                        // rodapé mente: diz 4, a coluna tem 2
+    esperado: {
+      atm: 0, is12: false, dias: [], cpf: '36914725806',
+      faltaQtd: 2, faltaDsr: 2, faltaConf: 'divergente',
+    },
+    nota: 'Conferência: TOTAL DE FALTAS impresso não bate com os dias lidos → divergente.',
   },
 ];
 
 const DOW = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-const COLS = { DIA: 50, ENT1: 120, SAI1: 190, ENT2: 260, SAI2: 330, JORNADA: 400 };
+const COLS = { DIA: 50, ENT1: 120, SAI1: 190, ENT2: 260, SAI2: 330, JORNADA: 400, 'OBSERVAÇÃO': 470 };
 
 async function gerar(destino) {
   const doc = await PDFDocument.create();
@@ -99,27 +237,40 @@ async function gerar(destino) {
     if (p.cpf) put(`CPF: ${p.cpf}`, 300, 750);
     if (p.escala) put(`Escala: ${p.escala}`, 50, 746);
 
-    let y = 710;
+    let y = 722;
     for (const [h, x] of Object.entries(COLS)) put(h, x, y, bold, 9);
 
-    y -= 20;
-    for (let dia = 1; dia <= 20; dia++) {
+    y -= 16;
+    for (let dia = 1; dia <= DIAS_NO_MES; dia++) {
       const dt = new Date(+PERIODO.ano, +PERIODO.mes - 1, dia);
       put(String(dia).padStart(2, '0'), COLS.DIA, y);
       put(DOW[dt.getDay()], COLS.DIA + 22, y);
 
+      const temFalta = p.faltas.includes(dia);
       if (p.atm.includes(dia)) {
         /* ATM em preto: isTokenDark() precisa medir luminância < 210. */
         put('ATM', COLS.ENT1, y, bold, 9, preto);
-      } else {
+      } else if (!temFalta) {
+        /* Dia de falta fica com as marcações vazias, como no PDF real. */
         put('08:00', COLS.ENT1, y);
         put('12:00', COLS.SAI1, y);
         put('13:00', COLS.ENT2, y);
         put('17:00', COLS.SAI2, y);
       }
       if (p.jornada[dia]) put(p.jornada[dia], COLS.JORNADA, y);
-      y -= 18;
+
+      const obs = temFalta ? 'FALTA' : (p.obs[dia] || '');
+      if (obs) put(obs, COLS['OBSERVAÇÃO'], y);
+      y -= 16;
     }
+
+    /* Rodapé: o que a conferência compara com a contagem da coluna. */
+    y -= 14;
+    const total = (p.impresso !== undefined) ? p.impresso : p.faltas.length;
+    put('TOTAL DE FALTAS:', COLS.DIA, y, bold, 9);
+    put(String(total), COLS.ENT2, y, bold, 9);
+    y -= 14;
+    put('OBSERVAÇÕES:', COLS.DIA, y, bold, 9);
   }
 
   fs.writeFileSync(destino, await doc.save());
@@ -130,7 +281,9 @@ if (require.main === module) {
   const destino = process.argv[2] || 'ponto-sintetico.pdf';
   gerar(destino).then(({ paginas }) => {
     console.log(`PDF sintético gerado: ${destino} (${paginas.length} páginas)`);
-    for (const p of paginas) console.log(`  ${p.nome}: ${p.esperado.atm} ATM — ${p.nota}`);
+    for (const p of paginas) {
+      console.log(`  ${p.nome}: ${p.esperado.atm} ATM, ${p.esperado.faltaQtd} faltas, DSR ${p.esperado.faltaDsr ?? '—'} — ${p.nota}`);
+    }
   });
 }
 
