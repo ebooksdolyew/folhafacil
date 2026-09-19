@@ -15,7 +15,8 @@ const path = require('path');
 const fs = require('fs');
 
 const PDF = path.join(__dirname, 'fixtures', 'ponto-sintetico.pdf');
-const { PAGINAS } = require('./fixtures/gerar-pdf-sintetico.js');
+const PDF_LAYOUT = path.join(__dirname, 'fixtures', 'ponto-sintetico-layout-producao.pdf');
+const { PAGINAS, LAYOUT_PRODUCAO } = require('./fixtures/gerar-pdf-sintetico.js');
 
 /** Processa o PDF e devolve o estado observável da aplicação. */
 async function processar(page, pdf = PDF) {
@@ -78,6 +79,33 @@ test.describe('Regras de negócio ponta a ponta', () => {
     const r = await processar(page);
     expect(JSON.stringify({ stats: r.stats, tabela: r.tabela }, null, 2))
       .toMatchSnapshot('tabela-sintetica.json');
+  });
+});
+
+/* Regressão do layout de produção.
+
+   O fixture principal desenhava o cabeçalho OBSERVAÇÃO e o texto da coluna no
+   mesmo x. No PDF real o cabeçalho é centralizado e o texto alinhado à
+   esquerda — 52pt de distância — e o agrupamento por x-mais-próximo do
+   identifyTableColumns descartava a célula, zerando TODAS as faltas sem
+   nenhum aviso. Esta página reproduz a geometria real. */
+test.describe('Layout de produção', () => {
+  test('as faltas são lidas com o cabeçalho centralizado e o texto à esquerda', async ({ page }) => {
+    const r = await processar(page, PDF_LAYOUT);
+    const emp = r.emps.find(e => e.nome === LAYOUT_PRODUCAO.nome);
+    expect(emp, 'funcionário não reconhecido no layout de produção').toBeTruthy();
+    expect(emp.faltaLidos, 'dias lidos na coluna OBSERVAÇÃO').toEqual([7, 8, 13, 14, 23, 24]);
+    expect(emp.faltaQtd).toBe(LAYOUT_PRODUCAO.esperado.faltaQtd);
+    expect(emp.faltaDsr).toBe(LAYOUT_PRODUCAO.esperado.faltaDsr);
+    expect(emp.faltaConf).toBe(LAYOUT_PRODUCAO.esperado.faltaConf);
+  });
+
+  /* O valor largo da JORNADA começa à esquerda do próprio cabeçalho; se ele
+     vazasse para a OBSERVAÇÃO, o texto da célula deixaria de ser só "FALTA". */
+  test('o valor largo da JORNADA não vaza para a coluna OBSERVAÇÃO', async ({ page }) => {
+    const r = await processar(page, PDF_LAYOUT);
+    const emp = r.emps.find(e => e.nome === LAYOUT_PRODUCAO.nome);
+    expect(emp.faltaLidos.length).toBe(6);
   });
 });
 

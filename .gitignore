@@ -13,6 +13,7 @@ node_modules/
 test-results/
 playwright-report/
 tests/fixtures/ponto-sintetico.pdf
+tests/fixtures/ponto-sintetico-layout-producao.pdf
 
 *.xlsx
 *.xlsm

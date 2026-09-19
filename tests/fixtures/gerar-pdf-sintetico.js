@@ -208,14 +208,34 @@ const PAGINAS = [
     impresso: 4,                        // rodapé mente: diz 4, a coluna tem 2
     esperado: {
       atm: 0, is12: false, dias: [], cpf: '36914725806',
-      faltaQtd: 2, faltaDsr: 2, faltaConf: 'divergente',
+      /* Regra de segurança: leitura que não fecha com o rodapé não manda.
+         Sai o total impresso (4), sem DSR, com a linha marcada. */
+      faltaQtd: 4, faltaDsr: null, faltaConf: 'divergente',
     },
-    nota: 'Conferência: TOTAL DE FALTAS impresso não bate com os dias lidos → divergente.',
+    nota: 'Conferência: rodapé diz 4 e a coluna tem 2 → cai para o impresso, sem DSR.',
   },
 ];
 
 const DOW = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-const COLS = { DIA: 50, ENT1: 120, SAI1: 190, ENT2: 260, SAI2: 330, JORNADA: 400, 'OBSERVAÇÃO': 470 };
+
+/* Geometria copiada do PDF de produção, medida na página renderizada.
+   `h` é onde o CABEÇALHO é desenhado, `c` onde o CONTEÚDO começa — e os dois
+   NÃO coincidem: no documento real o cabeçalho é centralizado na coluna e o
+   texto é alinhado à esquerda. Na coluna OBSERVAÇÃO isso dá 52pt de distância
+   entre "OBSERVAÇÃO" e "FALTA", o suficiente para o bucket por x-mais-próximo
+   do identifyTableColumns (corte em 50) descartar a célula.
+
+   Enquanto este fixture desenhava cabeçalho e conteúdo no mesmo x, o teste
+   passava e o PDF real não era lido. Não alinhe estes valores. */
+const COLS = {
+  DIA:          { h:  46, c:  40 },
+  ENT1:         { h: 120, c: 118 },
+  SAI1:         { h: 175, c: 173 },
+  ENT2:         { h: 230, c: 228 },
+  SAI2:         { h: 285, c: 283 },
+  JORNADA:      { h: 348, c: 340 },
+  'OBSERVAÇÃO': { h: 468, c: 416 },
+};
 
 async function gerar(destino) {
   const doc = await PDFDocument.create();
@@ -238,43 +258,134 @@ async function gerar(destino) {
     if (p.escala) put(`Escala: ${p.escala}`, 50, 746);
 
     let y = 722;
-    for (const [h, x] of Object.entries(COLS)) put(h, x, y, bold, 9);
+    for (const [nome, col] of Object.entries(COLS)) put(nome, col.h, y, bold, 9);
 
     y -= 16;
     for (let dia = 1; dia <= DIAS_NO_MES; dia++) {
       const dt = new Date(+PERIODO.ano, +PERIODO.mes - 1, dia);
-      put(String(dia).padStart(2, '0'), COLS.DIA, y);
-      put(DOW[dt.getDay()], COLS.DIA + 22, y);
+      put(`${String(dia).padStart(2, '0')} - ${DOW[dt.getDay()]}`, COLS.DIA.c, y);
 
       const temFalta = p.faltas.includes(dia);
       if (p.atm.includes(dia)) {
         /* ATM em preto: isTokenDark() precisa medir luminância < 210. */
-        put('ATM', COLS.ENT1, y, bold, 9, preto);
+        put('ATM', COLS.ENT1.c, y, bold, 9, preto);
       } else if (!temFalta) {
         /* Dia de falta fica com as marcações vazias, como no PDF real. */
-        put('08:00', COLS.ENT1, y);
-        put('12:00', COLS.SAI1, y);
-        put('13:00', COLS.ENT2, y);
-        put('17:00', COLS.SAI2, y);
+        put('08:00', COLS.ENT1.c, y);
+        put('12:00', COLS.SAI1.c, y);
+        put('13:00', COLS.ENT2.c, y);
+        put('17:00', COLS.SAI2.c, y);
       }
-      if (p.jornada[dia]) put(p.jornada[dia], COLS.JORNADA, y);
+      /* JORNADA larga, começando à esquerda do próprio cabeçalho — como no
+         documento real, onde o valor é "07:00-12:00/13:00-17:00-N". */
+      if (p.jornada[dia]) put(p.jornada[dia], COLS.JORNADA.c, y);
 
       const obs = temFalta ? 'FALTA' : (p.obs[dia] || '');
-      if (obs) put(obs, COLS['OBSERVAÇÃO'], y);
+      if (obs) put(obs, COLS['OBSERVAÇÃO'].c, y);
       y -= 16;
     }
 
     /* Rodapé: o que a conferência compara com a contagem da coluna. */
     y -= 14;
     const total = (p.impresso !== undefined) ? p.impresso : p.faltas.length;
-    put('TOTAL DE FALTAS:', COLS.DIA, y, bold, 9);
-    put(String(total), COLS.ENT2, y, bold, 9);
+    put('TOTAL DE FALTAS:', COLS.DIA.c, y, bold, 9);
+    put(String(total), COLS.ENT2.c, y, bold, 9);
     y -= 14;
-    put('OBSERVAÇÕES:', COLS.DIA, y, bold, 9);
+    put('OBSERVAÇÕES:', COLS.DIA.c, y, bold, 9);
   }
 
   fs.writeFileSync(destino, await doc.save());
   return { paginas: PAGINAS, destino };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Segunda página de teste: o LAYOUT DE PRODUÇÃO inteiro.
+
+   As onze colunas do PDF real, com as posições medidas na página
+   renderizada. O que importa aqui não são os dados e sim a geometria:
+
+   - cabeçalho OBSERVAÇÃO centralizado em 468, texto da observação
+     alinhado à esquerda em 416 — 52pt de distância;
+   - JORNADA com valor largo começando em 306, à ESQUERDA do próprio
+     cabeçalho em 348.
+
+   Essa combinação é a que fazia o agrupamento por x-mais-próximo
+   descartar toda falta. O fixture principal não a reproduzia, e o bug
+   passou. Esta página existe para que não passe de novo.
+   ════════════════════════════════════════════════════════════════ */
+const LAYOUT_PRODUCAO = {
+  nome: 'MARCOS TEIXEIRA GOULART',
+  cpf: '753.951.456-07',
+  escala: '12x36',
+  faltas: [7, 8, 13, 14, 23, 24],
+  obs: { 3: 'BATIDAS FORA DA MARGEM', 19: 'PONTO ABONADO COM ACORDO DA DIRECAO' },
+  esperado: { faltaQtd: 3, faltaDsr: 3, faltaConf: 'conferido' },
+  /* h = cabeçalho, c = conteúdo. Não alinhe: o desencontro é o teste. */
+  cols: {
+    DIA:          { h:  30, c:  30 },
+    ENT1:         { h:  68, c:  70 },
+    SAI1:         { h: 100, c: 102 },
+    ENT2:         { h: 132, c: 134 },
+    SAI2:         { h: 164, c: 166 },
+    ENT3:         { h: 196, c: 198 },
+    SAI3:         { h: 228, c: 230 },
+    SALDO:        { h: 256, c: 260 },
+    'LOTAÇÃO':    { h: 292, c: 290 },
+    JORNADA:      { h: 348, c: 306 },
+    'OBSERVAÇÃO': { h: 468, c: 416 },
+  },
+};
+
+async function gerarLayoutProducao(destino) {
+  const p = LAYOUT_PRODUCAO;
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const preto = rgb(0, 0, 0);
+  const page = doc.addPage([595.28, 841.89]);
+  const put = (txt, x, y, f = font, size = 8, color = preto) =>
+    page.drawText(txt, { x, y, size, font: f, color });
+
+  put('ACME SERVICOS LTDA - RELATORIO DE PRESTACAO DE SERVICOS', 50, 800, bold, 11);
+  put(`Periodo: 01/${PERIODO.mes}/${PERIODO.ano} a 31/${PERIODO.mes}/${PERIODO.ano}`, 50, 782);
+  put(`Funcionario: ${p.nome}`, 50, 764, bold, 10);
+  put(`CARGO AUXILIAR DE SERVICOS GERAIS DIURNO (${p.escala})`, 300, 764);
+  put(`CPF: ${p.cpf}`, 300, 750);
+
+  let y = 722;
+  for (const [nome, col] of Object.entries(p.cols)) put(nome, col.h, y, bold, 8);
+
+  y -= 16;
+  for (let dia = 1; dia <= DIAS_NO_MES; dia++) {
+    const dt = new Date(+PERIODO.ano, +PERIODO.mes - 1, dia);
+    put(`${String(dia).padStart(2, '0')} - ${DOW[dt.getDay()]}`, p.cols.DIA.c, y);
+    const temFalta = p.faltas.includes(dia);
+    if (!temFalta) {
+      put('06:53', p.cols.ENT1.c, y);
+      put('19:01', p.cols.SAI1.c, y);
+    }
+    put('00:00', p.cols.SALDO.c, y);
+    put('HDEBO -', p.cols['LOTAÇÃO'].c, y);
+    /* O valor largo da JORNADA, começando à esquerda do cabeçalho. */
+    put('07:00-12:00/13:00-17:00-N', p.cols.JORNADA.c, y);
+    const obs = temFalta ? 'FALTA' : (p.obs[dia] || '');
+    if (obs) put(obs, p.cols['OBSERVAÇÃO'].c, y);
+    y -= 16;
+  }
+
+  y -= 14;
+  put('LEGENDAS: N - ESCALA NORMAL, EC - EXTENSAO DE CARGA HORARIA', p.cols.DIA.c, y, font, 7);
+  y -= 14;
+  put('SALDO DE HORAS', p.cols.DIA.c, y, bold, 8);
+  put('0 HORA(S) E 0 MINUTO(S)', p.cols.ENT2.c, y);
+  y -= 14;
+  put('TOTAL DE FALTAS:', p.cols.DIA.c, y, bold, 8);
+  put(String(p.faltas.length), p.cols.ENT2.c, y, bold, 8);
+  y -= 14;
+  put('OBSERVAÇÕES:', p.cols.DIA.c, y, bold, 8);
+
+  fs.writeFileSync(destino, await doc.save());
+  return { destino, pagina: LAYOUT_PRODUCAO };
 }
 
 if (require.main === module) {
@@ -284,7 +395,12 @@ if (require.main === module) {
     for (const p of paginas) {
       console.log(`  ${p.nome}: ${p.esperado.atm} ATM, ${p.esperado.faltaQtd} faltas, DSR ${p.esperado.faltaDsr ?? '—'} — ${p.nota}`);
     }
+    const alvoLayout = destino.replace(/\.pdf$/i, '') + '-layout-producao.pdf';
+    return gerarLayoutProducao(alvoLayout).then(({ pagina }) => {
+      console.log(`PDF de layout de produção gerado: ${alvoLayout}`);
+      console.log(`  ${pagina.nome}: ${pagina.esperado.faltaQtd} faltas, DSR ${pagina.esperado.faltaDsr}`);
+    });
   });
 }
 
-module.exports = { gerar, PAGINAS };
+module.exports = { gerar, gerarLayoutProducao, PAGINAS, LAYOUT_PRODUCAO };

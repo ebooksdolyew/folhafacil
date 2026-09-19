@@ -56,21 +56,36 @@ um dia — ver Etapa 1, passo 2.
 
 ## Etapa 1 — Extração dos dias de falta
 
-### Passo 1: localizar a coluna
+### Passo 1: delimitar a coluna na horizontal
 
-`identifyTableColumns()` monta `allColumns` com todos os cabeçalhos da linha de título.
-`findObsCol()` procura ali a chave que, normalizada (maiúscula, sem acento), seja
-`OBSERVACAO` — no **singular**, para não pegar o bloco `OBSERVAÇÕES:` do rodapé.
+A coluna é um **intervalo entre cabeçalhos**: começa na borda direita do cabeçalho
+anterior e termina na borda esquerda do seguinte. `faixaHorizontal()` calcula isso a
+partir da própria linha de título, e só o canto esquerdo de cada token é comparado com o
+intervalo — é o que mantém um valor largo da JORNADA fora da OBSERVAÇÃO.
 
-Se a coluna não for encontrada, ou se a tabela não for identificada, a página **não**
+> **Por que não reaproveitar o `identifyTableColumns()`.** Ele joga cada token na coluna
+> de x **mais próximo**, com corte em 50pt. No PDF de produção o cabeçalho `OBSERVAÇÃO`
+> é centralizado numa coluna larga e o texto é alinhado à esquerda: a distância entre
+> `OBSERVAÇÃO` (x≈468) e `FALTA` (x≈416) dá 52pt, acima do corte, e **a célula é
+> descartada**. O efeito era ler zero falta em toda página, em silêncio, com a planilha
+> saindo com QUANTIDADE 0. Como intervalo, o alinhamento do texto dentro da coluna
+> deixa de importar.
+
+O nome é procurado no **singular**, para não pegar o bloco `OBSERVAÇÕES:` do rodapé.
+
+Se a coluna não for encontrada, ou se não houver linha de cabeçalho, a página **não**
 devolve zero faltas: devolve *não foi possível ler* (ver Etapa 4).
 
 ### Passo 2: delimitar a faixa de cada dia
 
-Das células da coluna `DIA`, consideram-se as que resultam num número de 1 a 31. Cada
-uma tem uma posição vertical. A **faixa** de um dia vai do ponto médio entre ele e o dia
-de cima até o ponto médio entre ele e o dia de baixo; a primeira e a última se estendem
-meia linha para fora.
+Das células da faixa horizontal da coluna `DIA`, consideram-se as que `diaDaCelula()`
+reconhece como dia: o texto precisa começar por um número de 1 a 31 e **não** pode
+conter `:` nem `/` — sem isso um horário da ENT1 (`08:00`) ou uma data viraria um dia
+inventado, já que a faixa é generosa de propósito.
+
+Cada dia reconhecido tem uma posição vertical. A **faixa** de um dia vai do ponto médio
+entre ele e o dia de cima até o ponto médio entre ele e o dia de baixo; a primeira e a
+última se estendem meia linha para fora.
 
 Um token pertence a um dia quando sua posição vertical cai dentro da faixa daquele dia.
 
@@ -226,33 +241,39 @@ Isso é essencial. No 12×36 o impresso (6) é diferente da QUANTIDADE (3), e is
 divergência**: é a F2 fazendo o trabalho dela. Se a conferência comparasse com a
 QUANTIDADE, ela acusaria erro em todo funcionário 12×36 com faltas em dias corridos.
 
+### A regra de segurança
+
+**As regras de escala só são aplicadas quando a leitura fecha com o número impresso no
+rodapé.** Qualquer desacordo — inclusive ler zero num PDF que imprime faltas — faz a
+QUANTIDADE cair para o total impresso, sem DSR e com a linha marcada.
+
+A razão é direta: se a leitura não bate com o que o próprio PDF declara, ela não é
+confiável, e uma lista de dias em que não se confia não pode reduzir um número que vai
+para a folha de pagamento. Aplicar a F2 sobre uma leitura incompleta produziria um
+número menor que o correto, em silêncio.
+
+Nessa situação a DSR fica **vazia**, não zero: ela depende de saber em que semana cada
+dia caiu, e é exatamente isso que está em dúvida.
+
+O efeito prático é que o pior caso da leitura é voltar ao comportamento antigo — o total
+impresso, sem escala e sem DSR — com um aviso visível. Nunca menos que isso.
+
 ### Estados possíveis
 
-| Estado | Quando | O que acontece |
-|---|---|---|
-| `conferido` | rodapé lido e igual ao contado | segue normal |
-| `divergente` | rodapé lido e diferente do contado | a planilha ganha a coluna **Conferência** com os dois números; a DSR é calculada, mas a linha fica marcada |
-| `sem-conferencia` | o PDF não traz `TOTAL DE FALTAS` | linha marcada; a leitura vale, mas não houve como conferir |
-| `sem-leitura` | coluna OBSERVAÇÃO ou tabela não identificada | a QUANTIDADE cai para o total impresso e a DSR fica vazia |
-| `periodo-divergente` | o dia da semana impresso não bate com o período | linha marcada; o mês provavelmente foi lido errado |
+| Estado | Quando | QUANTIDADE | DSR |
+|---|---|---|---|
+| `conferido` | rodapé lido e igual ao contado | dias contados, com as regras | calculada |
+| `divergente` | rodapé lido e diferente do contado | **total impresso** | vazia |
+| `sem-conferencia` | o PDF não traz `TOTAL DE FALTAS` | dias contados, com as regras | calculada |
+| `sem-leitura` | coluna OBSERVAÇÃO ou cabeçalho não identificados | **total impresso** | vazia |
+| `periodo-divergente` | o dia da semana impresso não bate com o período | dias contados, com as regras | vazia |
+
+O `periodo-divergente` é o único caso em que a QUANTIDADE vale e a DSR não: o número do
+dia foi lido certo, mas a semana em que ele cai depende do mês, e o mês está em dúvida.
 
 Na tela, qualquer estado diferente de `conferido` acende uma marca ao lado da
 quantidade, com a explicação no título. Na planilha, a coluna **Conferência** só é
 criada quando alguma linha precisa dela.
-
-### A regra que não se negocia
-
-**O número que vale é sempre o dos dias contados.** O total impresso nunca sobrescreve a
-lista — ele só responde *"você leu todos?"*.
-
-Se o rodapé disser 6 e a leitura encontrar 5 dias, o programa **não inventa um sexto
-dia**: ele marca a página. Um dia que não se sabe qual é não tem semana, e sem semana não
-há DSR.
-
-A única exceção é o estado `sem-leitura`, em que não há lista nenhuma: aí a QUANTIDADE
-cai para o total impresso, nunca para zero. Uma página com layout diferente não pode
-fazer a planilha perder faltas em silêncio — ela degrada para o comportamento antigo,
-com a linha marcada.
 
 ---
 
@@ -265,11 +286,13 @@ OBSERVAÇÃO`, sem nenhuma função em comum com a detecção de atestado.
 |---|---|
 | `lerTotalFaltasImpresso(rows, text)` | lê o rodapé; devolve `{ encontrado, valor }` para separar zero de ausente |
 | `normObs(txt)` | maiúscula, sem acento, espaços colapsados, pontuação final removida |
-| `findObsCol(tableStruct)` | acha a coluna OBSERVAÇÃO no singular |
-| `buildFaltaBands(diaCol, period)` | faixa vertical de cada dia |
-| `textoNaFaixa(col, banda)` | remonta o texto de uma célula |
-| `conferirDiaDaSemana(diaCol, bandas)` | confere o dia da semana impresso com o período |
-| `readFaltasFromTable(tableStruct, period)` | devolve os dias com `FALTA` |
+| `acharLinhaCabecalho(rows)` | acha a linha de título da tabela |
+| `faixaHorizontal(rows, nome)` | intervalo horizontal de uma coluna, entre os cabeçalhos vizinhos |
+| `diaDaCelula(txt)` | número do dia, rejeitando hora e data |
+| `buildFaltaBands(rows, faixaDia, period)` | faixa vertical de cada dia |
+| `textoNaFaixa(rows, faixa, banda)` | remonta o texto de uma célula |
+| `conferirDiaDaSemana(rows, faixaDia, bandas)` | confere o dia da semana impresso com o período |
+| `readFaltas(rows, period)` | devolve os dias com `FALTA` |
 | `contarFaltasPorEscala(dias, is12)` | F1, F2 e F3 |
 | `dsrDeFaltas(contados, is12, period, mesCheio)` | Etapa 3 |
 | `resolverFaltas(...)` | junta tudo e decide o estado da conferência |
@@ -277,22 +300,26 @@ OBSERVAÇÃO`, sem nenhuma função em comum com a detecção de atestado.
 
 A constante `FALTA_MES_CHEIO = 29` é o limite da F1.
 
-`processPage()` chama `identifyTableColumns(pg.rows)` **de novo** para as faltas, em vez
-de reaproveitar a estrutura do ATM: `detectAtmByRow` só devolve `tableStruct` quando
-encontrou algum atestado, e a falta precisa da tabela mesmo numa página sem ATM nenhum.
-Identificar duas vezes custa pouco e mantém os dois caminhos sem ponto de contato.
+`resolverFaltas()` recebe as linhas cruas da página (`pg.rows`) e não passa pelo
+`identifyTableColumns()` em momento nenhum — nem para a coluna DIA. Além de corrigir o
+descarte da coluna OBSERVAÇÃO, isso deixa o caminho da falta sem nenhum ponto de contato
+com o do atestado.
 
 ### Testes
 
 - `tests/unit.spec.js` — `normObs`, `contarFaltasPorEscala`, `dsrDeFaltas`,
-  `lerTotalFaltasImpresso` e `findObsCol`, incluindo o limite 28 vs 29 da F1 e o plural
-  `OBSERVAÇÕES`.
+  `lerTotalFaltasImpresso`, `faixaHorizontal` e `diaDaCelula`, incluindo o limite 28 vs
+  29 da F1, o plural `OBSERVAÇÕES` e a rejeição de hora na coluna DIA.
 - `tests/fixtures/gerar-pdf-sintetico.js` — seis páginas de falta com a verdade
   conferida à mão: pares corridos em 12×36, semanas distintas em Convencional, mês
   inteiro com 30, falta em fim de semana, uma página só de observações que não são falta,
   e uma com o rodapé mentindo (conferência divergente).
 - `tests/e2e.spec.js` — QUANTIDADE, DSR e estado de conferência por funcionário, mais o
   snapshot da tabela.
+- `ponto-sintetico-layout-producao.pdf` — uma página com as **onze colunas** do PDF real
+  e a geometria que quebrou a primeira implementação: cabeçalho OBSERVAÇÃO centralizado
+  em 468 com o texto em 416, e JORNADA com valor largo começando à esquerda do próprio
+  cabeçalho. O fixture principal não reproduzia isso, e foi por onde o bug passou.
 
 ---
 

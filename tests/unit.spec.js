@@ -286,29 +286,67 @@ test.describe('lerTotalFaltasImpresso', () => {
   });
 });
 
-test.describe('findObsCol', () => {
-  const achar = (page, headers) =>
-    page.evaluate(hs => {
-      const allColumns = {};
-      hs.forEach((h, i) => { allColumns[h] = { header: h, x: i * 50, cells: [] }; });
-      const col = findObsCol({ allColumns });
-      return col ? col.header : null;
-    }, headers);
+/* A coluna é um INTERVALO entre cabeçalhos, não o cabeçalho de x mais
+   próximo. É o que faz o texto alinhado à esquerda sob um cabeçalho
+   centralizado — o caso do PDF real — ser encontrado. */
+test.describe('faixaHorizontal', () => {
+  /* Geometria do documento de produção: JORNADA em 348, OBSERVAÇÃO em 468
+     (centralizado numa coluna larga) e o texto da observação em 416. */
+  const CABECALHO = [
+    { str: 'DIA', x: 46, w: 20 },
+    { str: 'ENT1', x: 120, w: 24 },
+    { str: 'JORNADA', x: 348, w: 40 },
+    { str: 'OBSERVAÇÃO', x: 468, w: 55 },
+  ];
+  const rows = (cels) => [{ text: 'DIA ENT1 JORNADA OBSERVAÇÃO', y: 700, cells: cels }];
 
-  test('acha OBSERVAÇÃO', async ({ page }) => {
-    expect(await achar(page, ['DIA', 'ENT1', 'OBSERVAÇÃO'])).toBe('OBSERVAÇÃO');
+  const faixa = (page, nome) =>
+    page.evaluate(({ cels, nome }) => faixaHorizontal([{ text: 'DIA ENT1 JORNADA OBSERVAÇÃO', y: 700, cells: cels }], nome),
+      { cels: CABECALHO, nome });
+
+  test('OBSERVAÇÃO começa depois da borda direita da JORNADA', async ({ page }) => {
+    const f = await faixa(page, 'OBSERVACAO');
+    expect(f.esq).toBe(388);            // 348 + 40
+    expect(f.dir).toBe(Infinity);       // é a última coluna
   });
 
-  test('acha OBSERVACAO sem acento', async ({ page }) => {
-    expect(await achar(page, ['DIA', 'OBSERVACAO'])).toBe('OBSERVACAO');
+  /* Regressão do bug que zerava as faltas: o texto em 416 fica 52pt à
+     esquerda do cabeçalho em 468, e o agrupamento antigo o descartava. */
+  test('o texto da observação em 416 cai dentro da faixa', async ({ page }) => {
+    const f = await faixa(page, 'OBSERVACAO');
+    expect(416 >= f.esq).toBe(true);
   });
 
-  /* O rodapé traz um bloco livre "OBSERVAÇÕES:" que não é a coluna. */
+  test('um valor largo de JORNADA em 306 fica de fora', async ({ page }) => {
+    const f = await faixa(page, 'OBSERVACAO');
+    expect(306 >= f.esq).toBe(false);
+  });
+
   test('não confunde com o plural OBSERVAÇÕES', async ({ page }) => {
-    expect(await achar(page, ['DIA', 'ENT1', 'OBSERVAÇÕES'])).toBe(null);
+    const f = await page.evaluate(() => faixaHorizontal(
+      [{ text: 'DIA ENT1 OBSERVAÇÕES', y: 700, cells: [
+        { str: 'DIA', x: 46, w: 20 }, { str: 'ENT1', x: 120, w: 24 }, { str: 'OBSERVAÇÕES', x: 468, w: 60 }] }],
+      'OBSERVACAO'));
+    expect(f).toBe(null);
   });
 
-  test('sem a coluna, devolve null', async ({ page }) => {
-    expect(await achar(page, ['DIA', 'ENT1', 'JORNADA'])).toBe(null);
+  test('sem linha de cabeçalho, devolve null', async ({ page }) => {
+    expect(await page.evaluate(() => faixaHorizontal([{ text: 'NADA AQUI', y: 1, cells: [] }], 'OBSERVACAO'))).toBe(null);
   });
+});
+
+test.describe('diaDaCelula', () => {
+  const casos = [
+    ['01 - Sex', 1], ['31 - Dom', 31], ['07', 7], ['7', 7],
+    ['08:00', null],            // hora da ENT1 não é dia
+    ['00:00', null],            // saldo não é dia
+    ['31/05/2026', null],       // data não é dia
+    ['HDGMBC -', null],
+    ['', null], ['32', null], ['0', null],
+  ];
+  for (const [entrada, saida] of casos) {
+    test(`"${entrada}" → ${saida}`, async ({ page }) => {
+      expect(await page.evaluate(t => diaDaCelula(t), entrada)).toBe(saida);
+    });
+  }
 });
