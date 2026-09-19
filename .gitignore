@@ -13,3 +13,8 @@ node_modules/
 test-results/
 playwright-report/
 tests/fixtures/ponto-sintetico.pdf
+
+*.xlsx
+*.xlsm
+*.csv
+.~lock.*#
