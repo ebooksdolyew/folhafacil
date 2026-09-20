@@ -260,6 +260,25 @@ body{
 html[data-theme="dark"] .brand-logo-light{display:none}
 html[data-theme="dark"] .brand-logo-dark{display:block}
 
+/* ── Efeito de surgimento da logo (ícone + texto) ── */
+@keyframes brand-rise{
+  from{opacity:0;transform:translateY(10px) scale(.9)}
+  to{opacity:1;transform:none}
+}
+@keyframes brand-slide{
+  from{opacity:0;transform:translateX(-16px)}
+  to{opacity:1;transform:none}
+}
+@media (prefers-reduced-motion:no-preference){
+  .brand-icon{
+    animation:brand-rise .6s var(--ease) both;
+    transform-origin:left center
+  }
+  .brand-logo-img{
+    animation:brand-slide .6s var(--ease) .14s both
+  }
+}
+
 .sub{color:var(--text-secondary);font-size:13px;font-weight:500;margin:0}
 
 /* ── BOTÃO DE TEMA (canto superior direito) ── */
