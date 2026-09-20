@@ -1,5 +1,5 @@
 {
-  "name": "Folha Fácil — Guardião Sepog e Infrequência SME",
+  "name": "Folha Fácil — Ferramenta de Departamento Pessoal",
   "short_name": "Folha Fácil",
   "description": "Duas ferramentas de departamento pessoal: envie o PDF do ponto eletrônico para identificar atestados, faltas, atrasos e escala 12×36, ou a planilha mensal de infrequência para gerar a planilha da folha. Processamento 100% no navegador.",
   "lang": "pt-BR",
@@ -43,7 +43,7 @@
       "src": "./assets/social/og-image.png",
       "sizes": "1200x1200",
       "type": "image/png",
-      "label": "Folha Fácil — Guardião Sepog e Infrequência SME"
+      "label": "Folha Fácil — Ferramenta de Departamento Pessoal"
     }
   ]
 }
