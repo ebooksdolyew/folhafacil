@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <!-- ═══════════ SEO — Identidade da página ═══════════ -->
-<title>Folha Fácil — Guardião Sepog e Infrequência SME</title>
+<title>Folha Fácil — Ferramenta de Departamento Pessoal</title>
 <meta name="description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador. Acesso mediante licenciamento.">
 <meta name="keywords" content="análise de ponto, ponto eletrônico, folha de ponto, espelho de ponto, infrequência, atestado médico, faltas, atrasos, DSR, escala 12x36, planilha da folha, leitor de PDF, departamento pessoal, RH">
 <meta name="author" content="Folha Fácil">
@@ -42,21 +42,21 @@
 <meta property="og:site_name" content="Folha Fácil">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://ghub-66j.pages.dev/">
-<meta property="og:title" content="Folha Fácil — Guardião Sepog e Infrequência SME">
+<meta property="og:title" content="Folha Fácil — Ferramenta de Departamento Pessoal">
 <meta property="og:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
-<meta property="og:image" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
-<meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
+<!-- Caminho relativo: a imagem resolve no mesmo domínio da página (preview ou produção) -->
+<meta property="og:image" content="/assets/social/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Folha Fácil — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
+<meta property="og:image:height" content="1200">
+<meta property="og:image:alt" content="Folha Fácil">
 
 <!-- ═══════════ Twitter / X ═══════════ -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Folha Fácil — Guardião Sepog e Infrequência SME">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Folha Fácil — Ferramenta de Departamento Pessoal">
 <meta name="twitter:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
-<meta name="twitter:image" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
-<meta name="twitter:image:alt" content="Folha Fácil — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
+<meta name="twitter:image" content="/assets/social/og-image.png">
+<meta name="twitter:image:alt" content="Folha Fácil">
 
 <!-- Bibliotecas e fontes auto-hospedadas: nenhuma requisição a terceiros. -->
 <script src="./vendor/pdf.min.js"></script>
@@ -232,21 +232,46 @@ body{
 
 .brand{display:flex;align-items:center;gap:16px;flex:1;min-width:0}
 
-.brand-logo{
-  width:48px;height:48px;
-  flex-shrink:0;
-  display:grid;place-items:center;
-  font-size:26px;line-height:1
+.brand-icon{
+  height:42px;width:auto;flex-shrink:0;
+  display:block
 }
 
-.brand-info{flex:1;min-width:0}
+.brand-wordmark{
+  flex:1;min-width:0;margin:0;
+  display:flex;align-items:center;line-height:0
+}
 
-.brand-name{
-  font-family:'Space Grotesk','Outfit',sans-serif;
-  font-size:24px;font-weight:700;letter-spacing:-.5px;
-  color:var(--text-primary);
-  display:flex;align-items:center;gap:12px;
-  margin-bottom:2px
+.brand-logo-img{
+  height:34px;width:auto;max-width:100%;
+  object-fit:contain;object-position:left center;
+  display:block;
+  transition:opacity .35s var(--ease)
+}
+/* Alterna a logo conforme o tema (claro = sem atributo) */
+.brand-logo-dark{display:none}
+html[data-theme="dark"] .brand-logo-light{display:none}
+html[data-theme="dark"] .brand-logo-dark{display:block}
+
+/* ── Efeito de surgimento da logo (ícone + texto) ── */
+@keyframes brand-rise{
+  from{opacity:0;transform:translateY(10px) scale(.9)}
+  to{opacity:1;transform:none}
+}
+/* Texto "desenhado": revelado da esquerda para a direita, como se escrito */
+@keyframes brand-draw{
+  from{clip-path:inset(0 100% 0 0);opacity:.35}
+  60%{opacity:1}
+  to{clip-path:inset(0 0 0 0);opacity:1}
+}
+@media (prefers-reduced-motion:no-preference){
+  .brand-icon{
+    animation:brand-rise .55s var(--ease) both;
+    transform-origin:left center
+  }
+  .brand-logo-img{
+    animation:brand-draw 1.15s cubic-bezier(.65,0,.35,1) .3s both
+  }
 }
 
 .sub{color:var(--text-secondary);font-size:13px;font-weight:500;margin:0}
@@ -793,7 +818,8 @@ td strong{
   .tool-head h2{font-size:21px}
   .header-top{flex-wrap:wrap;text-align:left;gap:14px;margin-bottom:30px;padding:16px}
   .brand{flex:1}
-  .brand-name{font-size:21px}
+  .brand-icon{height:38px}
+  .brand-logo-img{height:30px}
   .stats{grid-template-columns:repeat(2,1fr);gap:16px}
   .sn{font-size:38px}
   .tbar{flex-direction:column;align-items:stretch;padding:14px}
@@ -808,8 +834,8 @@ td strong{
 
 @media(max-width:480px){
   .wrap{padding:14px 12px 40px}
-  .brand-name{font-size:19px}
-  .brand-logo{width:46px;height:46px;font-size:22px}
+  .brand-icon{height:34px}
+  .brand-logo-img{height:26px}
   .theme-toggle{width:46px;height:46px;font-size:19px}
   .up{padding:44px 18px}
   .up-ico{width:84px;height:84px;font-size:38px}
@@ -849,7 +875,7 @@ td strong{
     {
       "@type": "WebApplication",
       "@id": "https://ghub-66j.pages.dev/#app",
-      "name": "Folha Fácil — Guardião Sepog e Infrequência SME",
+      "name": "Folha Fácil — Ferramenta de Departamento Pessoal",
       "url": "https://ghub-66j.pages.dev/",
       "description": "Reúne duas ferramentas. A primeira lê o PDF do ponto eletrônico e identifica atestados, faltas, atrasos, saldo de horas e escalas 12×36, exportando em PDF e planilha XLSX. A segunda, Infrequência SME, lê a planilha mensal de ponto, reconta faltas, atestados e TRE por funcionário, aplica as regras de escala e de DSR e gera a planilha enxuta para a folha. O processamento acontece integralmente no navegador do usuário; os arquivos e os dados extraídos não são transmitidos a nenhum servidor.",
       "applicationCategory": "BusinessApplication",
@@ -936,25 +962,14 @@ td strong{
 <div class="wrap">
   <header class="header-top">
     <div class="brand">
-      <span class="brand-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" style="display:block;transition:all .35s cubic-bezier(.4,0,.2,1)" aria-label="Folha Fácil">
-          <defs>
-            <linearGradient id="logo-g" x1="10%" y1="0%" x2="90%" y2="100%">
-              <stop offset="0%" stop-color="var(--logo-g-1)"/>
-              <stop offset="100%" stop-color="var(--logo-g-2)"/>
-            </linearGradient>
-          </defs>
-          <!-- G moderno, sem fundo -->
-          <path d="M50,19 A22.5,22.5 0 1,0 50,45"
-                fill="none" stroke="url(#logo-g)" stroke-width="11" stroke-linecap="round"/>
-          <rect x="35" y="29.5" width="16.5" height="9" rx="2.5" fill="url(#logo-g)"/>
-        </svg>
-      </span>
-      <div class="brand-info">
-        <h1 class="brand-name">
-          Folha Fácil<span class="sr-only"> — Guardião Sepog e Infrequência SME</span>
-        </h1>
-      </div>
+      <!-- Ícone FF à esquerda do texto -->
+      <img class="brand-icon" src="./assets/icons/folha-facil-icone.svg" alt="" aria-hidden="true" width="346" height="336">
+      <h1 class="brand-wordmark">
+        <!-- Logo de texto adaptável ao tema: preta no claro, branca no escuro -->
+        <img class="brand-logo-img brand-logo-light" src="./assets/icons/folha-facil-logo-tema-claro.svg" alt="Folha Fácil" width="852" height="150">
+        <img class="brand-logo-img brand-logo-dark" src="./assets/icons/folha-facil-logo-tema-escuro.svg" alt="" aria-hidden="true" width="852" height="150">
+        <span class="sr-only"> — Ferramenta de Departamento Pessoal</span>
+      </h1>
     </div>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar entre tema claro e noturno" title="Alternar tema"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 0 1 9.7 3.5a8.6 8.6 0 1 0 10.8 10.8Z"/></svg></button>
   </header>
