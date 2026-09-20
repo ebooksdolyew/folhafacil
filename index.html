@@ -48,22 +48,15 @@
 <meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Folha Fácil — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
-<!-- Ícone da logo (quadrado) como imagem alternativa de compartilhamento -->
-<meta property="og:image" content="https://ghub-66j.pages.dev/assets/social/og-icon.png">
-<meta property="og:image:secure_url" content="https://ghub-66j.pages.dev/assets/social/og-icon.png">
-<meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="1200">
-<meta property="og:image:alt" content="Ícone Folha Fácil">
+<meta property="og:image:alt" content="Folha Fácil">
 
 <!-- ═══════════ Twitter / X ═══════════ -->
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Folha Fácil — Guardião Sepog e Infrequência SME">
 <meta name="twitter:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
 <meta name="twitter:image" content="https://ghub-66j.pages.dev/assets/social/og-image.png">
-<meta name="twitter:image:alt" content="Folha Fácil — análise de ponto eletrônico em PDF e conferência da planilha de infrequência.">
+<meta name="twitter:image:alt" content="Folha Fácil">
 
 <!-- Bibliotecas e fontes auto-hospedadas: nenhuma requisição a terceiros. -->
 <script src="./vendor/pdf.min.js"></script>
@@ -265,17 +258,19 @@ html[data-theme="dark"] .brand-logo-dark{display:block}
   from{opacity:0;transform:translateY(10px) scale(.9)}
   to{opacity:1;transform:none}
 }
-@keyframes brand-slide{
-  from{opacity:0;transform:translateX(-16px)}
-  to{opacity:1;transform:none}
+/* Texto "desenhado": revelado da esquerda para a direita, como se escrito */
+@keyframes brand-draw{
+  from{clip-path:inset(0 100% 0 0);opacity:.35}
+  60%{opacity:1}
+  to{clip-path:inset(0 0 0 0);opacity:1}
 }
 @media (prefers-reduced-motion:no-preference){
   .brand-icon{
-    animation:brand-rise .6s var(--ease) both;
+    animation:brand-rise .55s var(--ease) both;
     transform-origin:left center
   }
   .brand-logo-img{
-    animation:brand-slide .6s var(--ease) .14s both
+    animation:brand-draw 1.15s cubic-bezier(.65,0,.35,1) .3s both
   }
 }
 

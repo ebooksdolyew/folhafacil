@@ -41,9 +41,8 @@
   "screenshots": [
     {
       "src": "./assets/social/og-image.png",
-      "sizes": "1200x630",
+      "sizes": "1200x1200",
       "type": "image/png",
-      "form_factor": "wide",
       "label": "Folha Fácil — Guardião Sepog e Infrequência SME"
     }
   ]
