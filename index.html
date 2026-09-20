@@ -917,16 +917,14 @@ td strong{
 .tool-switch-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* Infrequência em tela cheia: sai da coluna do .wrap e vai de borda a borda,
-   sem moldura. A altura exata (até o rodapé da janela) é dada no script. */
+   sem moldura. A altura acompanha o conteúdo (dada no script), e quem rola é a
+   PÁGINA — o cabeçalho sobe junto, não fica preso no topo. O valor abaixo é só
+   o inicial, até o script medir o conteúdo real. */
 .tool-frame{display:block;width:100vw;margin-left:calc(50% - 50vw);height:calc(100vh - 215px);border:0;background:transparent}
-/* Com a Infrequência aberta quem rola é ela, dentro do iframe */
-body.tool-infreq{overflow:hidden}
-body.tool-infreq .wrap{padding-bottom:0}
 
 @media (max-width:640px){
   .tool-switch{width:100%;justify-content:center}
   .tool-switch-btn{flex:1 1 auto;padding:10px 12px;text-align:center}
-  .tool-frame{height:calc(100vh - 175px)}
 }
 </style>
 
@@ -2951,10 +2949,35 @@ function prog(p) {
     doc.documentElement.style.colorScheme = tema();
   }
 
+  /* Dimensiona o iframe pela altura do CONTEÚDO interno (mesma origem), para
+     a página externa rolar como uma só — sem scroll preso dentro do iframe e
+     sem o cabeçalho fixo no topo. Se o conteúdo não puder ser medido (ex.:
+     file:// barra o acesso), cai no cálculo antigo, presa à viewport. */
   function ajustarAltura() {
     if (frame.style.display === 'none') return;
-    frame.style.height =
-      Math.max(320, Math.round(window.innerHeight - frame.getBoundingClientRect().top)) + 'px';
+    var interna = 0;
+    try {
+      var doc = frame.contentDocument;
+      if (doc && doc.body) {
+        interna = Math.max(doc.body.scrollHeight,
+                           doc.documentElement ? doc.documentElement.scrollHeight : 0);
+      }
+    } catch (_) {}
+    frame.style.height = interna > 0
+      ? interna + 'px'
+      : Math.max(320, Math.round(window.innerHeight - frame.getBoundingClientRect().top)) + 'px';
+  }
+
+  /* O conteúdo da Infrequência cresce depois do upload; observar o corpo dela
+     mantém a altura do iframe em dia sem depender de eventos internos. */
+  function observarConteudo() {
+    if (!window.ResizeObserver) return;
+    var doc;
+    try { doc = frame.contentDocument; } catch (_) { return; }
+    if (!doc || !doc.body) return;
+    if (frame._obs) frame._obs.disconnect();
+    frame._obs = new ResizeObserver(ajustarAltura);
+    frame._obs.observe(doc.body);
   }
 
   function mostrar(infreq) {
@@ -2964,7 +2987,6 @@ function prog(p) {
     }
     painel.style.display = infreq ? 'none' : '';
     frame.style.display  = infreq ? 'block' : 'none';
-    document.body.classList.toggle('tool-infreq', infreq);
     btnP.setAttribute('aria-selected', infreq ? 'false' : 'true');
     btnI.setAttribute('aria-selected', infreq ? 'true' : 'false');
     if (infreq) { ajustarAltura(); pintarIframe(); }
@@ -2977,7 +2999,7 @@ function prog(p) {
 
   btnP.addEventListener('click', function () { mostrar(false); });
   btnI.addEventListener('click', function () { mostrar(true); });
-  frame.addEventListener('load', function () { pintarIframe(); ajustarAltura(); });
+  frame.addEventListener('load', function () { pintarIframe(); ajustarAltura(); observarConteudo(); });
   window.addEventListener('resize', ajustarAltura);
 
   /* o botão de tema do Ghub só troca o atributo do <html>; observar esse
