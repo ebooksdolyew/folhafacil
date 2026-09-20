@@ -232,22 +232,21 @@ body{
 
 .brand{display:flex;align-items:center;gap:16px;flex:1;min-width:0}
 
-.brand-logo{
-  width:48px;height:48px;
-  flex-shrink:0;
-  display:grid;place-items:center;
-  font-size:26px;line-height:1
+.brand-wordmark{
+  flex:1;min-width:0;margin:0;
+  display:flex;align-items:center;line-height:0
 }
 
-.brand-info{flex:1;min-width:0}
-
-.brand-name{
-  font-family:'Space Grotesk','Outfit',sans-serif;
-  font-size:24px;font-weight:700;letter-spacing:-.5px;
-  color:var(--text-primary);
-  display:flex;align-items:center;gap:12px;
-  margin-bottom:2px
+.brand-logo-img{
+  height:34px;width:auto;max-width:100%;
+  object-fit:contain;object-position:left center;
+  display:block;
+  transition:opacity .35s var(--ease)
 }
+/* Alterna a logo conforme o tema (claro = sem atributo) */
+.brand-logo-dark{display:none}
+html[data-theme="dark"] .brand-logo-light{display:none}
+html[data-theme="dark"] .brand-logo-dark{display:block}
 
 .sub{color:var(--text-secondary);font-size:13px;font-weight:500;margin:0}
 
@@ -793,7 +792,7 @@ td strong{
   .tool-head h2{font-size:21px}
   .header-top{flex-wrap:wrap;text-align:left;gap:14px;margin-bottom:30px;padding:16px}
   .brand{flex:1}
-  .brand-name{font-size:21px}
+  .brand-logo-img{height:30px}
   .stats{grid-template-columns:repeat(2,1fr);gap:16px}
   .sn{font-size:38px}
   .tbar{flex-direction:column;align-items:stretch;padding:14px}
@@ -808,8 +807,7 @@ td strong{
 
 @media(max-width:480px){
   .wrap{padding:14px 12px 40px}
-  .brand-name{font-size:19px}
-  .brand-logo{width:46px;height:46px;font-size:22px}
+  .brand-logo-img{height:26px}
   .theme-toggle{width:46px;height:46px;font-size:19px}
   .up{padding:44px 18px}
   .up-ico{width:84px;height:84px;font-size:38px}
@@ -936,25 +934,12 @@ td strong{
 <div class="wrap">
   <header class="header-top">
     <div class="brand">
-      <span class="brand-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="40" height="40" style="display:block;transition:all .35s cubic-bezier(.4,0,.2,1)" aria-label="Folha Fácil">
-          <defs>
-            <linearGradient id="logo-g" x1="10%" y1="0%" x2="90%" y2="100%">
-              <stop offset="0%" stop-color="var(--logo-g-1)"/>
-              <stop offset="100%" stop-color="var(--logo-g-2)"/>
-            </linearGradient>
-          </defs>
-          <!-- G moderno, sem fundo -->
-          <path d="M50,19 A22.5,22.5 0 1,0 50,45"
-                fill="none" stroke="url(#logo-g)" stroke-width="11" stroke-linecap="round"/>
-          <rect x="35" y="29.5" width="16.5" height="9" rx="2.5" fill="url(#logo-g)"/>
-        </svg>
-      </span>
-      <div class="brand-info">
-        <h1 class="brand-name">
-          Folha Fácil<span class="sr-only"> — Guardião Sepog e Infrequência SME</span>
-        </h1>
-      </div>
+      <h1 class="brand-wordmark">
+        <!-- Logo de texto adaptável ao tema: preta no claro, branca no escuro -->
+        <img class="brand-logo-img brand-logo-light" src="./assets/icons/folha-facil-texto(1).svg" alt="Folha Fácil" width="852" height="150">
+        <img class="brand-logo-img brand-logo-dark" src="./assets/icons/folha-facil-texto(2).svg" alt="" aria-hidden="true" width="852" height="150">
+        <span class="sr-only"> — Guardião Sepog e Infrequência SME</span>
+      </h1>
     </div>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar entre tema claro e noturno" title="Alternar tema"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 0 1 9.7 3.5a8.6 8.6 0 1 0 10.8 10.8Z"/></svg></button>
   </header>
