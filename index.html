@@ -239,6 +239,11 @@ body{
 
 .brand{display:flex;align-items:center;gap:16px;flex:1;min-width:0}
 
+.brand-icon{
+  height:42px;width:auto;flex-shrink:0;
+  display:block
+}
+
 .brand-wordmark{
   flex:1;min-width:0;margin:0;
   display:flex;align-items:center;line-height:0
@@ -799,6 +804,7 @@ td strong{
   .tool-head h2{font-size:21px}
   .header-top{flex-wrap:wrap;text-align:left;gap:14px;margin-bottom:30px;padding:16px}
   .brand{flex:1}
+  .brand-icon{height:38px}
   .brand-logo-img{height:30px}
   .stats{grid-template-columns:repeat(2,1fr);gap:16px}
   .sn{font-size:38px}
@@ -814,6 +820,7 @@ td strong{
 
 @media(max-width:480px){
   .wrap{padding:14px 12px 40px}
+  .brand-icon{height:34px}
   .brand-logo-img{height:26px}
   .theme-toggle{width:46px;height:46px;font-size:19px}
   .up{padding:44px 18px}
@@ -941,6 +948,8 @@ td strong{
 <div class="wrap">
   <header class="header-top">
     <div class="brand">
+      <!-- Ícone FF à esquerda do texto -->
+      <img class="brand-icon" src="./assets/icons/folha-facil-icone(2).svg" alt="" aria-hidden="true" width="346" height="336">
       <h1 class="brand-wordmark">
         <!-- Logo de texto adaptável ao tema: preta no claro, branca no escuro -->
         <img class="brand-logo-img brand-logo-light" src="./assets/icons/folha-facil-texto(1).svg" alt="Folha Fácil" width="852" height="150">
