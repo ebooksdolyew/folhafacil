@@ -276,23 +276,39 @@ html[data-theme="dark"] .brand-logo-dark{display:block}
 
 .sub{color:var(--text-secondary);font-size:13px;font-weight:500;margin:0}
 
-/* ── BOTÃO DE TEMA (canto superior direito) ── */
+/* ── BOTÃO DE TEMA (canto superior direito) ──
+   Interruptor deslizante: o "knob" corre da esquerda (sol) para a direita
+   (lua) ao trocar de tema. Mesmo efeito do Conciliador de Planilhas, com o
+   relevo neumórfico e os acentos do Ghub. */
 .theme-toggle{
   flex-shrink:0;
-  width:52px;height:52px;
-  display:grid;place-items:center;
-  font-size:22px;line-height:1;
+  position:relative;
+  width:74px;height:36px;
+  padding:0;
   cursor:pointer;
   border:none;
+  border-radius:var(--r-pill);
+  background:var(--bg);
+  box-shadow:var(--nm-in-sm);
+  transition:background .35s var(--ease)
+}
+.theme-toggle .knob{
+  position:absolute;top:4px;left:4px;
+  width:28px;height:28px;
   border-radius:50%;
   background:var(--bg);
-  color:var(--text-primary);
   box-shadow:var(--nm-out-sm);
-  transition:box-shadow .25s var(--ease),transform .25s var(--ease),background .35s var(--ease)
+  display:grid;place-items:center;
+  color:var(--amber);
+  transition:transform .35s cubic-bezier(.5,1.6,.5,1),color .3s var(--ease),box-shadow .25s var(--ease)
 }
-
-.theme-toggle:hover{transform:translateY(-2px)}
-.theme-toggle:active{box-shadow:var(--nm-in-sm);transform:translateY(0)}
+html[data-theme="dark"] .theme-toggle .knob{transform:translateX(38px);color:var(--accent)}
+.theme-toggle .knob svg{width:16px;height:16px;stroke-width:2}
+.theme-toggle .i-moon{display:none}
+html[data-theme="dark"] .theme-toggle .i-sun{display:none}
+html[data-theme="dark"] .theme-toggle .i-moon{display:block}
+.theme-toggle:active .knob{box-shadow:var(--nm-in-sm)}
+.theme-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
 /* ════════════════════════════════════════════════════════════════ */
 /* CABEÇALHO DA FERRAMENTA — nome e o que ela faz                   */
@@ -836,7 +852,8 @@ td strong{
   .wrap{padding:14px 12px 40px}
   .brand-icon{height:34px}
   .brand-logo-img{height:26px}
-  .theme-toggle{width:46px;height:46px;font-size:19px}
+  .theme-toggle{width:66px;height:34px}
+  html[data-theme="dark"] .theme-toggle .knob{transform:translateX(30px)}
   .up{padding:44px 18px}
   .up-ico{width:84px;height:84px;font-size:38px}
   .up-txt{font-size:16px}
@@ -971,13 +988,19 @@ td strong{
         <span class="sr-only"> — Ferramenta de Departamento Pessoal</span>
       </h1>
     </div>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar entre tema claro e noturno" title="Alternar tema"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 0 1 9.7 3.5a8.6 8.6 0 1 0 10.8 10.8Z"/></svg></button>
+    <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Alternar entre tema claro e noturno" title="Alternar tema">
+      <span class="knob">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/></svg>
+      </span>
+    </button>
   </header>
 
   <!-- Seletor de ferramentas (adicionado) -->
   <nav class="tool-switch" role="tablist" aria-label="Escolher ferramenta">
     <button class="tool-switch-btn" id="toolBtnPonto" type="button" role="tab" aria-selected="true" aria-controls="toolPonto">Guardião Sepog</button>
     <button class="tool-switch-btn" id="toolBtnInfreq" type="button" role="tab" aria-selected="false" aria-controls="toolInfrequencia">Infrequência SME</button>
+    <button class="tool-switch-btn" id="toolBtnConcil" type="button" role="tab" aria-selected="false" aria-controls="toolConciliador">Conciliador de Planilhas</button>
   </nav>
 
   <!-- Contêiner da ferramenta atual — conteúdo interno inalterado -->
@@ -1112,6 +1135,10 @@ td strong{
   <!-- Segunda ferramenta: arquivo próprio, isolado em iframe de mesma origem -->
   <iframe class="tool-frame" id="toolInfrequencia" title="Infrequência SME" role="tabpanel"
           aria-labelledby="toolBtnInfreq" data-src="./infrequencia.html" style="display:none"></iframe>
+
+  <!-- Terceira ferramenta: Conciliador de Planilhas, mesmo isolamento em iframe -->
+  <iframe class="tool-frame" id="toolConciliador" title="Conciliador de Planilhas" role="tabpanel"
+          aria-labelledby="toolBtnConcil" data-src="./conciliadorde-planilha.html" style="display:none"></iframe>
 </div>
 
 <script>
@@ -1160,11 +1187,11 @@ function icoEl(nome, extra) {
   function apply(theme) {
     if (theme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
-      btn.replaceChildren(icoEl('sol'));
+      btn.setAttribute('aria-checked', 'true');
       btn.title = 'Mudar para tema White';
     } else {
       document.documentElement.removeAttribute('data-theme');
-      btn.replaceChildren(icoEl('lua'));
+      btn.setAttribute('aria-checked', 'false');
       btn.title = 'Mudar para tema Noturno';
     }
   }
@@ -2925,14 +2952,15 @@ function prog(p) {
    disso edita o infrequencia.html, que continua funcionando sozinho. */
 (function () {
   var painel = document.getElementById('toolPonto');
-  var frame  = document.getElementById('toolInfrequencia');
   var btnP   = document.getElementById('toolBtnPonto');
-  var btnI   = document.getElementById('toolBtnInfreq');
   var raiz   = document.documentElement;
   var ABA    = 'ghub-ferramenta';
 
   /* A Infrequência já expõe o preto/branco dela em variáveis; aqui elas passam
-     a apontar para os tons do Ghub. O vermelho de destaque dela não muda. */
+     a apontar para os tons do Ghub. O vermelho de destaque dela não muda. O
+     Conciliador de Planilhas já traz uma paleta neumórfica clara/escura própria
+     e coerente (o card precisa ter a mesma cor do fundo), então nele NÃO
+     injetamos esta paleta — só honramos o tema escolhido no botão. */
   var PALETA =
     ':root:not([data-theme="dark"]){' +
       '--bg:#e6eaf2;--ink:#2d3440;--ink-soft:#5c6677;--ink-faint:#8a93a6;' +
@@ -2940,93 +2968,107 @@ function prog(p) {
     ':root[data-theme="dark"]{' +
       '--bg:#2b2f36;--ink:#eef1f6;--ink-soft:#aeb6c4;--ink-faint:#737c8c;' +
       '--rule:rgba(255,255,255,.09);--hi:rgba(62,68,78,.85);--lo:rgba(16,18,22,.75)}' +
-    /* mesma coluna do Ghub, para o conteúdo das duas abas começar no mesmo
+    /* mesma coluna do Ghub, para o conteúdo das abas começar no mesmo
        ponto — só largura e recuo, nenhuma regra de cálculo */
     '.wrap{max-width:1600px;padding-left:28px;padding-right:28px}' +
     '@media(max-width:768px){.wrap{padding-left:16px;padding-right:16px}}' +
     '@media(max-width:480px){.wrap{padding-left:12px;padding-right:12px}}';
 
+  /* Cada ferramenta em iframe: id de sessão, botão, o próprio iframe e se
+     recebe a paleta do Ghub. Adicionar outra ferramenta é só mais uma entrada. */
+  var frames = [
+    { id: 'infrequencia', paleta: true,  frame: document.getElementById('toolInfrequencia'), btn: document.getElementById('toolBtnInfreq') },
+    { id: 'conciliador',  paleta: false, frame: document.getElementById('toolConciliador'),  btn: document.getElementById('toolBtnConcil') }
+  ];
+
   function tema() { return raiz.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
 
-  function pintarIframe() {
+  function pintarIframe(tool) {
     var doc;
-    try { doc = frame.contentDocument; } catch (_) { return; }  /* file:// pode barrar */
+    try { doc = tool.frame.contentDocument; } catch (_) { return; }  /* file:// pode barrar */
     if (!doc || !doc.documentElement) return;
-    if (!doc.getElementById('ghub-paleta')) {
+    if (tool.paleta && !doc.getElementById('ghub-paleta')) {
       var st = doc.createElement('style');
       st.id = 'ghub-paleta';
       st.textContent = PALETA;
       (doc.head || doc.documentElement).appendChild(st);
     }
-    /* claro/escuro explícito: sem isso a Infrequência seguiria o tema do
+    /* claro/escuro explícito: sem isso a ferramenta seguiria o tema do
        sistema e discordaria do Ghub, que só obedece ao botão */
     doc.documentElement.setAttribute('data-theme', tema());
     doc.documentElement.style.colorScheme = tema();
   }
+  function pintarTodos() { frames.forEach(function (t) { if (t.frame.getAttribute('src')) pintarIframe(t); }); }
 
   /* Dimensiona o iframe pela altura do CONTEÚDO interno (mesma origem), para
      a página externa rolar como uma só — sem scroll preso dentro do iframe e
      sem o cabeçalho fixo no topo. Se o conteúdo não puder ser medido (ex.:
      file:// barra o acesso), cai no cálculo antigo, presa à viewport. */
-  function ajustarAltura() {
-    if (frame.style.display === 'none') return;
+  function ajustarAltura(tool) {
+    if (!tool || tool.frame.style.display === 'none') return;
     var interna = 0;
     try {
-      var doc = frame.contentDocument;
+      var doc = tool.frame.contentDocument;
       if (doc && doc.body) {
         interna = Math.max(doc.body.scrollHeight,
                            doc.documentElement ? doc.documentElement.scrollHeight : 0);
       }
     } catch (_) {}
-    frame.style.height = interna > 0
+    tool.frame.style.height = interna > 0
       ? interna + 'px'
-      : Math.max(320, Math.round(window.innerHeight - frame.getBoundingClientRect().top)) + 'px';
+      : Math.max(320, Math.round(window.innerHeight - tool.frame.getBoundingClientRect().top)) + 'px';
   }
+  function ajustarVisivel() { frames.forEach(function (t) { if (t.frame.style.display !== 'none') ajustarAltura(t); }); }
 
-  /* O conteúdo da Infrequência cresce depois do upload; observar o corpo dela
+  /* O conteúdo da ferramenta cresce depois do upload; observar o corpo dela
      mantém a altura do iframe em dia sem depender de eventos internos. */
-  function observarConteudo() {
+  function observarConteudo(tool) {
     if (!window.ResizeObserver) return;
     var doc;
-    try { doc = frame.contentDocument; } catch (_) { return; }
+    try { doc = tool.frame.contentDocument; } catch (_) { return; }
     if (!doc || !doc.body) return;
-    if (frame._obs) frame._obs.disconnect();
-    frame._obs = new ResizeObserver(ajustarAltura);
-    frame._obs.observe(doc.body);
+    if (tool.frame._obs) tool.frame._obs.disconnect();
+    tool.frame._obs = new ResizeObserver(function () { ajustarAltura(tool); });
+    tool.frame._obs.observe(doc.body);
   }
 
-  function mostrar(infreq) {
-    /* carrega a Infrequência só no primeiro acesso; depois fica em memória */
-    if (infreq && !frame.getAttribute('src')) {
-      frame.setAttribute('src', frame.getAttribute('data-src'));
-    }
-    painel.style.display = infreq ? 'none' : '';
-    frame.style.display  = infreq ? 'block' : 'none';
-    btnP.setAttribute('aria-selected', infreq ? 'false' : 'true');
-    btnI.setAttribute('aria-selected', infreq ? 'true' : 'false');
-    if (infreq) { ajustarAltura(); pintarIframe(); }
+  function mostrar(id) {
+    painel.style.display = (id === 'ponto') ? '' : 'none';
+    btnP.setAttribute('aria-selected', id === 'ponto' ? 'true' : 'false');
+    frames.forEach(function (t) {
+      var ativo = t.id === id;
+      /* carrega o iframe só no primeiro acesso; depois fica em memória */
+      if (ativo && !t.frame.getAttribute('src')) {
+        t.frame.setAttribute('src', t.frame.getAttribute('data-src'));
+      }
+      t.frame.style.display = ativo ? 'block' : 'none';
+      t.btn.setAttribute('aria-selected', ativo ? 'true' : 'false');
+      if (ativo) { ajustarAltura(t); pintarIframe(t); }
+    });
     /* sessionStorage e não localStorage: a escolha vale enquanto esta aba do
        navegador estiver aberta (sobrevive ao F5) e some ao fechá-la, então
        nada fica gravado no navegador além da preferência de tema — como diz a
        Política de Privacidade no rodapé */
-    try { sessionStorage.setItem(ABA, infreq ? 'infrequencia' : 'ponto'); } catch (_) {}
+    try { sessionStorage.setItem(ABA, id); } catch (_) {}
   }
 
-  btnP.addEventListener('click', function () { mostrar(false); });
-  btnI.addEventListener('click', function () { mostrar(true); });
-  frame.addEventListener('load', function () { pintarIframe(); ajustarAltura(); observarConteudo(); });
-  window.addEventListener('resize', ajustarAltura);
+  btnP.addEventListener('click', function () { mostrar('ponto'); });
+  frames.forEach(function (t) {
+    t.btn.addEventListener('click', function () { mostrar(t.id); });
+    t.frame.addEventListener('load', function () { pintarIframe(t); ajustarAltura(t); observarConteudo(t); });
+  });
+  window.addEventListener('resize', ajustarVisivel);
 
   /* o botão de tema do Ghub só troca o atributo do <html>; observar esse
      atributo evita mexer naquele script */
   if (window.MutationObserver) {
-    new MutationObserver(pintarIframe).observe(raiz, { attributes: true, attributeFilter: ['data-theme'] });
+    new MutationObserver(pintarTodos).observe(raiz, { attributes: true, attributeFilter: ['data-theme'] });
   }
 
   /* retoma a ferramenta em uso nesta aba; sem nada guardado, abre no ponto */
   var guardada = null;
   try { guardada = sessionStorage.getItem(ABA); } catch (_) {}
-  if (guardada === 'infrequencia') mostrar(true);
+  if (frames.some(function (t) { return t.id === guardada; })) mostrar(guardada);
 })();
 </script>
 </body>

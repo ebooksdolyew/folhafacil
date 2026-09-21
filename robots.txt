@@ -1,6 +1,6 @@
 # robots.txt — Folha Fácil · Ponto eletrônico e Infrequência
 # Aplicação corporativa de acesso restrito: nenhuma página deve ser indexada,
-# nem a inicial nem a /infrequencia.html.
+# nem a inicial, nem a /infrequencia.html, nem a /conciliadorde-planilha.html.
 
 User-agent: *
 Disallow: /

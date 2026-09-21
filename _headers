@@ -18,6 +18,8 @@
   Cache-Control: public, max-age=0, must-revalidate
 /infrequencia.html
   Cache-Control: public, max-age=0, must-revalidate
+/conciliadorde-planilha.html
+  Cache-Control: public, max-age=0, must-revalidate
 
 # Camada de interface compartilhada: revalidada junto com as páginas
 /ui/*

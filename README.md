@@ -1,19 +1,21 @@
 # Folha Fácil
 
-Site estático com **duas ferramentas de departamento pessoal**, escolhidas por um
-seletor no topo da página. Nenhuma das duas envia arquivo para servidor: tudo é
+Site estático com **três ferramentas de departamento pessoal**, escolhidas por um
+seletor no topo da página. Nenhuma delas envia arquivo para servidor: tudo é
 processado no navegador de quem usa.
 
 | Ferramenta | Entrada | Saída |
 |---|---|---|
 | **Guardião Sepog** (padrão) | PDF de frequências | Tabela na tela (com faltas e DSR), PDF anotado, planilha XLSX e relatório TXT |
 | **Infrequência SME** | Planilha mensal de ponto (.xlsx, .xlsm ou .csv) | Planilha da folha e planilha detalhada |
+| **Conciliador de Planilhas** | Fatura Detalhada Clin Odonto (por empresa) + cadastro Novati | Listas de incluir/excluir/alterar e planilhas de dependentes, transferências e descontos |
 
-A Infrequência SME fica em `infrequencia.html`, um arquivo à parte carregado dentro de um
-`<iframe>` de mesma origem. É o que mantém o CSS, o JavaScript e os IDs das duas
-separados — as duas foram escritas para viver sozinhas na página e colidiriam se
-fossem coladas no mesmo documento. O `index.html` só acrescenta o seletor, o contêiner
-e o iframe; as duas ferramentas continuam intactas por dentro.
+A Infrequência SME e o Conciliador de Planilhas ficam em arquivos à parte
+(`infrequencia.html` e `conciliadorde-planilha.html`), cada um carregado dentro de um
+`<iframe>` de mesma origem. É o que mantém o CSS, o JavaScript e os IDs de cada uma
+separados — foram escritas para viver sozinhas na página e colidiriam se fossem coladas
+no mesmo documento. O `index.html` só acrescenta o seletor, o contêiner e os iframes; as
+ferramentas continuam intactas por dentro.
 
 ## Rodar
 
@@ -30,20 +32,22 @@ produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_head
 
 | Caminho | O que é |
 |---|---|
-| `index.html` | O Guardião Sepog inteiro (HTML + CSS + JS) e o seletor que carrega a Infrequência SME. |
+| `index.html` | O Guardião Sepog inteiro (HTML + CSS + JS) e o seletor que carrega as outras ferramentas. |
 | `infrequencia.html` | A Infrequência SME inteira, com a biblioteca xlsx-js-style (Apache-2.0) embutida. |
+| `conciliadorde-planilha.html` | O Conciliador de Planilhas inteiro; usa a `vendor/xlsx.full.min.js` auto-hospedada. |
 | `ui/neu.css`, `ui/neu.js` | Camada de interface usada pelas duas: lista neumórfica no lugar da lista nativa do `<select>`, caixas de marcação e retorno visual dos controles. Se não carregar, os seletores voltam a abrir a lista do navegador e nada quebra. |
 | `404.html`, `_headers`, `robots.txt`, `site.webmanifest`, `favicon.svg` | Página de erro, cabeçalhos HTTP (CSP inclusive), SEO e PWA. |
 | `assets/` | `icons/` (ícones do site e do PWA), `social/` (imagem de compartilhamento) e `fonts/` (Inter, Outfit e Space Grotesk auto-hospedadas). |
-| `vendor/` | pdf.js e pdf-lib auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |
+| `vendor/` | pdf.js, pdf-lib e xlsx (xlsx-js-style) auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |
 | `docs/regras/` | Regras de cálculo da **Infrequência SME** (R1 a R4) em linguagem simples. |
 | `docs/REGRA_VALIDACAO_ESCALA.md`, `docs/REGRA_JORNADA_12x36.md` | Regras de validação de atestado do **Guardião Sepog**. |
 | `docs/REGRA_FALTAS_DSR.md` | Regra de faltas e DSR do **Guardião Sepog** — leitura da coluna OBSERVAÇÃO, contagem por escala e DSR. |
 | `docs/LIMITACOES_CONHECIDAS.md` | Divergências conhecidas entre código e documentação, com a medição que falta para decidir cada uma. |
+| `docs/conciliador/` | Regras do **Conciliador de Planilhas** (classificação, descontos, avisos) e os layouts das planilhas geradas. |
 | `tests/` | Suíte Playwright (unitária + ponta a ponta) sobre o `index.html` real. Ver `tests/README.md`. |
 | `validacao/` | Procedimento de regressão contra PDFs reais (`comparar.py`) — os PDFs ficam fora do git. |
 
-## As duas ferramentas
+## As três ferramentas
 
 ### Guardião Sepog (`index.html`)
 
@@ -88,6 +92,21 @@ Lê o PDF do ponto, identifica atestados (ATM), faltas, atrasos, saldo de horas 
 Detalhe de cada uma em `docs/regras/REGRAS.md`, `docs/regras/regra-escala-convencional.md`
 e `docs/regras/regra-dsr.md`. **Toda regra nova entra no código e no `docs/regras/` no mesmo
 commit** — documentação que contradiz o código é pior que documentação nenhuma.
+
+### Conciliador de Planilhas (`conciliadorde-planilha.html`)
+
+Concilia a **Fatura Detalhada do Clin Odonto** (uma por empresa do grupo) com o
+**cadastro da folha (Novati)**, usando `CPF + tipo` (titular/dependente) como chave, sem
+restrição de filial. Classifica cada beneficiário em uma ação — **incluir, excluir,
+alterar, verificar, transferências** ou **adesão manual** — e extrai os **descontos**
+(adesão e prorata) e os **avisos** de conferência. Gera as planilhas de importação de
+dependentes, de transferências (uma aba por empresa de destino) e de descontos.
+
+As regras de classificação, os eventos de desconto (697/645/710) e os layouts das
+planilhas estão em `docs/conciliador/REGRAS.md` e `docs/conciliador/layouts-exportacao.md`
+— **toda regra nova entra no código e no `docs/conciliador/` no mesmo commit.** A leitura
+de planilha usa a `vendor/xlsx.full.min.js` (o mesmo artefato embutido na Infrequência),
+auto-hospedada para não depender de CDN nem furar a CSP.
 
 ## Testes
 
