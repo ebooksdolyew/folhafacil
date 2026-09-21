@@ -391,6 +391,7 @@ section:not(.hide),.actionbar:not(.hide){animation:rise .35s ease both}
         <option value="A">Somente atestados</option>
         <option value="FA" selected>Faltas e atestados</option>
         <option value="FAD">Faltas, atestados e TRE</option>
+        <option value="DSR">Somente DSR</option>
       </select>
     </label>
     <label class="field inline">Funcionários
@@ -1136,7 +1137,7 @@ function montarSaida(){
 // ex.: MODELO_VESPA_FALTAS-ATESTADOS_AGO.xlsx  /  MODELO_TODAS_FALTAS-ATESTADOS_SO31_AGO.xlsx
 function nomeArquivo(prefixo){
   const emp = ($('#f-empresa').value || 'TODAS').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_');
-  const tipo = { F:'FALTAS', A:'ATESTADOS', FA:'FALTAS-ATESTADOS', FAD:'FALTAS-ATESTADOS-TRE' }[$('#f-tipo').value];
+  const tipo = { F:'FALTAS', A:'ATESTADOS', FA:'FALTAS-ATESTADOS', FAD:'FALTAS-ATESTADOS-TRE', DSR:'DSR' }[$('#f-tipo').value];
   const mes = (STATE.mes || STATE.fileName.replace(/\.[^.]+$/,'')).toUpperCase().replace(/[^A-Z0-9]+/g,'');
   const quem = $('#f-quem').value === '31' ? 'SO31' : '';
   const esc = { '':'', 'Convencional':'CONVENCIONAL', '12×36':'12X36' }[$('#f-escala').value];
@@ -1160,6 +1161,7 @@ function estilizar(ws){
 
 $('#btn-modelo').onclick = async ()=>{
   if(!await confirmarMes()) return;
+  if($('#f-tipo').value === 'DSR') return exportarDSR('MODELO');
   const dados = montarSaida();
   if(!dados.length){ alert('Nada a exportar com os filtros atuais.'); return; }
   // com "Todas" as empresas, a planilha precisa dizer a empresa de cada funcionário
@@ -1189,6 +1191,7 @@ $('#btn-modelo').onclick = async ()=>{
 
 $('#btn-export').onclick = async ()=>{
   if(!await confirmarMes()) return;
+  if($('#f-tipo').value === 'DSR') return exportarDSR('DETALHADA');
   const dados = montarSaida();
   if(!dados.length){ alert('Nada a exportar com os filtros atuais.'); return; }
   const ws = XLSX.utils.json_to_sheet(dados);
@@ -1198,6 +1201,53 @@ $('#btn-export').onclick = async ()=>{
   XLSX.utils.book_append_sheet(wb, ws, 'FALTAS');
   XLSX.writeFile(wb, nomeArquivo('DETALHADA'));
 };
+
+/* Uma linha por funcionário que tem DSR (a DSR só vem de falta). A coluna
+   QUANTIDADE recebe a DSR, e o Provento DSR (campo #p-tre) fica ao lado. Respeita
+   os filtros de empresa, escala e "ausência mês completo". */
+function montarSaidaDSR(){
+  const emp = $('#f-empresa').value;
+  const escalaSel = $('#f-escala').value;
+  const so31 = $('#f-quem').value === '31';
+  const R = STATE.rows.filter(r=>(!emp || r.empresa===emp) && (!so31 || temMesCheio(r)) && (!escalaSel || escalaDe(r)===escalaSel));
+  const linhas = [];
+  R.forEach(r=>{
+    if(!r.cF) return;                       // sem falta, sem DSR
+    const escala = escalaDe(r);
+    const { contados } = diasContados(r, 'F', escala);
+    const dsr = dsrDe(r, escala, contados);
+    if(!dsr) return;                        // só quem realmente tem DSR
+    linhas.push({ Funcionário:r.nome, CPF:identificador(r), Empresa:r.empresa, Escala:escala, QUANTIDADE:dsr });
+  });
+  linhas.sort((a,b)=> (a.CPF||'').localeCompare(b.CPF||''));
+  return linhas.map((l,i)=>({ MATRICULA:i+1, ...l }));
+}
+
+// Selecionado "Somente DSR" no Lançar: planilha com a DSR na coluna QUANTIDADE
+// e o Provento DSR (campo #p-tre) ao lado. Serve tanto ao "modelo da folha"
+// quanto à "planilha detalhada" — nesse modo as duas geram a mesma folha enxuta.
+function exportarDSR(prefixo){
+  const dados = montarSaidaDSR();
+  if(!dados.length){ alert('Nenhum funcionário com DSR nos filtros atuais.'); return; }
+  const provDsr = $('#p-tre').value;        // campo "Provento DSR"
+  const todasEmpresas = !$('#f-empresa').value;
+  const cabecalho = ['MATRICULA','Funcionário', ...(todasEmpresas ? ['Empresa'] : []), 'CPF','Escala','QUANTIDADE','PROVENTO','VALOR'];
+  const aoa = [cabecalho].concat(dados.map(d=>[
+    d.MATRICULA, d['Funcionário'], ...(todasEmpresas ? [d.Empresa] : []), d.CPF, d.Escala, d.QUANTIDADE, provDsr ? Number(provDsr) : '', 0
+  ]));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const colCpf = cabecalho.indexOf('CPF');
+  for(let i=0;i<dados.length;i++){
+    const ref = XLSX.utils.encode_cell({r:i+1, c:colCpf});
+    if(ws[ref]) { ws[ref].t = 's'; ws[ref].z = '@'; }
+  }
+  ws['!cols'] = [{wch:12},{wch:34}, ...(todasEmpresas ? [{wch:16}] : []), {wch:16},{wch:14},{wch:12},{wch:12},{wch:8}];
+  estilizar(ws);
+  ws['!freeze'] = 'A2';
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'DSR');
+  XLSX.writeFile(wb, nomeArquivo(prefixo));
+}
 </script>
 
 <script>

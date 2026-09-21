@@ -1069,6 +1069,10 @@ td strong{
       <button class="btn bg" id="bdl" onclick="dlPdf()" aria-label="Baixar PDF com páginas de ATM" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg> Baixar PDF</button>
       <button class="btn bc" id="bcs" onclick="dlXlsx()" aria-label="Gerar planilha XLSX com a lista" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 9v12"/></svg> Gerar Planilha</button>
       <button class="btn bc" id="bcsv" onclick="dlCsv()" aria-label="Gerar arquivo CSV com a lista" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg> Gerar CSV</button>
+      <label class="ck" style="gap:8px" title="Código do provento da DSR, usado na Planilha DSR">Provento DSR
+        <input type="number" id="pDsr" inputmode="numeric" aria-label="Provento DSR" style="width:74px;height:26px;border:none;border-radius:var(--r-pill);background:var(--bg);color:var(--text-primary);box-shadow:var(--nm-in-sm);padding:4px 10px;font:inherit;font-weight:700;accent-color:var(--accent)">
+      </label>
+      <button class="btn bc" id="bdsr" onclick="dlDsr()" aria-label="Gerar planilha só com a DSR" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 9v12"/></svg> Planilha DSR</button>
       <button class="btn bc" id="blr" onclick="dlReport()" aria-label="Baixar relatório de aprendizado" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.5 9.5 11l4 4L21 7.5"/><path d="M15.5 7.5H21v5.5"/></svg> Relatório</button>
       <button class="btn bs" onclick="resetTool()" aria-label="Carregar novo arquivo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6l2.5 2.5"/><path d="M21 3v5.5h-5.5"/></svg> Novo</button>
     </div>
@@ -2392,6 +2396,7 @@ function updateButtonStates() {
   document.getElementById('bdl').disabled = !pdfOk || !pdfBytes;
   document.getElementById('bcs').disabled = list.length === 0;
   document.getElementById('bcsv').disabled = list.length === 0;
+  document.getElementById('bdsr').disabled = list.length === 0;
   document.getElementById('blr').disabled = list.length === 0;
 }
 
@@ -2758,6 +2763,41 @@ function dlXlsx() {
   }
 }
 
+/* ─── GERAR PLANILHA SÓ DE DSR (.xlsx) ───────────────────────────
+   Uma linha por funcionário com DSR (a DSR só vem de falta). A coluna
+   QUANTIDADE recebe a DSR e o PROVENTO (código do campo "Provento DSR") fica ao
+   lado. Respeita os filtros/busca ativos, como as demais exportações. */
+function dlDsr() {
+  if (!allEmps.length) return;
+  try {
+    const list = getFilteredEmps().filter(e => {
+      const d = faltaDsr(e);
+      return d !== null && d !== undefined && d > 0;
+    });
+    if (!list.length) { showAlert('Nenhum funcionário com DSR na lista atual.', 'warn'); return; }
+
+    const provRaw = document.getElementById('pDsr').value.trim();
+    const provento = provRaw === '' ? '' : Number(provRaw);
+
+    const header = ['MATRICULA', 'Funcionário', 'CPF', 'Escala', 'QUANTIDADE', 'PROVENTO', 'VALOR'];
+    const widths = [12, 34, 16, 14, 12, 12, 12];
+    const rows = [header];
+    list.forEach((e, i) => rows.push([
+      i + 1, e.name, e.cpf || '—', e.is12 ? '12×36' : 'Convencional', faltaDsr(e), provento, 0
+    ]));
+
+    const blob = _buildXlsx(rows, 'DSR', widths);
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (curFile ? curFile.name.replace(/\.pdf$/i, '') : 'freqatm') + '_DSR.xlsx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (err) {
+    showAlert('Erro ao gerar planilha de DSR: ' + err.message, 'err');
+  }
+}
+
 /* ─── GERAR CSV (.csv) ───────────────────────────────────────── */
 
 /* Escapa um valor para o formato CSV: envolve em aspas quando houver
@@ -2924,6 +2964,7 @@ function resetTool() {
   document.getElementById('fwarn').style.display = 'none';
   document.getElementById('bdl').disabled = true;
   document.getElementById('bcs').disabled = true;
+  document.getElementById('bdsr').disabled = true;
   document.getElementById('blr').disabled = true;
   document.querySelectorAll('th.sortable').forEach(t => {
     t.classList.remove('sort-asc','sort-desc');

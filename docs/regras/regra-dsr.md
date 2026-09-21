@@ -92,3 +92,6 @@ fins de semana continuam descartados pela R3 e não geram DSR.
 - `diasContados()` — bloco `// R3`, exceção `tipo === 'F' && !contados.length` devolve
   as faltas com `aviso`.
 - `montarSaida()` — preenche `DSR` e `Observação` em cada linha.
+- `montarSaidaDSR()` / `exportarDSR()` — exportação **Somente DSR** (opção do seletor
+  "Lançar"): uma linha por funcionário com DSR, a DSR na coluna `QUANTIDADE` e o
+  campo "Provento DSR" ao lado. Usa o mesmo `dsrDe()`; não muda o cálculo.

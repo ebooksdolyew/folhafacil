@@ -382,3 +382,10 @@ aparecesse numa observação ou na linha de LEGENDAS. Ancorar no CARGO seria mai
 Não entra aqui porque o `is12` também governa a detecção de atestado — mudá-lo altera a
 contagem de ATM, e alterar contagem sem medição é exatamente o que
 `LIMITACOES_CONHECIDAS.md` pede para não fazer.
+
+## Exportação "Planilha DSR"
+
+O botão **Planilha DSR** (`dlDsr()`) gera uma planilha à parte, só com quem tem DSR: uma
+linha por funcionário, a DSR na coluna `QUANTIDADE` e o `PROVENTO` (código do campo
+"Provento DSR" da barra) ao lado. Reaproveita `faltaDsr(e)` e os filtros/busca ativos —
+não recalcula nada.
