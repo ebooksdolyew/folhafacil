@@ -320,7 +320,7 @@ html[data-theme="dark"] .theme-toggle .i-moon{display:block}
 
 .tool-head h2{
   font-family:'Space Grotesk','Outfit',sans-serif;
-  font-size:26px;font-weight:800;letter-spacing:-.6px;
+  font-size:26px;font-weight:800;letter-spacing:-.6px;line-height:1.2;
   color:var(--text-primary);
   margin:0 0 6px;
   transition:color .35s var(--ease)
@@ -334,58 +334,52 @@ html[data-theme="dark"] .theme-toggle .i-moon{display:block}
 }
 
 /* ════════════════════════════════════════════════════════════════ */
-/* UPLOAD AREA — placa neumórfica com poço interno */
+/* UPLOAD AREA — cartão com rótulo e poço interno, mesmo desenho da  */
+/* Infrequência SME e do Conciliador de Planilhas                    */
 /* ════════════════════════════════════════════════════════════════ */
+.up-sec{
+  background:var(--bg);
+  border-radius:18px;
+  box-shadow:8px 8px 18px var(--sh-dark),-8px -8px 18px var(--sh-light);
+  padding:24px 26px;
+  animation:rise .55s var(--ease) .06s both;
+  transition:background .35s var(--ease),box-shadow .35s var(--ease)
+}
+
+.up-label{
+  font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-secondary);margin:0 0 16px;line-height:1.5;
+  display:flex;align-items:center;gap:10px
+}
+.up-label::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--bg),0 0 0 5px color-mix(in srgb,var(--text-primary) 9%,transparent)}
+
 .up{
-  position:relative;
   cursor:pointer;
   text-align:center;
-  padding:76px 48px;
-  border-radius:var(--r-xl);
+  padding:44px 20px;
+  border-radius:18px;
   background:var(--bg);
-  box-shadow:var(--nm-out-lg);
-  animation:rise .55s var(--ease) .06s both;
-  transition:box-shadow .3s var(--ease),transform .3s var(--ease),background .35s var(--ease)
+  box-shadow:inset 5px 5px 12px var(--sh-dark),inset -5px -5px 12px var(--sh-light);
+  outline:2px dashed transparent;outline-offset:-14px;
+  transition:box-shadow .2s,outline-color .2s,background .35s var(--ease)
 }
-
-.up:hover{transform:translateY(-3px)}
-
-.up:active,.up.over{
-  box-shadow:var(--nm-in);
-  transform:translateY(0)
-}
+.up:hover,.up:focus-visible{outline-color:var(--text-muted)}
+.up.over{outline-color:var(--accent);box-shadow:inset 5px 5px 12px var(--sh-dark),inset -5px -5px 12px var(--sh-light),0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
 
 .up-ico{
-  width:104px;height:104px;
-  margin:0 auto 26px;
-  display:grid;place-items:center;
-  font-size:46px;
+  width:56px;height:56px;
+  margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;
   border-radius:50%;
   background:var(--bg);
-  box-shadow:var(--nm-out);
-  color:var(--accent);
-  transition:background .35s var(--ease),box-shadow .35s var(--ease)
+  box-shadow:4px 4px 10px var(--sh-dark),-4px -4px 10px var(--sh-light);
+  color:var(--accent)
 }
+.up-ico .ico{width:26px;height:26px}
 
-.up.over .up-ico,.up:active .up-ico{box-shadow:var(--nm-in-sm)}
-
-.up-txt{
-  font-family:'Outfit',sans-serif;
-  font-size:22px;font-weight:700;letter-spacing:-.3px;
-  color:var(--text-primary);
-  margin-bottom:14px
-}
-
-.up-hint{
-  display:inline-block;
-  color:var(--text-secondary);
-  font-size:13px;font-weight:600;letter-spacing:.2px;
-  padding:9px 20px;
-  border-radius:var(--r-pill);
-  background:var(--bg);
-  box-shadow:var(--nm-in-sm);
-  transition:background .35s var(--ease),box-shadow .35s var(--ease)
-}
+.up-txt{margin:0;font-size:14px;color:var(--text-secondary)}
+.up-txt strong{color:var(--text-primary);font-weight:700}
+.up-hint{margin:6px 0 0;font-size:12px;color:var(--text-muted)}
 
 #fi{display:none}
 
@@ -841,8 +835,7 @@ td strong{
   .tbar{flex-direction:column;align-items:stretch;padding:14px}
   .sbox{flex:1 1 auto;width:100%}
   .ck,.btn{width:100%;justify-content:center}
-  .up{padding:56px 24px}
-  .up-txt{font-size:18px}
+  .up-sec{padding:18px 16px;border-radius:14px}
   table{font-size:12px}
   td,th{padding:12px 12px}
   .dlist{padding-left:20px}
@@ -854,9 +847,6 @@ td strong{
   .brand-logo-img{height:26px}
   .theme-toggle{width:66px;height:34px}
   html[data-theme="dark"] .theme-toggle .knob{transform:translateX(30px)}
-  .up{padding:44px 18px}
-  .up-ico{width:84px;height:84px;font-size:38px}
-  .up-txt{font-size:16px}
   .stats{grid-template-columns:1fr}
   .sc{padding:22px}
   .sn{font-size:42px}
@@ -1013,12 +1003,15 @@ td strong{
   </header>
 
   <main>
-  <div class="up" id="up" onclick="document.getElementById('fi').click()" role="button" aria-label="Selecionar arquivo PDF de frequências">
-    <div class="up-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg></div>
-    <h2 class="up-txt">Clique ou arraste o PDF de frequências aqui</h2>
-    <div class="up-hint">Arquivo .pdf do ponto eletrônico</div>
+  <section class="up-sec" aria-labelledby="upLabel">
+    <h3 class="up-label" id="upLabel">PDF de frequências</h3>
+    <div class="up" id="up" tabindex="0" onclick="document.getElementById('fi').click()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" role="button" aria-label="Escolher arquivo PDF de frequências">
+      <div class="up-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
+      <p class="up-txt"><strong>Escolher arquivo</strong> ou arrastar aqui</p>
+      <p class="up-hint">PDF de frequências do ponto eletrônico — .pdf</p>
+    </div>
     <input type="file" id="fi" accept=".pdf" aria-label="Arquivo PDF">
-  </div>
+  </section>
 
   <div class="pw" id="pw"><div class="pb" id="pb" style="width:0%"></div></div>
   <div class="sm" id="sm"></div>
@@ -2999,9 +2992,9 @@ function prog(p) {
 
   /* A Infrequência já expõe o preto/branco dela em variáveis; aqui elas passam
      a apontar para os tons do Ghub. O vermelho de destaque dela não muda. O
-     Conciliador de Planilhas já traz uma paleta neumórfica clara/escura própria
-     e coerente (o card precisa ter a mesma cor do fundo), então nele NÃO
-     injetamos esta paleta — só honramos o tema escolhido no botão. */
+     Conciliador de Planilhas já usa estes mesmos tons de fundo e sombra no
+     próprio arquivo, então nele NÃO injetamos esta paleta — só honramos o
+     tema escolhido no botão. */
   var PALETA =
     ':root:not([data-theme="dark"]){' +
       '--bg:#e6eaf2;--ink:#2d3440;--ink-soft:#5c6677;--ink-faint:#8a93a6;' +
