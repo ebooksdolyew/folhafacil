@@ -95,12 +95,16 @@ header .ref{font-family:var(--mono);font-size:13px;color:var(--petrol);padding:6
 /* ---------- área de upload (mesma da Infrequência) ---------- */
 .drops{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
 @media(max-width:820px){.drops{grid-template-columns:1fr}}
-.drop{display:block;border-radius:18px;padding:44px 20px;text-align:center;cursor:pointer;background:var(--card);box-shadow:var(--inset);outline:2px dashed transparent;outline-offset:-14px;transition:box-shadow .2s,outline-color .2s}
+.drop{display:block;border-radius:18px;padding:32px 20px 36px;text-align:center;cursor:pointer;background:var(--card);box-shadow:var(--inset);outline:2px dashed transparent;outline-offset:-14px;transition:box-shadow .2s,outline-color .2s}
 .drop:hover,.drop:focus-within{outline-color:var(--ink-3)}
 .drop.over{outline-color:var(--petrol);box-shadow:var(--inset),0 0 0 3px color-mix(in srgb,var(--petrol) 25%,transparent)}
 .drop .ico{width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;box-shadow:var(--raise-sm);color:var(--petrol)}
 .drop .ico svg{width:26px;height:26px}
 .drop.loaded .ico{color:var(--inc)}
+.drop .tag-src{display:inline-block;margin:0 0 10px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--petrol);box-shadow:var(--raise-sm)}
+.drop .nome{margin:0;font-size:18px;font-weight:800;letter-spacing:-.2px;color:var(--ink)}
+.drop .qual{margin:4px auto 20px;max-width:420px;font-size:13px;line-height:1.5;color:var(--ink-2)}
+.drop.loaded .tag-src{color:var(--inc)}
 .drop .t{margin:0;font-size:14px;color:var(--ink-2)}
 .drop .t strong{color:var(--ink);font-weight:700}
 .drop .d{margin:6px 0 0;font-size:12px;color:var(--ink-3)}
@@ -217,17 +221,23 @@ r.setAttribute('data-theme',(window.matchMedia&&matchMedia('(prefers-color-schem
   <div class="drops">
     <div class="dropcol">
       <label class="drop" id="dropHap">
+        <span class="tag-src">1 · Clin Odonto</span>
+        <p class="nome">Fatura Detalhada</p>
+        <p class="qual">Uma por empresa do grupo, baixada do portal da Clin Odonto (ou uma cópia salva no Excel)</p>
         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
         <p class="t"><strong>Escolher arquivos</strong> ou arrastar aqui</p>
-        <p class="d">Fatura Detalhada Clin Odonto, uma por empresa do grupo — .xlsx, .xls ou .csv</p>
+        <p class="d">.xlsx, .xls ou .csv — pode enviar várias de uma vez</p>
         <input type="file" accept=".xlsx,.xls,.csv,.htm,.html" id="inHap" multiple>
       </label>
       <div class="filelist" id="hapFileList"></div>
     </div>
     <label class="drop" id="dropNov">
+      <span class="tag-src">2 · Sistema Novati</span>
+      <p class="nome">Cadastro da folha</p>
+      <p class="qual">Titulares e dependentes do plano, com a aba de categorias de plano</p>
       <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
       <p class="t"><strong>Escolher arquivo</strong> ou arrastar aqui</p>
-      <p class="d">Cadastro Novati de titulares e dependentes — .xlsx, .xls ou .csv</p>
+      <p class="d">.xlsx, .xls ou .csv — um arquivo</p>
       <p class="file" id="fileNov"></p>
       <input type="file" accept=".xlsx,.xls,.csv" id="inNov">
     </label>
