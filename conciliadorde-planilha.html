@@ -101,10 +101,8 @@ header .ref{font-family:var(--mono);font-size:13px;color:var(--petrol);padding:6
 .drop .ico{width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;box-shadow:var(--raise-sm);color:var(--petrol)}
 .drop .ico svg{width:26px;height:26px}
 .drop.loaded .ico{color:var(--inc)}
-.drop .tag-src{display:block;margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--petrol)}
 .drop .nome{margin:0;font-size:18px;font-weight:800;letter-spacing:-.2px;color:var(--ink)}
 .drop .qual{margin:4px auto 20px;max-width:420px;font-size:13px;line-height:1.5;color:var(--ink-2)}
-.drop.loaded .tag-src{color:var(--inc)}
 .drop .t{margin:0;font-size:14px;color:var(--ink-2)}
 .drop .t strong{color:var(--ink);font-weight:700}
 .drop .d{margin:6px 0 0;font-size:12px;color:var(--ink-3)}
@@ -221,7 +219,6 @@ r.setAttribute('data-theme',(window.matchMedia&&matchMedia('(prefers-color-schem
   <div class="drops">
     <div class="dropcol">
       <label class="drop" id="dropHap">
-        <span class="tag-src">1 · Clin Odonto</span>
         <p class="nome">Fatura Detalhada</p>
         <p class="qual">Uma por empresa do grupo, baixada do portal da Clin Odonto (ou uma cópia salva no Excel)</p>
         <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
@@ -232,9 +229,8 @@ r.setAttribute('data-theme',(window.matchMedia&&matchMedia('(prefers-color-schem
       <div class="filelist" id="hapFileList"></div>
     </div>
     <label class="drop" id="dropNov">
-      <span class="tag-src">2 · Sistema Novati</span>
       <p class="nome">Cadastro da folha</p>
-      <p class="qual">Titulares e dependentes do plano, com a aba de categorias de plano</p>
+      <p class="qual">Exportado do sistema Novati: titulares e dependentes do plano, com a aba de categorias de plano</p>
       <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>
       <p class="t"><strong>Escolher arquivo</strong> ou arrastar aqui</p>
       <p class="d">.xlsx, .xls ou .csv — um arquivo</p>
