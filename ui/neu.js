@@ -37,22 +37,54 @@
     if (devolverFoco) a.sel.focus();
   }
 
+  /* Trecho da janela que a pessoa realmente vê, nas coordenadas desta página.
+     Dentro do Folha Fácil a Infrequência roda num iframe da altura do
+     conteúdo inteiro e quem rola é a página de fora: o innerHeight do iframe
+     são milhares de pixels, e a lista achava que sempre cabia embaixo — abria
+     para baixo mesmo com o seletor no pé da tela. Sobe pelos iframes de mesma
+     origem somando a posição de cada um; sozinha, é a própria janela. */
+  function areaVisivel() {
+    var a = { top: 0, left: 0,
+              bottom: window.innerHeight || document.documentElement.clientHeight,
+              right: window.innerWidth || document.documentElement.clientWidth };
+    var w = window, dx = 0, dy = 0;
+    try {
+      while (w.frameElement && w.parent && w.parent !== w) {
+        var f = w.frameElement.getBoundingClientRect();
+        dx += f.left + w.frameElement.clientLeft;
+        dy += f.top + w.frameElement.clientTop;
+        w = w.parent;
+        a.top = Math.max(a.top, -dy);
+        a.left = Math.max(a.left, -dx);
+        a.bottom = Math.min(a.bottom, w.innerHeight - dy);
+        a.right = Math.min(a.right, w.innerWidth - dx);
+      }
+    } catch (_) {}                // iframe de outra origem: fica com a janela
+    return a;
+  }
+
+  var ALTURA_MAX = 380;           // mesma de .neu-pop no neu.css
+
   function posicionar(sel, pop) {
     var r = sel.getBoundingClientRect();
-    var alturaJanela = window.innerHeight || document.documentElement.clientHeight;
+    var v = areaVisivel();
     pop.style.minWidth = Math.round(r.width) + 'px';
+    pop.style.maxHeight = '';
     pop.style.left = '0px';
     pop.style.top = '0px';
-    var p = pop.getBoundingClientRect();
+    // offsetWidth/Height e não getBoundingClientRect: na abertura a lista está
+    // em scale(.98) (animação do neu.css) e sairia 2% menor, com rolagem à toa
+    var p = { width: pop.offsetWidth, height: pop.offsetHeight };
     var largura = Math.max(p.width, r.width);
-    var esquerda = Math.min(Math.max(8, r.left), Math.max(8, window.innerWidth - largura - 8));
-    var abaixo = alturaJanela - r.bottom - 8;
-    var acima = r.top - 8;
+    var esquerda = Math.min(Math.max(v.left + 8, r.left), Math.max(v.left + 8, v.right - largura - 8));
+    var abaixo = v.bottom - r.bottom - 8;
+    var acima = r.top - v.top - 8;
     var paraCima = p.height > abaixo && acima > abaixo;
+    var altura = Math.min(p.height, ALTURA_MAX, Math.max(120, Math.round(paraCima ? acima : abaixo)));
     pop.classList.toggle('neu-acima', paraCima);
-    pop.style.maxHeight = Math.max(120, Math.round(paraCima ? acima : abaixo)) + 'px';
+    pop.style.maxHeight = altura + 'px';
     pop.style.left = Math.round(esquerda) + 'px';
-    pop.style.top = Math.round(paraCima ? Math.max(8, r.top - p.height - 6) : r.bottom + 6) + 'px';
+    pop.style.top = Math.round(paraCima ? r.top - altura - 6 : r.bottom + 6) + 'px';
   }
 
   function destacar(indice) {
@@ -191,8 +223,16 @@
     if (!aberto) return;
     if (!aberto.pop.contains(e.target) && e.target !== aberto.sel) fechar(false);
   }, true);
-  window.addEventListener('resize', function () { if (aberto) posicionar(aberto.sel, aberto.pop); });
-  window.addEventListener('scroll', function () { if (aberto) posicionar(aberto.sel, aberto.pop); }, true);
+  function reposicionar() { if (aberto) posicionar(aberto.sel, aberto.pop); }
+  window.addEventListener('resize', reposicionar);
+  window.addEventListener('scroll', reposicionar, true);
+  // dentro de um iframe, quem rola é a página de fora: a lista acompanha
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.addEventListener('resize', reposicionar);
+      window.parent.addEventListener('scroll', reposicionar, true);
+    }
+  } catch (_) {}
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', varrer);
   else varrer();

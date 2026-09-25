@@ -436,6 +436,23 @@ test.describe('Infrequência SME', () => {
     expect(nomes).toEqual(['FUNC ALFA']);
   });
 
+  /* A lista neumórfica (ui/neu.js) media o espaço pelo innerHeight do iframe
+     — a altura do conteúdo inteiro — e sempre abria para baixo, mesmo com o
+     seletor no pé da tela. Agora usa o trecho realmente visível. */
+  test('a lista de um seletor abre dentro da tela, mesmo com pouco espaço embaixo', async ({ page }) => {
+    const { iframe, frame } = await abrir(page);
+    await page.setViewportSize({ width: 1400, height: 450 });
+    const b = await (await frame.$('#f-tipo')).boundingBox();
+    await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+    const lista = frame.locator('.neu-pop');
+    await expect(lista).toBeVisible();
+    const f = await iframe.boundingBox();
+    const r = await lista.evaluate(e => e.getBoundingClientRect().toJSON());
+    expect(f.y + r.top, 'lista acima do topo da tela').toBeGreaterThanOrEqual(0);
+    expect(f.y + r.bottom, 'lista abaixo do pé da tela').toBeLessThanOrEqual(450);
+    await expect(lista).toHaveClass(/neu-acima/);
+  });
+
   /* Cabeçalho de dia gravado como data (células dd/mmm), como o SheetJS grava
      no fuso de Brasília — 01/ago vinha 31/jul 23:59:59, e o nome do arquivo
      levava a data inteira ("SATAUG012026..."). */
