@@ -94,4 +94,7 @@ fins de semana continuam descartados pela R3 e não geram DSR.
 - `montarSaida()` — preenche `DSR` e `Observação` em cada linha.
 - `montarSaidaDSR()` / `exportarDSR()` — exportação **Somente DSR** (opção do seletor
   "Lançar"): uma linha por funcionário com DSR, a DSR na coluna `QUANTIDADE` e o
-  campo "Provento DSR" ao lado. Usa o mesmo `dsrDe()`; não muda o cálculo.
+  campo "Provento DSR" (`#p-dsr`) ao lado. Usa o mesmo `dsrDe()`; não muda o cálculo.
+- O "Provento DSR" é só da DSR. As linhas de TRE das planilhas de faltas/atestados/TRE
+  usam o campo próprio "Provento TRE" (`#p-tre`) — antes as duas coisas liam o mesmo
+  campo e o TRE saía com o código da DSR.

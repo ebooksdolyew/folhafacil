@@ -12,7 +12,7 @@
 
 <!-- ═══════════ SEO — Identidade da página ═══════════ -->
 <title>Folha Fácil — Ferramenta de Departamento Pessoal</title>
-<meta name="description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador. Acesso mediante licenciamento.">
+<meta name="description" content="Três ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico, conferência da planilha de infrequência e conciliação do plano odontológico com a folha. Processamento 100% no navegador. Acesso mediante licenciamento.">
 <meta name="keywords" content="análise de ponto, ponto eletrônico, folha de ponto, espelho de ponto, infrequência, atestado médico, faltas, atrasos, DSR, escala 12x36, planilha da folha, leitor de PDF, departamento pessoal, RH">
 <meta name="author" content="Folha Fácil">
 <meta name="application-name" content="Folha Fácil">
@@ -49,7 +49,7 @@
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://ghub-66j.pages.dev/">
 <meta property="og:title" content="Folha Fácil — Ferramenta de Departamento Pessoal">
-<meta property="og:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
+<meta property="og:description" content="Três ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico, conferência da planilha de infrequência e conciliação do plano odontológico com a folha. Processamento 100% no navegador.">
 <!-- Caminho relativo: a imagem resolve no mesmo domínio da página (preview ou produção) -->
 <meta property="og:image" content="/assets/social/og-image.png">
 <meta property="og:image:type" content="image/png">
@@ -60,7 +60,7 @@
 <!-- ═══════════ Twitter / X ═══════════ -->
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Folha Fácil — Ferramenta de Departamento Pessoal">
-<meta name="twitter:description" content="Duas ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico e conferência da planilha de infrequência. Processamento 100% no navegador.">
+<meta name="twitter:description" content="Três ferramentas de departamento pessoal: leitura do PDF do ponto eletrônico, conferência da planilha de infrequência e conciliação do plano odontológico com a folha. Processamento 100% no navegador.">
 <meta name="twitter:image" content="/assets/social/og-image.png">
 <meta name="twitter:image:alt" content="Folha Fácil">
 
@@ -625,8 +625,11 @@ html[data-theme="dark"] .theme-toggle .i-moon{display:block}
 /* ════════════════════════════════════════════════════════════════ */
 /* TABLE */
 /* ════════════════════════════════════════════════════════════════ */
+/* Rolagem lateral em vez de corte: a tabela tem ~760px de largura mínima e,
+   em celular e tablet, o overflow:hidden escondia ATM, Faltas, Saldo e
+   Páginas sem nenhum jeito de chegar até elas. */
 .tw{
-  overflow:hidden;
+  overflow-x:auto;
   border-radius:var(--r-lg);margin-bottom:40px;
   background:var(--bg);
   box-shadow:var(--nm-out);
@@ -901,7 +904,7 @@ td strong{
       "@id": "https://ghub-66j.pages.dev/#app",
       "name": "Folha Fácil — Ferramenta de Departamento Pessoal",
       "url": "https://ghub-66j.pages.dev/",
-      "description": "Reúne duas ferramentas. A primeira lê o PDF do ponto eletrônico e identifica atestados, faltas, atrasos, saldo de horas e escalas 12×36, exportando em PDF e planilha XLSX. A segunda, Infrequência SME, lê a planilha mensal de ponto, reconta faltas, atestados e TRE por funcionário, aplica as regras de escala e de DSR e gera a planilha enxuta para a folha. O processamento acontece integralmente no navegador do usuário; os arquivos e os dados extraídos não são transmitidos a nenhum servidor.",
+      "description": "Reúne três ferramentas. A primeira lê o PDF do ponto eletrônico e identifica atestados, faltas, atrasos, saldo de horas e escalas 12×36, exportando em PDF e planilha XLSX. A segunda, Infrequência SME, lê a planilha mensal de ponto, reconta faltas, atestados e TRE por funcionário, aplica as regras de escala e de DSR e gera a planilha enxuta para a folha. A terceira, o Conciliador de Planilhas, compara a Fatura Detalhada da Clin Odonto com o cadastro Novati. O processamento acontece integralmente no navegador do usuário; os arquivos e os dados extraídos não são transmitidos a nenhum servidor.",
       "applicationCategory": "BusinessApplication",
       "applicationSubCategory": "Recursos Humanos / Departamento Pessoal",
       "operatingSystem": "Qualquer sistema com navegador moderno",
@@ -942,6 +945,13 @@ td strong{
           "url": "https://ghub-66j.pages.dev/infrequencia.html",
           "applicationCategory": "BusinessApplication",
           "description": "Lê a planilha mensal de ponto, reconta faltas, atestados e TRE, aplica as regras de escala e de DSR e gera a planilha da folha."
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Conciliador de Planilhas",
+          "url": "https://ghub-66j.pages.dev/conciliadorde-planilha.html",
+          "applicationCategory": "BusinessApplication",
+          "description": "Concilia a Fatura Detalhada da Clin Odonto com o cadastro Novati e gera as listas de inclusão, exclusão, alteração, transferência e desconto."
         }
       ],
       "screenshot": "https://ghub-66j.pages.dev/assets/social/og-image.png",
@@ -1033,6 +1043,11 @@ td strong{
   <div class="pw" id="pw"><div class="pb" id="pb" style="width:0%"></div></div>
   <div class="sm" id="sm"></div>
 
+  <!-- Fora do #res: um aviso (arquivo inválido, por exemplo) não pode abrir o
+       painel de resultados vazio — cartão sem nome, contadores zerados e tabela
+       só com o cabeçalho. -->
+  <div id="alrt" class="alert alert-warn" style="display:none"></div>
+
   <div id="res">
     <div class="fib">
       <span class="fib-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></svg></span>
@@ -1042,8 +1057,6 @@ td strong{
         <div class="fip-warn" id="fwarn" style="display:none"></div>
       </div>
     </div>
-
-    <div id="alrt" class="alert alert-warn" style="display:none"></div>
 
     <div class="stats">
       <div class="sc">
@@ -1127,10 +1140,10 @@ td strong{
         <h4>Dados na memória</h4>
         <p>Durante o uso, o PDF e os dados extraídos ficam apenas na memória
         temporária do navegador. Eles são <strong>apagados automaticamente</strong>
-        ao fechar ou recarregar a aba, e também ao clicar em “Limpar”.</p>
+        ao fechar ou recarregar a aba, e também ao clicar em “Novo”.</p>
 
         <h4>Arquivos que você baixa</h4>
-        <p>As exportações (PDF anotado, planilha XLSX e relatório TXT) são geradas
+        <p>As exportações (PDF anotado, planilhas XLSX, arquivo CSV e relatório TXT) são geradas
         no seu dispositivo e contêm nomes de funcionários e atestados. Após o
         download, esses arquivos ficam sob a sua guarda e responsabilidade.</p>
 
@@ -1310,7 +1323,6 @@ function showAlert(msg, type = 'warn', icone) {
   el.className = `alert alert-${type}`;
   el.replaceChildren(icoEl(icone || ICO_ALERTA[type] || 'alerta'), document.createTextNode(msg));
   el.style.display = 'flex';
-  document.getElementById('res').style.display = 'block';
   clearTimeout(el._t);
   el._t = setTimeout(() => { el.style.display = 'none'; }, 7000);
 }
@@ -2192,17 +2204,14 @@ async function go(file) {
      na primeira oportunidade. */
   const seq = ++goSeq;
   const cancelado = () => seq !== goSeq;
-  curFile = file;
-  expanded.clear();
   document.getElementById('alrt').style.display = 'none';
-  document.getElementById('fwarn').style.display = 'none';
-  skippedPages = 0;
   procStart = Date.now();
   setStatus('Carregando PDF…'); prog(5);
   try {
     const buf = await file.arrayBuffer();
     if (cancelado()) return;
-    pdfBytes = new Uint8Array(buf.slice(0));
+    /* Cópia antes do getDocument: o pdf.js transfere o buffer para o worker. */
+    const bytes = new Uint8Array(buf.slice(0));
     let pdf;
     try {
       pdf = await pdfjsLib.getDocument({
@@ -2212,17 +2221,37 @@ async function go(file) {
     } catch (pdfErr) {
       if (/password/i.test(pdfErr.message) || pdfErr.name === 'PasswordException')
         throw new Error('PDF protegido por senha. Remova a proteção antes de carregar.');
+      /* o pdf.js responde em inglês ("Invalid PDF structure.") */
+      if (pdfErr.name === 'InvalidPDFException')
+        throw new Error('o arquivo não é um PDF válido ou está corrompido.');
       throw pdfErr;
     }
     if (cancelado()) { pdf.destroy(); return; }
+
+    /* Só agora o arquivo novo substitui o anterior. Antes, curFile e pdfBytes
+       trocavam logo no início: um PDF que não abria (corrompido, com senha)
+       deixava a tabela e allEmps do arquivo anterior com o nome e os bytes do
+       novo — a planilha saía com o nome errado e o "Baixar PDF" copiava
+       páginas do arquivo errado. O painel some até a análise terminar, para
+       ninguém exportar uma lista pela metade. */
+    if (pdfBytes && pdfBytes !== bytes) { try { pdfBytes.fill(0); } catch (_) {} }
+    curFile = file;
+    pdfBytes = bytes;
+    allEmps = [];
+    expanded.clear();
+    skippedPages = 0;
+    pageImageCache.clear();
+    document.getElementById('res').style.display = 'none';
+    document.getElementById('fwarn').style.display = 'none';
+    document.getElementById('tbd').innerHTML = '';
+    renderStats();
+
     const n = pdf.numPages;
     document.getElementById('fn').textContent = file.name;
     document.getElementById('fp').textContent = `${n} página${n > 1 ? 's' : ''}`;
     if (n > 600) {
       showAlert(`PDF com ${n} páginas. O processamento pode levar alguns minutos — mantenha esta aba aberta.`, 'warn', 'info');
     }
-    pageImageCache.clear();
-    allEmps = [];
     setStatus(`Analisando ${n} página${n > 1 ? 's' : ''}…`);
 
     for (let i = 1; i <= n; i++) {
@@ -2280,6 +2309,8 @@ async function go(file) {
     }, 400);
   } catch (err) {
     if (cancelado()) return;
+    /* a barra ficava parada em 5% embaixo da mensagem de erro */
+    document.getElementById('pw').style.display = 'none';
     setStatus('Erro: ' + err.message, 'erro');
     console.error(err);
   }
@@ -2291,6 +2322,13 @@ function renderStats() {
   document.getElementById('s1').textContent = allEmps.filter(e => e.is12).length;
   document.getElementById('sft').textContent = allEmps.filter(e => e.totalFaltas > 0).length;
   updateButtonStates();
+}
+
+/* Texto que entra em innerHTML: o nome vem do PDF e a busca vem do teclado.
+   Sem isto, "<b>" na busca virava negrito e um <img onerror> rodava script. */
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 function renderTable() {
@@ -2325,7 +2363,7 @@ function renderTable() {
   if (!list.length) {
     let msg;
     if (q) {
-      msg = `Nenhum funcionário encontrado para "${q}"`;
+      msg = `Nenhum funcionário encontrado para "${escHtml(q)}"`;
     } else if (onlyAtm || onlyFaltas || onlyAtrasos) {
       msg = 'Nenhum funcionário atende aos filtros selecionados';
     } else {
@@ -2358,7 +2396,7 @@ function renderTable() {
       : '<span style="color:#7a8fa8">—</span>';
     return `<tr class="mr" onclick="toggle(${i})">
       <td style="color:#7a8fa8;font-size:11px;font-weight:600">${i+1}</td>
-      <td><strong>${e.name}</strong></td>
+      <td><strong>${escHtml(e.name)}</strong></td>
       <td><span class="bdg ${e.is12 ? 'b12' : 'bcv'}">${e.is12 ? '12×36' : 'Convencional'}</span></td>
       <td>${e.atm > 0 ? `<span class="batm">${ico('estetoscopio')} ${e.atm} dia${e.atm > 1 ? 's' : ''}</span>` : '<span style="color:#7a8fa8">—</span>'}</td>
       <td>${faltasCell}</td>
@@ -2906,9 +2944,12 @@ function dlReport() {
 
   /* ── Seção: Faltas ──
      O relatório mostra o número CRU do PDF, de propósito. A contagem por
-     escala e a DSR existem só na planilha gerada. Ver docs/REGRA_FALTAS_DSR.md. */
+     escala e a DSR existem só na planilha gerada. Ver docs/REGRA_FALTAS_DSR.md.
+     Segue o filtro como as outras duas: com "Apenas atestados" marcado, a
+     seção de faltas não entra. */
+  const showFaltas = verbas.faltas;
   const comFaltas = list.filter(e => e.totalFaltas > 0);
-  if (comFaltas.length > 0) {
+  if (showFaltas && comFaltas.length > 0) {
     lines.push('─ FALTAS (TOTAL DE FALTAS > 0)');
     lines.push(`  Com faltas: ${comFaltas.length}`);
     lines.push(`  Total de dias de falta: ${comFaltas.reduce((s, e) => s + (e.totalFaltas || 0), 0)}`);
@@ -2931,7 +2972,7 @@ function dlReport() {
     if (showAtrasos) {
       lines.push(`    Saldo de Horas: ${formatSaldoHoras(e.saldoHoras) || '—'}`);
     }
-    if (e.totalFaltas > 0) {
+    if (showFaltas && e.totalFaltas > 0) {
       lines.push(`    Total de Faltas: ${e.totalFaltas} dia${e.totalFaltas > 1 ? 's' : ''}`);
     }
     if (e.detectionReport?.motorUsado === 'linha-legacy') {
@@ -2978,7 +3019,7 @@ function wipeSensitiveData() {
 }
 
 /* Garante o wipe ao fechar, recarregar ou ocultar a aba — sem depender de o
-   usuário clicar em "Limpar". 'pagehide' cobre fechamento, navegação e o
+   usuário clicar em "Novo". 'pagehide' cobre fechamento, navegação e o
    cache de retorno (bfcache) em mobile; 'beforeunload' cobre o desktop. */
 window.addEventListener('pagehide', wipeSensitiveData);
 window.addEventListener('beforeunload', wipeSensitiveData);

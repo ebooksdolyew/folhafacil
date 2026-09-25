@@ -5,8 +5,8 @@ motor e sem refatorar o app, que continua single-file.
 
 | Arquivo | Cobre |
 |---------|-------|
-| `unit.spec.js` | Funções puras: estado vazio da tabela, `extractSaldoHoras`, `dateFromDayNumber`, `isWeekendDay`, reconhecimento de ATM |
-| `e2e.spec.js` | Encadeamento completo: REGRAS 1 e 2, contadores, snapshot da tabela, fluxo com os 3 downloads, seções do relatório por filtro, troca de PDF no meio do processamento, CSP e ausência de requisição externa. Também a Infrequência dentro do iframe (confirmação do mês visível, Esc, filtro de empresa, cabeçalho em data) e as datas do Conciliador no fuso de Brasília |
+| `unit.spec.js` | Funções puras: estado vazio da tabela, `extractSaldoHoras`, `dateFromDayNumber`, `isWeekendDay`, reconhecimento de ATM, `escHtml` (nome e busca como texto) |
+| `e2e.spec.js` | Encadeamento completo: REGRAS 1 e 2, contadores, snapshot da tabela, fluxo com os 3 downloads, seções do relatório por filtro, troca de PDF no meio do processamento, PDF quebrado depois de um bom, arquivo recusado sem painel vazio, tabela rolável no celular, CSP e ausência de requisição externa. Também a Infrequência dentro do iframe (confirmação do mês visível, Esc, filtro de empresa, cabeçalho em data) e fora dele (nome com HTML, empresa com espaço duplo, Provento TRE × Provento DSR), e o Conciliador (datas no fuso de Brasília, busca das abas, Novati recusada, Fatura carregada antes da Novati) |
 
 A suíte unitária não pega regressão no encadeamento — que é justamente o
 risco das Fases 2 e 3 do plano de correções. Por isso as duas existem.

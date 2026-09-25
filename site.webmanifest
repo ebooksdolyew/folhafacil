@@ -1,7 +1,7 @@
 {
   "name": "Folha Fácil — Ferramenta de Departamento Pessoal",
   "short_name": "Folha Fácil",
-  "description": "Duas ferramentas de departamento pessoal: envie o PDF do ponto eletrônico para identificar atestados, faltas, atrasos e escala 12×36, ou a planilha mensal de infrequência para gerar a planilha da folha. Processamento 100% no navegador.",
+  "description": "Três ferramentas de departamento pessoal: envie o PDF do ponto eletrônico para identificar atestados, faltas, atrasos e escala 12×36, a planilha mensal de infrequência para gerar a planilha da folha, ou a fatura da Clin Odonto para conciliar com o cadastro Novati. Processamento 100% no navegador.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./",

@@ -495,3 +495,207 @@ test.describe('Conciliador de Planilhas', () => {
       .toEqual(['15/03/1990', '01/08/2026', '01/08/2026']);
   });
 });
+
+/* ─── Varredura geral: regressões dos bugs corrigidos ──────────────────── */
+test.describe('Guardião — arquivo recusado, PDF quebrado e tela estreita', () => {
+  /* O aviso morava dentro do painel de resultados: um arquivo inválido logo no
+     início abria o painel vazio — cartão sem nome, contadores em zero e tabela
+     só com o cabeçalho. */
+  test('arquivo que não é PDF mostra só o aviso, sem abrir o painel vazio', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.setInputFiles('#fi', { name: 'planilha.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from('x') });
+    await expect(page.locator('#alrt')).toBeVisible();
+    await expect(page.locator('#alrt')).toContainText('Arquivo inválido');
+    await expect(page.locator('#res')).toBeHidden();
+  });
+
+  /* O arquivo novo trocava curFile e pdfBytes antes de abrir: um PDF quebrado
+     deixava a tabela do anterior com o nome e os bytes do novo, e a barra de
+     progresso parada em 5% embaixo do erro. */
+  test('um PDF quebrado depois de um bom mantém o anterior inteiro', async ({ page }) => {
+    await processar(page);
+    const antes = await page.evaluate(() => ({ nome: curFile.name, bytes: pdfBytes.length, emps: allEmps.length }));
+    await page.setInputFiles('#fi', { name: 'quebrado.pdf', mimeType: 'application/pdf', buffer: Buffer.from('isto nao e um pdf') });
+    await page.waitForFunction(() => /Erro/.test(document.getElementById('sm').textContent));
+    await expect(page.locator('#sm')).toContainText('não é um PDF válido');
+    await expect(page.locator('#pw')).toBeHidden();
+    expect(await page.evaluate(() => ({ nome: curFile.name, bytes: pdfBytes.length, emps: allEmps.length }))).toEqual(antes);
+    await expect(page.locator('#fn')).toHaveText(antes.nome);
+    const [d] = await Promise.all([page.waitForEvent('download'), page.click('#bcs')]);
+    expect(d.suggestedFilename()).toBe('ponto-sintetico_GERAL.xlsx');
+  });
+
+  /* A tabela tem ~760px de largura mínima e o contêiner cortava o resto com
+     overflow:hidden: no celular ATM, Faltas, Saldo e Páginas sumiam. */
+  test('no celular a tabela rola para o lado em vez de cortar colunas', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await processar(page);
+    const r = await page.$eval('.tw', tw => ({ overflow: getComputedStyle(tw).overflowX, cabe: tw.scrollWidth <= tw.clientWidth }));
+    expect(r.overflow).toBe('auto');
+    expect(r.cabe).toBe(false);
+    await page.$eval('.tw', tw => { tw.scrollLeft = tw.scrollWidth; });
+    const [tw, th] = await Promise.all([
+      page.$eval('.tw', e => e.getBoundingClientRect().toJSON()),
+      page.$eval('th:nth-child(7)', e => e.getBoundingClientRect().toJSON()),
+    ]);
+    expect(th.right, 'coluna Páginas continua fora do alcance').toBeLessThanOrEqual(tw.right + 1);
+  });
+
+  /* A seção de faltas do relatório aparecia com qualquer filtro; as de
+     atestados e atrasos já seguiam o que estava marcado. */
+  test('a seção de faltas do relatório segue o filtro marcado', async ({ page }) => {
+    await page.goto('/index.html');
+    const relatorio = async (filtro) => {
+      await page.evaluate(f => {
+        allEmps = [{ name: 'TESTE', cpf: null, pages: [1], atm: 1, is12: false, saldoHoras: null,
+                     atmDays: [{ display: '04/05/2026 (Seg)', confidence: 1 }], totalFaltas: 2,
+                     faltas: { quantidade: 2, dsr: 1, conferencia: 'conferido', dias: [], impresso: 2 },
+                     detectionReport: { motorUsado: 'coluna-horizontal' } }];
+        for (const id of ['fa', 'ff', 'fd']) document.getElementById(id).checked = id === f;
+      }, filtro);
+      const [d] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => dlReport())]);
+      return fs.readFileSync(await d.path(), 'utf8');
+    };
+    const soAtm = await relatorio('fa');
+    expect(soAtm).toContain('─ ATESTADOS');
+    expect(soAtm).not.toContain('─ FALTAS');
+    expect(soAtm).not.toContain('Total de Faltas');
+    const soFaltas = await relatorio('ff');
+    expect(soFaltas).toContain('─ FALTAS');
+    expect(soFaltas).toContain('Total de Faltas: 2 dias');
+  });
+});
+
+test.describe('Infrequência — nomes, empresas e proventos', () => {
+  test.use({ timezoneId: 'America/Sao_Paulo' });
+
+  /** Planilha no mês esperado (sem balão de confirmação), uma ocorrência por
+      funcionário no primeiro dia útil. */
+  async function carregar(page, linhas) {
+    await page.goto('/infrequencia.html');
+    const b64 = await page.evaluate(linhas => {
+      const { mes, ano } = mesAnterior();
+      const n = diasNoMes(mes, ano);
+      let util = 1; while ([0, 6].includes(new Date(ano, mes - 1, util).getDay())) util++;
+      const cab = ['FUNCIONÁRIO', 'CPF', 'FUNÇÃO', 'EMPRESA'];
+      for (let d = 1; d <= n; d++) cab.push(String(d).padStart(2, '0') + '/' + SIGLAS[mes - 1]);
+      const aoa = [cab, ...linhas.map(([nome, cpf, empresa, marca]) =>
+        [nome, cpf, 'AUXILIAR', empresa, ...Array.from({ length: n }, (_, i) => (i + 1 === util ? marca : ''))])];
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'P');
+      return XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+    }, linhas);
+    await page.setInputFiles('#file', { name: 'ponto.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from(b64, 'base64') });
+    await page.waitForSelector('#actionbar:not(.hide)');
+  }
+  async function linhasDoXlsx(page, d) {
+    const b64 = fs.readFileSync(await d.path()).toString('base64');
+    return page.evaluate(b64 => {
+      const wb = XLSX.read(b64, { type: 'base64' });
+      return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    }, b64);
+  }
+
+  test('nome com HTML aparece como texto, na tabela, nas críticas e na busca', async ({ page }) => {
+    await carregar(page, [['ANA <img src=x onerror="window.__xss=1">', '123', 'ALFA', 'F']]);
+    await page.waitForTimeout(100);
+    expect(await page.evaluate(() => window.__xss)).toBeUndefined();
+    expect(await page.$$eval('#tbl img, #issues img', e => e.length)).toBe(0);
+    await expect(page.locator('#tbl tbody td.name')).toContainText('ANA <img src=x');
+    await expect(page.locator('#issues')).toContainText('ANA <img src=x');
+    await page.fill('#busca', '<i>ninguem</i>');
+    await expect(page.locator('#tbl tbody td.empty')).toContainText('<i>ninguem</i>');
+  });
+
+  /* Sem value explícito o navegador junta os espaços duplos do texto da
+     <option>, e o filtro deixava de bater com r.empresa: "Nada a exportar". */
+  test('empresa com espaço duplo no nome continua filtrável', async ({ page }) => {
+    await carregar(page, [['FUNC UM', '52998224725', 'EMPRESA  DUPLA', 'F'], ['FUNC DOIS', '11144477735', 'OUTRA', 'F']]);
+    await page.selectOption('#f-empresa', 'EMPRESA  DUPLA');
+    expect(await page.inputValue('#f-empresa')).toBe('EMPRESA  DUPLA');
+    const [d] = await Promise.all([page.waitForEvent('download'), page.click('#btn-modelo')]);
+    expect((await linhasDoXlsx(page, d)).map(l => l['Funcionário'])).toEqual(['FUNC UM']);
+  });
+
+  /* Quando "Provento TRE" foi renomeado para "Provento DSR", as linhas de TRE
+     continuaram lendo o mesmo campo e saíam com o código da DSR. */
+  test('TRE usa o Provento TRE e a DSR usa o Provento DSR', async ({ page }) => {
+    await carregar(page, [['FUNC FALTA', '52998224725', 'ALFA', 'F'], ['FUNC TRE', '11144477735', 'ALFA', 'D']]);
+    await page.selectOption('#f-tipo', 'FAD');
+    await page.fill('#p-falta', '504');
+    await page.fill('#p-tre', '777');
+    await page.fill('#p-dsr', '999');
+    const [d] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export')]);
+    const porTipo = Object.fromEntries((await linhasDoXlsx(page, d)).map(l => [l.Tipo, l.PROVENTO]));
+    expect(porTipo).toEqual({ FALTA: 504, TRE: 777 });
+    await page.selectOption('#f-tipo', 'DSR');
+    const [d2] = await Promise.all([page.waitForEvent('download'), page.click('#btn-modelo')]);
+    expect((await linhasDoXlsx(page, d2)).map(l => l.PROVENTO)).toEqual([999]);
+  });
+});
+
+test.describe('Conciliador — busca e carga dos arquivos', () => {
+  test.use({ timezoneId: 'America/Sao_Paulo' });
+
+  async function arquivos(page) {
+    return page.evaluate(() => {
+      const livro = (aoa) => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'A'); return XLSX.write(wb, { type: 'base64', bookType: 'xlsx' }); };
+      return {
+        fatura: livro([
+          ['Fatura Detalhada ALFA SERVICOS LTDA [CÓD 123]'],
+          ['Competência: Agosto / 2026'],
+          ['Nome', 'Nasc.', 'CPF', 'Parentesco', 'Plano', 'Valor'],
+          ['1001 - JOAO DA SILVA [CPF: 529.982.247-25] [Mat: 500]', null, null, null, null, null],
+          ['JOAO DA SILVA', '01/01/1980', '529.982.247-25', 'TITULAR', 'CLIN ODONTO [PGTO: 2026/08]', '30,00'],
+        ]),
+        novati: livro([
+          ['numCodigoFilial', 'RazaoSocialFilial', 'desRazaoSocialPlano', 'Matricul', 'NomeFuncionario', 'CpfTitular', 'Beneficiario', 'Cpf', 'ValorPlano', 'Plano', 'AnoMesRef'],
+          [1, 'ALFA SERVICOS LTDA', 'CLIN ODONTO', 500, 'JOAO DA SILVA', '52998224725', 'JOAO DA SILVA', '52998224725', 30, 'PLANO 1234', 202609],
+          [1, 'ALFA SERVICOS LTDA', 'CLIN ODONTO', 777, 'CARLOS LIMA', '86288366757', 'CARLOS LIMA', '86288366757', 30, 'PLANO 1234', 202609],
+          [1, 'ALFA SERVICOS LTDA', 'CLIN ODONTO', 778, 'DIANA ROCHA', '71428793860', 'DIANA ROCHA', '71428793860', 30, 'PLANO 1234', 202609],
+        ]),
+        errado: livro([['coluna', 'errada'], [1, 2]]),
+      };
+    });
+  }
+  const xlsx = (nome, b64) => ({ name: nome, mimeType: 'application/octet-stream', buffer: Buffer.from(b64, 'base64') });
+
+  /* Arquivo Novati recusado ("não encontrei a aba de cadastros") ficava com o
+     ✓ verde no cartão, como se tivesse entrado. */
+  test('Novati recusada não ganha o ✓ de carregada', async ({ page }) => {
+    await page.goto('/conciliadorde-planilha.html');
+    const a = await arquivos(page);
+    page.on('dialog', d => d.accept());
+    await page.setInputFiles('#inNov', xlsx('novati-errada.xlsx', a.errado));
+    await page.waitForTimeout(300);
+    await expect(page.locator('#fileNov')).toHaveText('');
+    await expect(page.locator('#dropNov')).not.toHaveClass(/loaded/);
+  });
+
+  /* Com a Fatura carregada antes da Novati, o cartão da Fatura dizia
+     "carregue a Novati p/ vincular" para sempre, sem a lista de empresas. */
+  test('Fatura antes da Novati: o cartão ganha a lista de empresas', async ({ page }) => {
+    await page.goto('/conciliadorde-planilha.html');
+    const a = await arquivos(page);
+    await page.setInputFiles('#inHap', xlsx('fatura-alfa.xlsx', a.fatura));
+    await expect(page.locator('#hapFileList')).toContainText('carregue a Novati');
+    await page.setInputFiles('#inNov', xlsx('novati.xlsx', a.novati));
+    await expect(page.locator('#hapFileList select')).toHaveValue('ALFA SERVICOS LTDA');
+  });
+
+  /* Cada aba testava nome.includes(q) || cpf.includes(d): com um dos dois vazio,
+     ''.includes('') é sempre verdadeiro — nenhuma busca filtrava. */
+  test('a busca das abas filtra por nome e por número', async ({ page }) => {
+    await page.goto('/conciliadorde-planilha.html');
+    const a = await arquivos(page);
+    await page.setInputFiles('#inHap', xlsx('fatura-alfa.xlsx', a.fatura));
+    await page.setInputFiles('#inNov', xlsx('novati.xlsx', a.novati));
+    await page.click('#btnCompare');
+    await page.click('.tile[data-tab="exc"]');
+    const linhas = () => page.locator('#t-exc tbody tr').count();
+    expect(await linhas()).toBe(2);
+    for (const [busca, esperado] of [['CARLOS', 1], ['777', 1], ['862.883', 1], ['NINGUEM', 0], ['', 2]]) {
+      await page.fill('.search[data-t="exc"]', busca);
+      expect(await linhas(), `busca "${busca}"`).toBe(esperado);
+    }
+  });
+});

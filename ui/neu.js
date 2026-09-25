@@ -116,6 +116,11 @@
     var pop = document.createElement('div');
     pop.className = 'neu-pop';
     pop.setAttribute('role', 'listbox');
+    // o foco fica no <select>: com a lista aberta pelo teclado (Tab + Enter),
+    // apertar no fundo ou na barra de rolagem dela tirava o foco do seletor, o
+    // 'blur' abaixo fechava a lista e, numa lista longa (empresas), não dava
+    // para arrastar a barra
+    pop.addEventListener('mousedown', function (e) { e.preventDefault(); });
     var rotulo = sel.getAttribute('aria-label') ||
       (sel.closest('label') ? sel.closest('label').textContent.trim() : '');
     if (rotulo) pop.setAttribute('aria-label', rotulo);
