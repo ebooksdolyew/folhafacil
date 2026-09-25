@@ -12,6 +12,8 @@ tests/**/*-real-*-snapshots/
 node_modules/
 test-results/
 playwright-report/
+# Saída do build de deploy (scripts/build-deploy.js)
+dist/
 tests/fixtures/ponto-sintetico.pdf
 tests/fixtures/ponto-sintetico-layout-producao.pdf
 

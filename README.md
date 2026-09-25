@@ -28,6 +28,21 @@ python3 -m http.server 8000     # depois abra http://127.0.0.1:8000/index.html
 Abrir o `index.html` direto do disco (`file://`) funciona no Chrome e no Edge. Em
 produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_headers`.
 
+## Deploy
+
+O Cloudflare Pages publica só a pasta `dist/`, montada por `scripts/build-deploy.js`
+a partir de uma lista fechada de arquivos (páginas, `_headers`, `robots.txt`,
+manifesto, `ui/`, `assets/` e as bibliotecas de `vendor/`). `docs/`, `tests/`,
+`validacao/`, os `.md` e os arquivos de projeto não vão para o ar. Arquivo novo que o
+site precise carregar tem de entrar na lista do script.
+
+No painel do Pages (Settings → Builds & deployments):
+
+- **Build command:** `node scripts/build-deploy.js`
+- **Build output directory:** `dist`
+
+Para conferir localmente: `npm run build` e `python3 -m http.server 8000 -d dist`.
+
 ## Mapa do repositório
 
 | Caminho | O que é |
@@ -36,7 +51,8 @@ produção o site é servido pelo Cloudflare Pages, com os cabeçalhos do `_head
 | `infrequencia.html` | A Infrequência SME inteira, com a biblioteca xlsx-js-style (Apache-2.0) embutida. |
 | `conciliadorde-planilha.html` | O Conciliador de Planilhas inteiro; usa a `vendor/xlsx.full.min.js` auto-hospedada. |
 | `ui/neu.css`, `ui/neu.js` | Camada de interface usada pelas duas: lista neumórfica no lugar da lista nativa do `<select>`, caixas de marcação e retorno visual dos controles. Se não carregar, os seletores voltam a abrir a lista do navegador e nada quebra. |
-| `404.html`, `_headers`, `robots.txt`, `site.webmanifest`, `favicon.svg` | Página de erro, cabeçalhos HTTP (CSP inclusive), SEO e PWA. |
+| `404.html`, `_headers`, `robots.txt`, `site.webmanifest`, `favicon.svg` | Página de erro, cabeçalhos HTTP (CSP e `X-Robots-Tag: noindex` inclusive), bloqueio de robôs e PWA. |
+| `scripts/build-deploy.js` | Monta `dist/`, a única pasta publicada. Ver **Deploy**. |
 | `assets/` | `icons/` (ícones do site e do PWA), `social/` (imagem de compartilhamento) e `fonts/` (Inter, Outfit e Space Grotesk auto-hospedadas). |
 | `vendor/` | pdf.js, pdf-lib e xlsx (xlsx-js-style) auto-hospedados, com `CHECKSUMS.txt` para conferir integridade. |
 | `docs/regras/` | Regras de cálculo da **Infrequência SME** (R1 a R4) em linguagem simples. |
