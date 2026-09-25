@@ -641,7 +641,13 @@ function findHeaderRow(grid){
 }
 
 function isDayHeader(v){
-  if(v instanceof Date){ STATE.mesCabecalho = { mes: v.getMonth()+1, ano: v.getFullYear(), origem:'data' }; return v.getDate(); }
+  if(v instanceof Date){
+    // planilha gravada pelo SheetJS pode trazer a data segundos antes da
+    // meia-noite (31/jul 23:59:59 no lugar de 01/ago): arredonda para o dia mais próximo
+    const d = new Date(v.getFullYear(), v.getMonth(), v.getDate() + (v.getHours() >= 12 ? 1 : 0));
+    STATE.mesCabecalho = { mes: d.getMonth()+1, ano: d.getFullYear(), origem:'data' };
+    return d.getDate();
+  }
   const s = norm(v);
   let m = s.match(/^(\d{1,2})\s*[\/\-\.]/);        // 01/ago, 1-ago
   if(m) return parseInt(m[1],10);
@@ -746,6 +752,35 @@ function mesDivergente(){
   return { cabecalho: { mes: cab.mes, ano: cab.ano || (cab.mes > esp.mes ? esp.ano-1 : esp.ano) }, esperado: esp };
 }
 
+/* Dentro do Folha Fácil (iframe) quem rola é a página de fora, e o iframe tem a
+   altura do conteúdo inteiro: o position:fixed centralizava a caixa no meio do
+   iframe, milhares de pixels abaixo da tela — só o fundo cinza aparecia e a aba
+   travava até o F5. Aqui a caixa vai para o trecho do iframe visível na janela
+   de fora e acompanha a rolagem dela. Aberta sozinha, a página não precisa disso.
+   Devolve a função que desfaz o ajuste. */
+function modalNaTela(){
+  let frame = null, fora = null;
+  try{ frame = window.frameElement; fora = window.parent; }catch(e){}
+  if(!frame || !fora || fora === window) return ()=>{};
+  const box = $('#modal'), caixa = box.querySelector('.modal-box');
+  const posicionar = ()=>{
+    const r = frame.getBoundingClientRect();
+    const topo = Math.max(0, -r.top);
+    const fim = Math.max(topo, Math.min(r.height, fora.innerHeight - r.top));
+    const folga = Math.max(0, (fim - topo - caixa.offsetHeight) / 2);
+    caixa.style.marginTop = Math.round(topo + Math.max(0, folga - 20)) + 'px';   // 20 = padding do .modal
+  };
+  box.style.alignItems = 'flex-start';
+  posicionar();
+  fora.addEventListener('scroll', posicionar, { passive:true });
+  fora.addEventListener('resize', posicionar);
+  return ()=>{
+    fora.removeEventListener('scroll', posicionar);
+    fora.removeEventListener('resize', posicionar);
+    box.style.alignItems = ''; caixa.style.marginTop = '';
+  };
+}
+
 // Pergunta qual é o mês verdadeiro. Resolve true quando pode gerar.
 function confirmarMes(){
   const div = mesDivergente();
@@ -756,16 +791,26 @@ function confirmarMes(){
       `O cabeçalho da planilha indica <b>${MESES[div.cabecalho.mes-1]}</b>, mas o mês esperado (anterior ao atual) é <b>${nomeRef(div.esperado)}</b>.<br>Qual é o mês verdadeiro deste arquivo?`;
     $('#modal-cab').textContent = `${MESES[div.cabecalho.mes-1]} de ${div.cabecalho.ano} (cabeçalho)`;
     $('#modal-esp').textContent = `${nomeRef(div.esperado)} (mês anterior)`;
+    let soltar = ()=>{};
+    const tecla = e => { if(e.key === 'Escape'){ e.preventDefault(); fechar(null); } };
     const fechar = ref => {
       box.classList.add('hide');
-      if(ref){ STATE.ref = ref; STATE.confirmado = true; aplicarCalendario(); render(); }
+      document.removeEventListener('keydown', tecla);
+      soltar();
+      // só o que depende do mês: render() recriaria a lista de empresas e a
+      // planilha sairia com "Todas" mesmo com uma empresa escolhida no filtro
+      if(ref){ STATE.ref = ref; STATE.confirmado = true; aplicarCalendario(); infoMes(); tabela(); }
       resolve(!!ref);
     };
     $('#modal-cab').onclick = ()=>fechar(div.cabecalho);
     $('#modal-esp').onclick = ()=>fechar(div.esperado);
     $('#modal-cancel').onclick = ()=>fechar(null);
+    // Esc ou clique no fundo cancelam: a tela nunca fica presa no cinza
+    box.onclick = e => { if(e.target === box) fechar(null); };
+    document.addEventListener('keydown', tecla);
     box.classList.remove('hide');
-    $('#modal-cab').focus();
+    soltar = modalNaTela();
+    $('#modal-cab').focus({ preventScroll:true });
   });
 }
 
@@ -795,7 +840,10 @@ function parse(grid){
   STATE.days = days;
   STATE.mes = days.length ? (norm(head[days[0].idx]).replace(/^\d{1,2}[\/\-\.]/,'') || '') : '';
   // sigla do cabeçalho ("ago") -> mês; se o cabeçalho veio como data, isDayHeader já preencheu
-  if(!(STATE.mesCabecalho && STATE.mesCabecalho.origem === 'data')){
+  if(STATE.mesCabecalho && STATE.mesCabecalho.origem === 'data'){
+    // o texto da célula seria a data inteira ("Sat Aug 01 2026 ...") e iria parar no nome do arquivo
+    STATE.mes = SIGLAS[STATE.mesCabecalho.mes-1];
+  }else{
     const m = mesDaSigla(STATE.mes);
     STATE.mesCabecalho = m ? { mes:m, ano:null, origem:'sigla' } : null;
   }
@@ -1020,10 +1068,7 @@ function render(){
   ['#resumo','#ocorrencias','#criticas','#actionbar'].forEach(s=>$(s).classList.remove('hide'));
   drop.classList.add('ready');
   $('#busca').value=''; $('#busca-limpar').classList.add('hide');
-  $('#fileinfo').textContent = [`${STATE.fileName} — ${R.length} funcionários, ${STATE.days.length} dias`, `mês de referência: ${nomeRef(STATE.ref)}`, STATE.origem].filter(Boolean).join(' · ');
-  const div = mesDivergente();
-  $('#aviso').textContent = [STATE.avisoMes, div ? `O cabeçalho indica ${MESES[div.cabecalho.mes-1]}, mas o mês esperado é ${nomeRef(div.esperado)} — será perguntado antes de gerar.` : ''].filter(Boolean).join(' ');
-  $('#aviso').classList.toggle('hide', !$('#aviso').textContent);
+  infoMes();
 
   const comF = R.filter(r=>r.cF>0).length;
   const comA = R.filter(r=>r.cA>0).length;
@@ -1046,6 +1091,14 @@ function render(){
 
   tabela();
   criticas();
+}
+
+// Linha do arquivo e aviso do mês — o que muda quando o mês de referência é confirmado
+function infoMes(){
+  $('#fileinfo').textContent = [`${STATE.fileName} — ${STATE.rows.length} funcionários, ${STATE.days.length} dias`, `mês de referência: ${nomeRef(STATE.ref)}`, STATE.origem].filter(Boolean).join(' · ');
+  const div = mesDivergente();
+  $('#aviso').textContent = [STATE.avisoMes, div ? `O cabeçalho indica ${MESES[div.cabecalho.mes-1]}, mas o mês esperado é ${nomeRef(div.esperado)} — será perguntado antes de gerar.` : ''].filter(Boolean).join(' ');
+  $('#aviso').classList.toggle('hide', !$('#aviso').textContent);
 }
 
 // busca sem acento e sem diferenciar maiúsculas; CPF casa só pelos dígitos

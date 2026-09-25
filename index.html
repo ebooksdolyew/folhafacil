@@ -1256,6 +1256,7 @@ let pageImageCache = new Map();
 let sortCol = null, sortDir = 1;
 let skippedPages = 0;
 let procStart = 0;
+let goSeq = 0;   /* cada go() recebe um número; um arquivo novo cancela o anterior */
 
 function isWeekendDay(dowText) {
   if (!dowText) return false;
@@ -2183,7 +2184,14 @@ function processPage(pg) {
 }
 
 async function go(file) {
+  /* Um segundo PDF escolhido no meio do processamento do primeiro misturava os
+     dois: funcionários de ambos em allEmps e pdfBytes só do segundo — o PDF
+     exportado saía com as páginas erradas. O processamento antigo agora para
+     na primeira oportunidade. */
+  const seq = ++goSeq;
+  const cancelado = () => seq !== goSeq;
   curFile = file;
+  expanded.clear();
   document.getElementById('alrt').style.display = 'none';
   document.getElementById('fwarn').style.display = 'none';
   skippedPages = 0;
@@ -2191,6 +2199,7 @@ async function go(file) {
   setStatus('Carregando PDF…'); prog(5);
   try {
     const buf = await file.arrayBuffer();
+    if (cancelado()) return;
     pdfBytes = new Uint8Array(buf.slice(0));
     let pdf;
     try {
@@ -2203,6 +2212,7 @@ async function go(file) {
         throw new Error('PDF protegido por senha. Remova a proteção antes de carregar.');
       throw pdfErr;
     }
+    if (cancelado()) { pdf.destroy(); return; }
     const n = pdf.numPages;
     document.getElementById('fn').textContent = file.name;
     document.getElementById('fp').textContent = `${n} página${n > 1 ? 's' : ''}`;
@@ -2214,6 +2224,7 @@ async function go(file) {
     setStatus(`Analisando ${n} página${n > 1 ? 's' : ''}…`);
 
     for (let i = 1; i <= n; i++) {
+      if (cancelado()) { pdf.destroy(); return; }
       prog(5 + (i / n) * 85);
 
       /* Atualiza o texto de status e devolve o controle à UI a cada 10 páginas,
@@ -2233,6 +2244,7 @@ async function go(file) {
          sampleLuminance() lê pageImageCache.get(pageNum); sem o cache
          presente ele retorna 255 (claro) e TODOS os ATMs são descartados. */
       await renderPageToCache(pdfPage, i);
+      if (cancelado()) { pdf.destroy(); return; }
 
       const result = processPage(pg);
       if (!result) skippedPages++;
@@ -2260,10 +2272,12 @@ async function go(file) {
       fw.style.display = 'flex';
     }
     setTimeout(() => {
+      if (cancelado()) return;
       document.getElementById('pw').style.display = 'none';
       setStatus(`Concluído em ${elapsed}s`, 'ok');
     }, 400);
   } catch (err) {
+    if (cancelado()) return;
     setStatus('Erro: ' + err.message, 'erro');
     console.error(err);
   }
@@ -2858,8 +2872,13 @@ function dlReport() {
   lines.push(`Funcionários no relatório: ${list.length} de ${allEmps.length}`);
   lines.push('');
 
+  /* Mesma leitura do filtro que a planilha usa: a lista fixa de rótulos
+     esquecia ATESTADOS_E_FALTAS, FALTAS_E_ATRASOS e os três juntos, e o
+     relatório saía sem a seção de atestados ou de atrasos. */
+  const verbas = _exportVerbas(ctx);
+
   /* ── Seção: Atestados ── */
-  const showAtm = ctx.label === 'ATESTADOS' || ctx.label === 'ATESTADOS_E_ATRASOS' || ctx.label === 'GERAL';
+  const showAtm = verbas.atm;
   if (showAtm) {
     const comAtm = list.filter(e => e.atm > 0);
     lines.push('─ ATESTADOS');
@@ -2875,7 +2894,7 @@ function dlReport() {
   }
 
   /* ── Seção: Atrasos ── */
-  const showAtrasos = ctx.label === 'ATRASOS' || ctx.label === 'ATESTADOS_E_ATRASOS' || ctx.label === 'GERAL';
+  const showAtrasos = verbas.atrasos;
   if (showAtrasos) {
     const comAtrasos = list.filter(e => e.saldoHoras && e.saldoHoras.negative);
     lines.push('─ ATRASOS (SALDO DE HORAS NEGATIVO)');
@@ -2963,6 +2982,7 @@ window.addEventListener('pagehide', wipeSensitiveData);
 window.addEventListener('beforeunload', wipeSensitiveData);
 
 function resetTool() {
+  goSeq++;                      /* "Novo" no meio do processamento também o interrompe */
   wipeSensitiveData();
   skippedPages = 0; sortCol = null; sortDir = 1;
   document.getElementById('res').style.display = 'none';
@@ -2978,6 +2998,7 @@ function resetTool() {
   document.getElementById('fwarn').style.display = 'none';
   document.getElementById('bdl').disabled = true;
   document.getElementById('bcs').disabled = true;
+  document.getElementById('bcsv').disabled = true;
   document.getElementById('bdsr').disabled = true;
   document.getElementById('blr').disabled = true;
   document.querySelectorAll('th.sortable').forEach(t => {
