@@ -565,3 +565,70 @@ test.describe('Guardião — arquivo recusado, PDF quebrado e tela estreita', ()
     expect(soFaltas).toContain('Total de Faltas: 2 dias');
   });
 });
+
+test.describe('Infrequência — nomes, empresas e proventos', () => {
+  test.use({ timezoneId: 'America/Sao_Paulo' });
+
+  /** Planilha no mês esperado (sem balão de confirmação), uma ocorrência por
+      funcionário no primeiro dia útil. */
+  async function carregar(page, linhas) {
+    await page.goto('/infrequencia.html');
+    const b64 = await page.evaluate(linhas => {
+      const { mes, ano } = mesAnterior();
+      const n = diasNoMes(mes, ano);
+      let util = 1; while ([0, 6].includes(new Date(ano, mes - 1, util).getDay())) util++;
+      const cab = ['FUNCIONÁRIO', 'CPF', 'FUNÇÃO', 'EMPRESA'];
+      for (let d = 1; d <= n; d++) cab.push(String(d).padStart(2, '0') + '/' + SIGLAS[mes - 1]);
+      const aoa = [cab, ...linhas.map(([nome, cpf, empresa, marca]) =>
+        [nome, cpf, 'AUXILIAR', empresa, ...Array.from({ length: n }, (_, i) => (i + 1 === util ? marca : ''))])];
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'P');
+      return XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+    }, linhas);
+    await page.setInputFiles('#file', { name: 'ponto.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from(b64, 'base64') });
+    await page.waitForSelector('#actionbar:not(.hide)');
+  }
+  async function linhasDoXlsx(page, d) {
+    const b64 = fs.readFileSync(await d.path()).toString('base64');
+    return page.evaluate(b64 => {
+      const wb = XLSX.read(b64, { type: 'base64' });
+      return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    }, b64);
+  }
+
+  test('nome com HTML aparece como texto, na tabela, nas críticas e na busca', async ({ page }) => {
+    await carregar(page, [['ANA <img src=x onerror="window.__xss=1">', '123', 'ALFA', 'F']]);
+    await page.waitForTimeout(100);
+    expect(await page.evaluate(() => window.__xss)).toBeUndefined();
+    expect(await page.$$eval('#tbl img, #issues img', e => e.length)).toBe(0);
+    await expect(page.locator('#tbl tbody td.name')).toContainText('ANA <img src=x');
+    await expect(page.locator('#issues')).toContainText('ANA <img src=x');
+    await page.fill('#busca', '<i>ninguem</i>');
+    await expect(page.locator('#tbl tbody td.empty')).toContainText('<i>ninguem</i>');
+  });
+
+  /* Sem value explícito o navegador junta os espaços duplos do texto da
+     <option>, e o filtro deixava de bater com r.empresa: "Nada a exportar". */
+  test('empresa com espaço duplo no nome continua filtrável', async ({ page }) => {
+    await carregar(page, [['FUNC UM', '52998224725', 'EMPRESA  DUPLA', 'F'], ['FUNC DOIS', '11144477735', 'OUTRA', 'F']]);
+    await page.selectOption('#f-empresa', 'EMPRESA  DUPLA');
+    expect(await page.inputValue('#f-empresa')).toBe('EMPRESA  DUPLA');
+    const [d] = await Promise.all([page.waitForEvent('download'), page.click('#btn-modelo')]);
+    expect((await linhasDoXlsx(page, d)).map(l => l['Funcionário'])).toEqual(['FUNC UM']);
+  });
+
+  /* Quando "Provento TRE" foi renomeado para "Provento DSR", as linhas de TRE
+     continuaram lendo o mesmo campo e saíam com o código da DSR. */
+  test('TRE usa o Provento TRE e a DSR usa o Provento DSR', async ({ page }) => {
+    await carregar(page, [['FUNC FALTA', '52998224725', 'ALFA', 'F'], ['FUNC TRE', '11144477735', 'ALFA', 'D']]);
+    await page.selectOption('#f-tipo', 'FAD');
+    await page.fill('#p-falta', '504');
+    await page.fill('#p-tre', '777');
+    await page.fill('#p-dsr', '999');
+    const [d] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export')]);
+    const porTipo = Object.fromEntries((await linhasDoXlsx(page, d)).map(l => [l.Tipo, l.PROVENTO]));
+    expect(porTipo).toEqual({ FALTA: 504, TRE: 777 });
+    await page.selectOption('#f-tipo', 'DSR');
+    const [d2] = await Promise.all([page.waitForEvent('download'), page.click('#btn-modelo')]);
+    expect((await linhasDoXlsx(page, d2)).map(l => l.PROVENTO)).toEqual([999]);
+  });
+});

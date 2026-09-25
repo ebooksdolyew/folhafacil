@@ -425,8 +425,11 @@ section:not(.hide),.actionbar:not(.hide){animation:rise .35s ease both}
     <label class="field inline">Provento atestado
       <input type="number" id="p-atestado" value="">
     </label>
-    <label class="field inline">Provento DSR
+    <label class="field inline">Provento TRE
       <input type="number" id="p-tre" value="">
+    </label>
+    <label class="field inline">Provento DSR
+      <input type="number" id="p-dsr" value="">
     </label>
     <label class="field inline" title="Porteiro, porteiro diurno e porteiro noturno são 12×36; as demais funções são Convencional">Escala
       <select id="f-escala">
@@ -639,6 +642,9 @@ function handleFile(file){
 
 const norm = v => (v===null||v===undefined) ? '' : String(v).trim();
 const up = v => norm(v).toUpperCase();
+// Texto da planilha que entra em innerHTML (nome, empresa, lotação, CPF, código
+// lido): sem isto um "<b>" no nome virava negrito e um <img onerror> rodava script
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function findHeaderRow(grid){
   for(let i=0;i<Math.min(grid.length,15);i++){
@@ -1140,7 +1146,9 @@ function render(){
   ].map(([k,v,alert])=>`<div class="stat${alert&&v>0?' alert':''}"><span>${k}</span><b>${v}</b></div>`).join('');
 
   const empresas = [...new Set(R.map(r=>r.empresa).filter(Boolean))].sort();
-  $('#f-empresa').innerHTML = '<option value="">Todas</option>' + empresas.map(e=>`<option>${e}</option>`).join('');
+  // value explícito: sem ele o navegador junta espaços duplos ("EMPRESA  X" vira
+  // "EMPRESA X") e o filtro deixava de bater com r.empresa — "Nada a exportar"
+  $('#f-empresa').innerHTML = '<option value="">Todas</option>' + empresas.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('');
   $('#tab-F').textContent  = `Só faltas (${R.filter(r=>r.cF>0).length})`;
   $('#tab-AD').textContent = `Atestados e TRE (${R.filter(r=>r.cA>0||r.cD>0).length})`;
   $('#tab-31').textContent = `Ausência mês completo (${R.filter(temMesCheio).length})`;
@@ -1166,9 +1174,9 @@ function bateBusca(r, termo){
   return termo.split(/\s+/).every(t => alvo.includes(t)) || (digitos.length>=3 && r.cpf.replace(/\D/g,'').includes(digitos));
 }
 function destacar(texto, termo){
-  if(!termo) return texto;
+  if(!termo) return esc(texto);
   const partes = termo.split(/\s+/).filter(Boolean);
-  if(!partes.length) return texto;
+  if(!partes.length) return esc(texto);
   // compara sem acento (mesmo tamanho do texto original), marcando os trechos encontrados
   const plano = semAcento(texto);
   const marca = new Array(texto.length).fill(false);
@@ -1180,7 +1188,7 @@ function destacar(texto, termo){
   for(let i=0;i<texto.length;i++){
     if(marca[i] && !dentro){ out += '<mark>'; dentro = true; }
     if(!marca[i] && dentro){ out += '</mark>'; dentro = false; }
-    out += texto[i];
+    out += esc(texto[i]);
   }
   return out + (dentro ? '</mark>' : '');
 }
@@ -1200,7 +1208,7 @@ function tabela(){
     `<tr><th>Linha</th><th>Funcionário</th><th>Dias do mês</th><th class="num" title="Marcados na planilha; abaixo, quantos contam após as regras">F</th><th class="num" title="Marcados na planilha; abaixo, quantos contam após as regras">ATM</th><th class="num" title="Marcados na planilha; abaixo, quantos contam após as regras">TRE</th><th>Situação</th></tr>`;
   const tb = $('#tbl').querySelector('tbody');
   if(!R.length){
-    const msg = termo ? `Nenhum funcionário encontrado para “${$('#busca').value.trim()}”.`
+    const msg = termo ? `Nenhum funcionário encontrado para “${esc($('#busca').value.trim())}”.`
               : vista==='31' ? 'Nenhum funcionário com ausência no mês completo.'
               : vista==='F'  ? 'Nenhum funcionário com falta.'
               : vista==='AD' ? 'Nenhum funcionário com atestado ou TRE.' : 'Nenhum funcionário.';
@@ -1224,7 +1232,7 @@ function tabela(){
       fr && fr.aviso ? `<span class="aviso-fds">${fr.aviso}.</span>` : '',
       dsr !== '' ? `<span class="dsr" title="${escala==='12×36' ? '1 DSR por falta contada (12×36)' : '1 DSR por semana (seg a sex) com falta'}">DSR ${dsr}</span>` : ''
     ].filter(Boolean).join(' ');
-    const sit = [r.criticas.length ? r.criticas.map(c=>c.texto).join(' ') : '<span class="meta">Conferido</span>', extras].filter(Boolean).join(' ');
+    const sit = [r.criticas.length ? r.criticas.map(c=>esc(c.texto)).join(' ') : '<span class="meta">Conferido</span>', extras].filter(Boolean).join(' ');
     return `<tr class="${r.criticas.some(c=>c.grave)?'flagged':''}">
       <td class="meta">${r.linha}</td>
       <td class="name">${destacar(r.nome, termo)}<div class="meta">${destacar([r.empresa,r.lotacao].filter(Boolean).join(' · '), termo)}</div></td>
@@ -1240,13 +1248,16 @@ function criticas(){
   STATE.rows.forEach(r=>r.criticas.forEach(c=>itens.push({r,c})));
   itens.sort((a,b)=> (b.c.grave?1:0)-(a.c.grave?1:0));
   $('#issues').innerHTML = itens.length
-    ? itens.map(({r,c})=>`<li class="${c.grave?'':'warn'}"><b>${c.texto}</b><span class="who">Linha ${r.linha} — ${r.nome}${r.empresa?' · '+r.empresa:''}</span></li>`).join('')
+    ? itens.map(({r,c})=>`<li class="${c.grave?'':'warn'}"><b>${esc(c.texto)}</b><span class="who">Linha ${r.linha} — ${esc(r.nome)}${r.empresa?' · '+esc(r.empresa):''}</span></li>`).join('')
     : `<li class="warn"><b>Nenhuma crítica.</b></li>`;
 }
 
 function montarSaida(){
   const emp = $('#f-empresa').value;
   const tipos = $('#f-tipo').value.split('');
+  /* TRE tem campo próprio: quando o antigo "Provento TRE" foi renomeado para
+     "Provento DSR", as linhas de TRE continuaram lendo o mesmo campo e saíam
+     na planilha com o código da DSR. */
   const prov = { F:$('#p-falta').value, A:$('#p-atestado').value, D:$('#p-tre').value };
   const escalaSel = $('#f-escala').value;   // '' = Tudo (as duas escalas juntas)
 
@@ -1352,7 +1363,7 @@ $('#btn-export').onclick = async ()=>{
 };
 
 /* Uma linha por funcionário que tem DSR (a DSR só vem de falta). A coluna
-   QUANTIDADE recebe a DSR, e o Provento DSR (campo #p-tre) fica ao lado. Respeita
+   QUANTIDADE recebe a DSR, e o Provento DSR (campo #p-dsr) fica ao lado. Respeita
    os filtros de empresa, escala e "ausência mês completo". */
 function montarSaidaDSR(){
   const emp = $('#f-empresa').value;
@@ -1373,12 +1384,12 @@ function montarSaidaDSR(){
 }
 
 // Selecionado "Somente DSR" no Lançar: planilha com a DSR na coluna QUANTIDADE
-// e o Provento DSR (campo #p-tre) ao lado. Serve tanto ao "modelo da folha"
+// e o Provento DSR (campo #p-dsr) ao lado. Serve tanto ao "modelo da folha"
 // quanto à "planilha detalhada" — nesse modo as duas geram a mesma folha enxuta.
 function exportarDSR(prefixo){
   const dados = montarSaidaDSR();
   if(!dados.length){ alert('Nenhum funcionário com DSR nos filtros atuais.'); return; }
-  const provDsr = $('#p-tre').value;        // campo "Provento DSR"
+  const provDsr = $('#p-dsr').value;        // campo "Provento DSR"
   const todasEmpresas = !$('#f-empresa').value;
   const cabecalho = ['MATRICULA','Funcionário', ...(todasEmpresas ? ['Empresa'] : []), 'CPF','Escala','QUANTIDADE','PROVENTO','VALOR'];
   const aoa = [cabecalho].concat(dados.map(d=>[
