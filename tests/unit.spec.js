@@ -350,3 +350,46 @@ test.describe('diaDaCelula', () => {
     });
   }
 });
+
+/* O nome vem do PDF e a busca vem do teclado; os dois entram em innerHTML.
+   Sem o escape, "<b>" na busca virava negrito e um <img onerror> rodava script. */
+test.describe('escHtml', () => {
+  const casos = [
+    ['JOSÉ DA SILVA', 'JOSÉ DA SILVA'],
+    ['<b>x</b>', '&lt;b&gt;x&lt;/b&gt;'],
+    ['A & B', 'A &amp; B'],
+    [`"aspas" e 'apóstrofo'`, '&quot;aspas&quot; e &#39;apóstrofo&#39;'],
+    [null, ''],
+    [123, '123'],
+  ];
+  for (const [entrada, saida] of casos) {
+    test(`${JSON.stringify(entrada)} → ${JSON.stringify(saida)}`, async ({ page }) => {
+      expect(await page.evaluate(t => escHtml(t), entrada)).toBe(saida);
+    });
+  }
+
+  test('renderTable mostra nome e busca como texto, sem criar elemento', async ({ page }) => {
+    const r = await page.evaluate(() => {
+      window.__xss = 0;
+      const emp = { name: 'ANA <img src=x onerror="window.__xss=1">', pages: [1], atm: 0, is12: false,
+                    atmDays: [], totalFaltas: 0, saldoHoras: null };
+      allEmps = [emp];
+      renderTable();
+      const nome = document.querySelector('#tbd td strong').textContent;
+      const imgsNaLinha = document.querySelectorAll('#tbd img').length;
+      document.getElementById('srch').value = '<i>zzz</i>';
+      renderTable();
+      const vazio = document.querySelector('#tbd .empty-row td').textContent;
+      const italicos = document.querySelectorAll('#tbd i').length;
+      document.getElementById('srch').value = '';
+      allEmps = [];
+      return { nome, imgsNaLinha, vazio, italicos };
+    });
+    await page.waitForTimeout(100);   // tempo de um onerror disparar, se o <img> existisse
+    expect(r.nome).toBe('ANA <img src=x onerror="window.__xss=1">');
+    expect(r.imgsNaLinha).toBe(0);
+    expect(r.vazio).toContain('"<i>zzz</i>"');
+    expect(r.italicos).toBe(0);
+    expect(await page.evaluate(() => window.__xss)).toBe(0);
+  });
+});

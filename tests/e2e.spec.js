@@ -495,3 +495,73 @@ test.describe('Conciliador de Planilhas', () => {
       .toEqual(['15/03/1990', '01/08/2026', '01/08/2026']);
   });
 });
+
+/* ─── Varredura geral: regressões dos bugs corrigidos ──────────────────── */
+test.describe('Guardião — arquivo recusado, PDF quebrado e tela estreita', () => {
+  /* O aviso morava dentro do painel de resultados: um arquivo inválido logo no
+     início abria o painel vazio — cartão sem nome, contadores em zero e tabela
+     só com o cabeçalho. */
+  test('arquivo que não é PDF mostra só o aviso, sem abrir o painel vazio', async ({ page }) => {
+    await page.goto('/index.html');
+    await page.setInputFiles('#fi', { name: 'planilha.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from('x') });
+    await expect(page.locator('#alrt')).toBeVisible();
+    await expect(page.locator('#alrt')).toContainText('Arquivo inválido');
+    await expect(page.locator('#res')).toBeHidden();
+  });
+
+  /* O arquivo novo trocava curFile e pdfBytes antes de abrir: um PDF quebrado
+     deixava a tabela do anterior com o nome e os bytes do novo, e a barra de
+     progresso parada em 5% embaixo do erro. */
+  test('um PDF quebrado depois de um bom mantém o anterior inteiro', async ({ page }) => {
+    await processar(page);
+    const antes = await page.evaluate(() => ({ nome: curFile.name, bytes: pdfBytes.length, emps: allEmps.length }));
+    await page.setInputFiles('#fi', { name: 'quebrado.pdf', mimeType: 'application/pdf', buffer: Buffer.from('isto nao e um pdf') });
+    await page.waitForFunction(() => /Erro/.test(document.getElementById('sm').textContent));
+    await expect(page.locator('#sm')).toContainText('não é um PDF válido');
+    await expect(page.locator('#pw')).toBeHidden();
+    expect(await page.evaluate(() => ({ nome: curFile.name, bytes: pdfBytes.length, emps: allEmps.length }))).toEqual(antes);
+    await expect(page.locator('#fn')).toHaveText(antes.nome);
+    const [d] = await Promise.all([page.waitForEvent('download'), page.click('#bcs')]);
+    expect(d.suggestedFilename()).toBe('ponto-sintetico_GERAL.xlsx');
+  });
+
+  /* A tabela tem ~760px de largura mínima e o contêiner cortava o resto com
+     overflow:hidden: no celular ATM, Faltas, Saldo e Páginas sumiam. */
+  test('no celular a tabela rola para o lado em vez de cortar colunas', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await processar(page);
+    const r = await page.$eval('.tw', tw => ({ overflow: getComputedStyle(tw).overflowX, cabe: tw.scrollWidth <= tw.clientWidth }));
+    expect(r.overflow).toBe('auto');
+    expect(r.cabe).toBe(false);
+    await page.$eval('.tw', tw => { tw.scrollLeft = tw.scrollWidth; });
+    const [tw, th] = await Promise.all([
+      page.$eval('.tw', e => e.getBoundingClientRect().toJSON()),
+      page.$eval('th:nth-child(7)', e => e.getBoundingClientRect().toJSON()),
+    ]);
+    expect(th.right, 'coluna Páginas continua fora do alcance').toBeLessThanOrEqual(tw.right + 1);
+  });
+
+  /* A seção de faltas do relatório aparecia com qualquer filtro; as de
+     atestados e atrasos já seguiam o que estava marcado. */
+  test('a seção de faltas do relatório segue o filtro marcado', async ({ page }) => {
+    await page.goto('/index.html');
+    const relatorio = async (filtro) => {
+      await page.evaluate(f => {
+        allEmps = [{ name: 'TESTE', cpf: null, pages: [1], atm: 1, is12: false, saldoHoras: null,
+                     atmDays: [{ display: '04/05/2026 (Seg)', confidence: 1 }], totalFaltas: 2,
+                     faltas: { quantidade: 2, dsr: 1, conferencia: 'conferido', dias: [], impresso: 2 },
+                     detectionReport: { motorUsado: 'coluna-horizontal' } }];
+        for (const id of ['fa', 'ff', 'fd']) document.getElementById(id).checked = id === f;
+      }, filtro);
+      const [d] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => dlReport())]);
+      return fs.readFileSync(await d.path(), 'utf8');
+    };
+    const soAtm = await relatorio('fa');
+    expect(soAtm).toContain('─ ATESTADOS');
+    expect(soAtm).not.toContain('─ FALTAS');
+    expect(soAtm).not.toContain('Total de Faltas');
+    const soFaltas = await relatorio('ff');
+    expect(soFaltas).toContain('─ FALTAS');
+    expect(soFaltas).toContain('Total de Faltas: 2 dias');
+  });
+});
