@@ -3086,8 +3086,11 @@ function prog(p) {
     try {
       var doc = tool.frame.contentDocument;
       if (doc && doc.body) {
-        interna = Math.max(doc.body.scrollHeight,
-                           doc.documentElement ? doc.documentElement.scrollHeight : 0);
+        /* altura do conteúdo (body + margens). O scrollHeight do <html> nunca é
+           menor que a altura atual do próprio iframe: com ele o iframe só
+           crescia, e página curta ficava com um vão antes dos direitos autorais */
+        var cs = doc.defaultView.getComputedStyle(doc.body);
+        interna = Math.ceil(doc.body.scrollHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom));
       }
     } catch (_) {}
     tool.frame.style.height = interna > 0
