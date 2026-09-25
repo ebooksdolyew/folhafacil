@@ -729,7 +729,7 @@ function loadNov(wb){
     if(cols.includes('CpfTitular')) data=r;
     if(cols.some(c=>c.toLowerCase().includes('categoria do plano'))) ref=r;
   }
-  if(!data){ alert('Não encontrei no arquivo Novati a aba de cadastros (coluna CpfTitular).'); return; }
+  if(!data){ alert('Não encontrei no arquivo Novati a aba de cadastros (coluna CpfTitular).'); return false; }
   S.nov = data.map(r=>({
     filial:r.numCodigoFilial, filialNome:(r.RazaoSocialFilial||'').toString().trim(),
     operadora:(r.desRazaoSocialPlano||'').toString().trim(), idPlano:r.idPlanoSaude,
@@ -756,6 +756,7 @@ function loadNov(wb){
   S.competencia = refMes || null;
   if(S.competencia){ const b=document.getElementById('refBadge'); b.textContent='Competência folha: '+String(S.competencia).replace(/(\d{4})(\d{2})/,'$2/$1'); b.style.display='inline'; }
   suggestAssignments();
+  return true;
 }
 
 /* ---------- escopo (somente operadora) ---------- */
@@ -974,7 +975,8 @@ function buildDependenteRows(depItems){
    ============================================================ */
 function bindDropSingle(dropId, inputId, handler){
   const drop=document.getElementById(dropId), inp=document.getElementById(inputId);
-  inp.addEventListener('change', e=>{ if(e.target.files[0]) readFile(e.target.files[0], handler, drop); });
+  // value zerado: escolher de novo o mesmo arquivo (corrigido no Excel) volta a disparar o change
+  inp.addEventListener('change', e=>{ const f=e.target.files[0]; if(f) readFile(f, handler, drop); inp.value=''; });
   ['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
   ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
   drop.addEventListener('drop', e=>{ const f=e.dataTransfer.files[0]; if(f) readFile(f, handler, drop); });
@@ -984,9 +986,13 @@ function readFile(file, handler, drop){
   r.onload=e=>{
     try{
       const wb=readWorkbookAny(new Uint8Array(e.target.result), file.name);
-      handler(wb, file.name);
+      // arquivo recusado (o handler já avisou): o cartão fica como estava, sem ✓
+      if(handler(wb, file.name)===false) return;
       drop.classList.add('loaded');
       drop.querySelector('.file').textContent='✓ '+file.name;
+      // Fatura carregada antes da Novati: os cartões dela diziam "carregue a
+      // Novati p/ vincular" para sempre e não ganhavam a lista de empresas
+      renderHapFileList();
       maybeScope();
     }catch(err){ alert('Não foi possível ler o arquivo: '+err.message); }
   };
@@ -1006,7 +1012,7 @@ function bindDropMulti(dropId, inputId, onFileParsed){
         try{
           onFileParsed(new Uint8Array(e.target.result), file.name);
         }catch(err){ alert('Não foi possível ler "'+file.name+'": '+err.message); }
-        finally{ pending--; if(pending===0){ drop.classList.add('loaded'); renderHapFileList(); maybeScope(); } }
+        finally{ pending--; if(pending===0){ drop.classList.toggle('loaded', S.hapSources.length>0); renderHapFileList(); maybeScope(); } }
       };
       r.readAsArrayBuffer(file);
     });
@@ -1068,9 +1074,16 @@ function renderAll(){
   document.getElementById('ledger').scrollIntoView({behavior:'smooth'});
 }
 
+/* Busca das abas. Antes cada aba testava `nome.includes(q) || cpf.includes(d)`:
+   buscando um nome, d ficava vazio e ''.includes('') é sempre verdadeiro — e
+   buscando um número, q é que ficava vazio. Resultado: nenhuma busca filtrava. */
+function bateBusca(f, nkey, ...numeros){
+  const q=normName(f), d=digits(f);
+  if(!q && !d) return true;
+  return (!!q && String(nkey||'').includes(q)) || (!!d && numeros.some(n=>String(n||'').includes(d)));
+}
 function renderInc(f=''){
-  const q=normName(f);
-  const rows=S.res.inc.filter(r=>!q||r.nkey.includes(q)||r.cpf.includes(digits(f))).map(r=>{
+  const rows=S.res.inc.filter(r=>bateBusca(f, r.nkey, r.cpf, r.matriculaResolvida)).map(r=>{
     const sitTag = r.situacao==='dep' ? '<span class="tag dep">Dependente novo</span>' : '<span class="tag titpend">Titular — plano pendente</span>';
     return `<tr><td>${esc(r.nome)}</td><td class="mono">${fmtCpf(r.cpf)}</td><td>${roleTag(r.role)}</td>
     <td class="mono">${esc(r.plano)}</td><td class="num">${money(r.mensalidade)}</td><td>${esc(r.inicio)}</td>
@@ -1080,17 +1093,15 @@ function renderInc(f=''){
   tbl('t-inc',['Beneficiário','CPF','Tipo','Plano Clin Odonto','Valor (R$)','Início','Titular (matrícula)','Situação'],rows,'Nenhuma inclusão pendente.');
 }
 function renderExc(f=''){
-  const q=normName(f),d=digits(f);
-  const rows=S.res.exc.filter(r=>!q&&!d||r.nkey.includes(q)||r.cpf.includes(d)||r.matricula.includes(d)).map(r=>
+  const rows=S.res.exc.filter(r=>bateBusca(f, r.nkey, r.cpf, r.matricula)).map(r=>
     `<tr><td class="mono">${esc(r.matricula)}</td><td>${esc(r.funcionario)}</td><td>${esc(r.nome)}</td>
     <td class="mono">${fmtCpf(r.cpf)}</td><td>${roleTag(r.role)}</td><td>${esc(r.plano)}</td>
     <td class="num">${money(r.valor)}</td><td>${esc(r.filialNome)}</td><td class="mono">${esc(r.dataExclusaoSugerida)}</td></tr>`);
   tbl('t-exc',['Matrícula','Funcionário (titular)','Beneficiário','CPF','Tipo','Plano no sistema','Valor (R$)','Filial','Data exclusão sugerida'],rows,'Nenhuma exclusão pendente.');
 }
 function renderAlt(kind,f=''){
-  const q=normName(f),d=digits(f);
   const list=S.res[kind];
-  const rows=list.filter(r=>!q&&!d||r.h.nkey.includes(q)||r.h.cpf.includes(d)).map(r=>
+  const rows=list.filter(r=>bateBusca(f, r.h.nkey, r.h.cpf, r.n.matricula)).map(r=>
     `<tr><td class="mono">${esc(r.n.matricula)}</td><td>${esc(r.h.nome)}</td><td class="mono">${fmtCpf(r.h.cpf)}</td><td>${roleTag(r.h.role)}</td>
     <td>${esc(r.n.plano)}<br><span class="mono" style="color:var(--ink-2)">R$ ${money(r.n.valor)}</span></td>
     <td class="mono">${esc(r.h.plano)}<br><span style="color:var(--ink-2)">R$ ${money(r.h.mensalidade)}</span></td>
@@ -1099,25 +1110,22 @@ function renderAlt(kind,f=''){
     kind==='alt'?'Nenhuma alteração de valor pendente.':'Nenhuma divergência de código para verificar.');
 }
 function renderTransf(f=''){
-  const q=normName(f);
-  const rows=S.res.transf.filter(r=>!q||r.h.nkey.includes(q)||r.h.cpf.includes(digits(f))).map(r=>
+  const rows=S.res.transf.filter(r=>bateBusca(f, r.h.nkey, r.h.cpf, r.n.matricula)).map(r=>
     `<tr><td class="mono">${esc(r.n.matricula)}</td><td>${esc(r.h.nome)}</td><td class="mono">${fmtCpf(r.h.cpf)}</td><td>${roleTag(r.h.role)}</td>
     <td>${esc(r.origem)}</td><td>${esc(r.destino)}</td></tr>`);
   tbl('t-transf',['Matrícula','Beneficiário','CPF','Tipo','Empresa atual no Clin Odonto (origem)','Empresa correta na Novati (destino)'],rows,'Nenhuma transferência pendente.');
 }
 function renderManual(f=''){
-  const q=normName(f);
-  const rows=S.res.manual.filter(r=>!q||r.nkey.includes(q)||r.cpf.includes(digits(f))).map(r=>
+  const rows=S.res.manual.filter(r=>bateBusca(f, r.nkey, r.cpf)).map(r=>
     `<tr><td>${esc(r.nome)}</td><td class="mono">${fmtCpf(r.cpf)}</td><td>${roleTag(r.role)} ${esc(r.parentesco!=='TITULAR'?r.parentesco:'')}</td>
     <td class="mono">${esc(r.plano)}</td><td class="num">${money(r.mensalidade)}</td><td>${esc(r.inicio)}</td><td class="mono" style="color:var(--ink-2)">${esc(r.sourceFile)}</td></tr>`);
   tbl('t-manual',['Beneficiário','CPF','Tipo','Plano Clin Odonto','Valor (R$)','Início','Arquivo de origem'],rows,'Nenhuma adesão manual pendente.');
 }
 function renderDes(f=''){
-  const q=normName(f),d=digits(f);
   const notes=[];
   if(S.res.des.some(x=>x.semMat)) notes.push('Há lançamentos sem matrícula (destacados) — eles não entram no arquivo de importação. Veja a aba Adesão manual.');
   document.getElementById('desNotes').innerHTML=notes.map(n=>`<div class="note">${n}</div>`).join('');
-  const rows=S.res.des.map((r,i)=>({r,i})).filter(({r})=>!q&&!d||normName(r.benef).includes(q)||r.cpfFolha.includes(d)||r.mat.includes(d)).map(({r,i})=>
+  const rows=S.res.des.map((r,i)=>({r,i})).filter(({r})=>bateBusca(f, normName(r.benef), r.cpfFolha, r.mat)).map(({r,i})=>
     `<tr${r.semMat?' style="background:var(--alt-bg)"':''}><td><input type="checkbox" ${r.inc&&!r.semMat?'checked':''} ${r.semMat?'disabled':''} onchange="S.res.des[${i}].inc=this.checked"></td>
     <td class="mono">${r.mat||'<span class="tag warn">sem matrícula</span>'}</td><td class="mono">${fmtCpf(r.cpfFolha)}</td>
     <td class="mono">${r.evento}</td><td>${esc(r.tipo)}</td><td class="num">${money(r.valor)}</td>

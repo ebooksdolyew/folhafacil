@@ -632,3 +632,70 @@ test.describe('Infrequência — nomes, empresas e proventos', () => {
     expect((await linhasDoXlsx(page, d2)).map(l => l.PROVENTO)).toEqual([999]);
   });
 });
+
+test.describe('Conciliador — busca e carga dos arquivos', () => {
+  test.use({ timezoneId: 'America/Sao_Paulo' });
+
+  async function arquivos(page) {
+    return page.evaluate(() => {
+      const livro = (aoa) => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'A'); return XLSX.write(wb, { type: 'base64', bookType: 'xlsx' }); };
+      return {
+        fatura: livro([
+          ['Fatura Detalhada ALFA SERVICOS LTDA [CÓD 123]'],
+          ['Competência: Agosto / 2026'],
+          ['Nome', 'Nasc.', 'CPF', 'Parentesco', 'Plano', 'Valor'],
+          ['1001 - JOAO DA SILVA [CPF: 529.982.247-25] [Mat: 500]', null, null, null, null, null],
+          ['JOAO DA SILVA', '01/01/1980', '529.982.247-25', 'TITULAR', 'CLIN ODONTO [PGTO: 2026/08]', '30,00'],
+        ]),
+        novati: livro([
+          ['numCodigoFilial', 'RazaoSocialFilial', 'desRazaoSocialPlano', 'Matricul', 'NomeFuncionario', 'CpfTitular', 'Beneficiario', 'Cpf', 'ValorPlano', 'Plano', 'AnoMesRef'],
+          [1, 'ALFA SERVICOS LTDA', 'CLIN ODONTO', 500, 'JOAO DA SILVA', '52998224725', 'JOAO DA SILVA', '52998224725', 30, 'PLANO 1234', 202609],
+          [1, 'ALFA SERVICOS LTDA', 'CLIN ODONTO', 777, 'CARLOS LIMA', '86288366757', 'CARLOS LIMA', '86288366757', 30, 'PLANO 1234', 202609],
+          [1, 'ALFA SERVICOS LTDA', 'CLIN ODONTO', 778, 'DIANA ROCHA', '71428793860', 'DIANA ROCHA', '71428793860', 30, 'PLANO 1234', 202609],
+        ]),
+        errado: livro([['coluna', 'errada'], [1, 2]]),
+      };
+    });
+  }
+  const xlsx = (nome, b64) => ({ name: nome, mimeType: 'application/octet-stream', buffer: Buffer.from(b64, 'base64') });
+
+  /* Arquivo Novati recusado ("não encontrei a aba de cadastros") ficava com o
+     ✓ verde no cartão, como se tivesse entrado. */
+  test('Novati recusada não ganha o ✓ de carregada', async ({ page }) => {
+    await page.goto('/conciliadorde-planilha.html');
+    const a = await arquivos(page);
+    page.on('dialog', d => d.accept());
+    await page.setInputFiles('#inNov', xlsx('novati-errada.xlsx', a.errado));
+    await page.waitForTimeout(300);
+    await expect(page.locator('#fileNov')).toHaveText('');
+    await expect(page.locator('#dropNov')).not.toHaveClass(/loaded/);
+  });
+
+  /* Com a Fatura carregada antes da Novati, o cartão da Fatura dizia
+     "carregue a Novati p/ vincular" para sempre, sem a lista de empresas. */
+  test('Fatura antes da Novati: o cartão ganha a lista de empresas', async ({ page }) => {
+    await page.goto('/conciliadorde-planilha.html');
+    const a = await arquivos(page);
+    await page.setInputFiles('#inHap', xlsx('fatura-alfa.xlsx', a.fatura));
+    await expect(page.locator('#hapFileList')).toContainText('carregue a Novati');
+    await page.setInputFiles('#inNov', xlsx('novati.xlsx', a.novati));
+    await expect(page.locator('#hapFileList select')).toHaveValue('ALFA SERVICOS LTDA');
+  });
+
+  /* Cada aba testava nome.includes(q) || cpf.includes(d): com um dos dois vazio,
+     ''.includes('') é sempre verdadeiro — nenhuma busca filtrava. */
+  test('a busca das abas filtra por nome e por número', async ({ page }) => {
+    await page.goto('/conciliadorde-planilha.html');
+    const a = await arquivos(page);
+    await page.setInputFiles('#inHap', xlsx('fatura-alfa.xlsx', a.fatura));
+    await page.setInputFiles('#inNov', xlsx('novati.xlsx', a.novati));
+    await page.click('#btnCompare');
+    await page.click('.tile[data-tab="exc"]');
+    const linhas = () => page.locator('#t-exc tbody tr').count();
+    expect(await linhas()).toBe(2);
+    for (const [busca, esperado] of [['CARLOS', 1], ['777', 1], ['862.883', 1], ['NINGUEM', 0], ['', 2]]) {
+      await page.fill('.search[data-t="exc"]', busca);
+      expect(await linhas(), `busca "${busca}"`).toBe(esperado);
+    }
+  });
+});
