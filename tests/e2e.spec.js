@@ -366,30 +366,56 @@ test.describe('Infrequência SME', () => {
     return { iframe, frame };
   }
 
-  /* O iframe tem a altura do conteúdo inteiro: centralizada nele, a caixa caía
+  /* O iframe tem a altura do conteúdo inteiro: centralizado nele, o balão caía
      milhares de pixels abaixo da tela, só o fundo cinza aparecia e a aba
-     travava até o F5. */
-  test('a confirmação do mês aparece na parte visível da tela, e Esc cancela', async ({ page }) => {
+     travava até o F5. Agora ele vai para o trecho visível e a rolagem fica
+     travada enquanto estiver aberto — sem desfoque, que pesava a rolagem. */
+  test('o balão do mês aparece na tela, trava a rolagem e Esc cancela', async ({ page }) => {
     const { iframe, frame } = await abrir(page);
     const naTela = async () => {
       const f = await iframe.boundingBox();
       const c = await frame.$eval('.modal-box', e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
       return f.y + c.top >= 0 && f.y + c.bottom <= page.viewportSize().height;
     };
-    await frame.click('#btn-modelo');
+    const rolagem = () => page.evaluate(() => scrollY);
+    /* clique de mouse de verdade: o frame.click do Playwright rola a página até
+       o botão, e com o scroll-behavior:smooth do site essa animação seguiria
+       depois da trava e confundiria a medida */
+    const gerar = async () => {
+      const b = await (await frame.$('#btn-modelo')).boundingBox();
+      await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+    };
+    await gerar();
     await frame.waitForSelector('#modal:not(.hide)');
-    expect(await naTela(), 'caixa de confirmação fora da tela').toBe(true);
+    expect(await naTela(), 'balão fora da tela').toBe(true);
+    expect(await frame.$eval('#modal', e => getComputedStyle(e).backdropFilter)).toBe('none');
 
-    await page.evaluate(() => scrollTo(0, 1500));          // a caixa acompanha a rolagem
-    await expect.poll(naTela).toBe(true);
+    const antes = await rolagem();
+    await page.mouse.move(700, 700);
+    await page.mouse.wheel(0, 1500);
+    await page.waitForTimeout(400);
+    expect(await rolagem(), 'a página rolou com o balão aberto').toBe(antes);
+    expect(await naTela()).toBe(true);
 
     await page.keyboard.press('Escape');
     await expect(frame.locator('#modal')).toBeHidden();
+    await page.mouse.wheel(0, 600);                         // fechado, a rolagem volta
+    await expect.poll(rolagem).toBeGreaterThan(antes);
+    await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
 
-    await frame.click('#btn-modelo');                       // clique no fundo, ao lado da caixa, também cancela
+    await gerar();                                          // clique fora do balão também cancela
     const y = await frame.$eval('.modal-box', e => Math.round(e.getBoundingClientRect().top + 20));
-    await frame.click('#modal', { position: { x: 5, y } });
+    await frame.click('#modal', { position: { x: 60, y } });
     await expect(frame.locator('#modal')).toBeHidden();
+
+    /* trocar de ferramenta com o balão aberto cancela e solta a trava — senão
+       o Guardião ficaria sem rolagem */
+    await gerar();
+    await frame.waitForSelector('#modal:not(.hide)');
+    await page.click('#toolBtnPonto');
+    await expect(frame.locator('#modal')).toBeHidden();
+    expect(await page.evaluate(() => [document.body.style.overflow, document.documentElement.style.scrollbarGutter]))
+      .toEqual(['', '']);
   });
 
   /* Confirmar o mês recriava a lista de empresas e o filtro voltava a "Todas"

@@ -301,9 +301,12 @@ mark{background:color-mix(in srgb,var(--accent) 22%,transparent);color:inherit;b
   margin:14px 0 0;padding:12px 16px;border-radius:var(--r-sm);
   color:var(--accent);font-weight:600;font-size:13px;box-shadow:var(--in-sm);
 }
-.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:color-mix(in srgb,var(--ink) 35%,transparent);backdrop-filter:blur(3px)}
+/* só o balão: sem fundo cinza nem desfoque. O backdrop-filter cobria o iframe
+   inteiro (dezenas de milhares de px) e deixava a rolagem a ~12 quadros/s. A
+   camada continua lá, transparente, para um clique fora cancelar. */
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal.hide{display:none}
-.modal-box{background:var(--bg);border-radius:var(--r);box-shadow:var(--out);padding:26px 28px;max-width:520px;width:100%;animation:rise .25s ease both}
+.modal-box{background:var(--bg);border-radius:var(--r);box-shadow:0 0 0 2px var(--accent),var(--out),0 18px 48px color-mix(in srgb,var(--accent) 35%,transparent);padding:26px 28px;max-width:520px;width:100%;animation:rise .25s ease both}
 .modal-box h3{margin:0 0 10px;font-size:17px;font-weight:800;letter-spacing:-.01em}
 .modal-box p{margin:0 0 20px;color:var(--ink-soft);line-height:1.55}
 .modal-box p b{color:var(--ink)}
@@ -752,33 +755,72 @@ function mesDivergente(){
   return { cabecalho: { mes: cab.mes, ano: cab.ano || (cab.mes > esp.mes ? esp.ano-1 : esp.ano) }, esperado: esp };
 }
 
-/* Dentro do Folha Fácil (iframe) quem rola é a página de fora, e o iframe tem a
-   altura do conteúdo inteiro: o position:fixed centralizava a caixa no meio do
-   iframe, milhares de pixels abaixo da tela — só o fundo cinza aparecia e a aba
-   travava até o F5. Aqui a caixa vai para o trecho do iframe visível na janela
-   de fora e acompanha a rolagem dela. Aberta sozinha, a página não precisa disso.
-   Devolve a função que desfaz o ajuste. */
-function modalNaTela(){
-  let frame = null, fora = null;
-  try{ frame = window.frameElement; fora = window.parent; }catch(e){}
-  if(!frame || !fora || fora === window) return ()=>{};
+/* Enquanto o balão está aberto a rolagem fica travada: ele não sai da tela e
+   não há nada para redesenhar. Dentro do Folha Fácil (iframe) quem rola é a
+   página de fora e o iframe tem a altura do conteúdo inteiro — o position:fixed
+   centralizava o balão milhares de pixels abaixo da tela. Então a trava vai na
+   página de fora e o balão é posto no trecho do iframe que está visível.
+   `cancelar` é chamado se a pessoa clicar na página de fora (trocar de
+   ferramenta, tema) ou o iframe for descarregado: a trava nunca fica esquecida.
+   Devolve a função que desfaz tudo. */
+function prenderModal(cancelar){
   const box = $('#modal'), caixa = box.querySelector('.modal-box');
-  const posicionar = ()=>{
+  let frame = null, fora = null;
+  try{ frame = window.frameElement; fora = frame ? window.parent : null; }catch(e){}
+  if(fora === window) fora = null;
+  const doc = fora ? fora.document : document, raiz = doc.documentElement, corpo = doc.body;
+  const desfazer = [];
+
+  // A trava vai no <body>, que repassa o overflow para a janela; no <html> o
+  // body da página de fora (overflow-x:hidden) viraria uma caixa de rolagem
+  // própria e o conteúdo andaria alguns pixels para o lado. Sem a barra de
+  // rolagem a página também pularia: o espaço dela fica reservado (gutter).
+  // scroll-behavior:auto porque a página de fora rola "suave" e o ajuste abaixo precisa ser imediato.
+  const antes = { overflow: corpo.style.overflow, gutter: raiz.style.scrollbarGutter, suave: raiz.style.scrollBehavior };
+  corpo.style.overflow = 'hidden';
+  Object.assign(raiz.style, { scrollbarGutter:'stable', scrollBehavior:'auto' });
+  desfazer.push(()=>{
+    corpo.style.overflow = antes.overflow;
+    Object.assign(raiz.style, { scrollbarGutter: antes.gutter, scrollBehavior: antes.suave });
+  });
+  // a trava não para uma rolagem suave que já estava em andamento: rolar para o
+  // ponto atual, agora sem animação, interrompe o que sobrou dela
+  const janela = fora || window;
+  janela.scrollTo(janela.scrollX, janela.scrollY);
+
+  if(fora){
+    // balão maior que o trecho visível do iframe: desce a página de fora só o necessário
     const r = frame.getBoundingClientRect();
-    const topo = Math.max(0, -r.top);
-    const fim = Math.max(topo, Math.min(r.height, fora.innerHeight - r.top));
-    const folga = Math.max(0, (fim - topo - caixa.offsetHeight) / 2);
-    caixa.style.marginTop = Math.round(topo + Math.max(0, folga - 20)) + 'px';   // 20 = padding do .modal
-  };
-  box.style.alignItems = 'flex-start';
-  posicionar();
-  fora.addEventListener('scroll', posicionar, { passive:true });
-  fora.addEventListener('resize', posicionar);
-  return ()=>{
-    fora.removeEventListener('scroll', posicionar);
-    fora.removeEventListener('resize', posicionar);
-    box.style.alignItems = ''; caixa.style.marginTop = '';
-  };
+    const falta = caixa.offsetHeight + 40 - (Math.min(r.bottom, fora.innerHeight) - Math.max(r.top, 0));
+    if(falta > 0 && r.top > 0) fora.scrollBy(0, Math.min(falta, r.top));
+
+    const posicionar = ()=>{
+      const r = frame.getBoundingClientRect();
+      const topo = Math.max(0, -r.top);
+      const fim = Math.max(topo, Math.min(r.height, fora.innerHeight - r.top));
+      const folga = Math.max(0, (fim - topo - caixa.offsetHeight) / 2);
+      caixa.style.marginTop = Math.round(topo + Math.max(0, folga - 20)) + 'px';   // 20 = padding do .modal
+    };
+    box.style.alignItems = 'flex-start';
+    posicionar();
+    fora.addEventListener('resize', posicionar);
+    // rolagem feita por código (a pessoa não consegue rolar): o balão acompanha
+    fora.addEventListener('scroll', posicionar, { passive:true });
+
+    const naPaginaDeFora = e => { if(e.target !== frame) cancelar(); };
+    doc.addEventListener('pointerdown', naPaginaDeFora, true);
+    doc.addEventListener('focusin', naPaginaDeFora, true);
+    desfazer.push(()=>{
+      fora.removeEventListener('resize', posicionar);
+      fora.removeEventListener('scroll', posicionar);
+      doc.removeEventListener('pointerdown', naPaginaDeFora, true);
+      doc.removeEventListener('focusin', naPaginaDeFora, true);
+      box.style.alignItems = ''; caixa.style.marginTop = '';
+    });
+  }
+  window.addEventListener('pagehide', cancelar);
+  desfazer.push(()=>window.removeEventListener('pagehide', cancelar));
+  return ()=>desfazer.forEach(f=>f());
 }
 
 // Pergunta qual é o mês verdadeiro. Resolve true quando pode gerar.
@@ -791,9 +833,18 @@ function confirmarMes(){
       `O cabeçalho da planilha indica <b>${MESES[div.cabecalho.mes-1]}</b>, mas o mês esperado (anterior ao atual) é <b>${nomeRef(div.esperado)}</b>.<br>Qual é o mês verdadeiro deste arquivo?`;
     $('#modal-cab').textContent = `${MESES[div.cabecalho.mes-1]} de ${div.cabecalho.ano} (cabeçalho)`;
     $('#modal-esp').textContent = `${nomeRef(div.esperado)} (mês anterior)`;
-    let soltar = ()=>{};
-    const tecla = e => { if(e.key === 'Escape'){ e.preventDefault(); fechar(null); } };
+    let soltar = ()=>{}, aberto = true;
+    const tecla = e => {
+      if(e.key === 'Escape'){ e.preventDefault(); fechar(null); return; }
+      if(e.key === 'Tab'){                      // o foco fica nos botões do balão
+        e.preventDefault();
+        const bts = [...box.querySelectorAll('button')], i = bts.indexOf(document.activeElement);
+        bts[(i + (e.shiftKey ? bts.length - 1 : 1)) % bts.length].focus({ preventScroll:true });
+      }
+    };
     const fechar = ref => {
+      if(!aberto) return;
+      aberto = false;
       box.classList.add('hide');
       document.removeEventListener('keydown', tecla);
       soltar();
@@ -805,11 +856,11 @@ function confirmarMes(){
     $('#modal-cab').onclick = ()=>fechar(div.cabecalho);
     $('#modal-esp').onclick = ()=>fechar(div.esperado);
     $('#modal-cancel').onclick = ()=>fechar(null);
-    // Esc ou clique no fundo cancelam: a tela nunca fica presa no cinza
+    // Esc ou clique fora do balão cancelam
     box.onclick = e => { if(e.target === box) fechar(null); };
     document.addEventListener('keydown', tecla);
     box.classList.remove('hide');
-    soltar = modalNaTela();
+    soltar = prenderModal(()=>fechar(null));
     $('#modal-cab').focus({ preventScroll:true });
   });
 }
