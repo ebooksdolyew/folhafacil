@@ -195,6 +195,31 @@ input[type=checkbox]{accent-color:var(--petrol)}
 .tablewrap::-webkit-scrollbar{width:10px;height:10px}
 .tablewrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
 .tablewrap::-webkit-scrollbar-track{background:transparent}
+
+/* ── Política de Privacidade (mesmo bloco do rodapé do Guardião Sepog) ── */
+.ff-footer{margin-top:56px;text-align:center;display:flex;flex-direction:column;align-items:center;
+  color:var(--ink-3);font-size:12px;font-weight:500;line-height:1.9}
+.ff-footer .privacy{width:100%;max-width:760px}
+.ff-footer .privacy summary{
+  cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;
+  color:var(--petrol);font-weight:700;font-size:12px;
+  padding:8px 16px;border-radius:12px;
+  box-shadow:var(--raise-sm);width:max-content;margin:0 auto;
+  transition:box-shadow .2s ease}
+.ff-footer .privacy summary::-webkit-details-marker{display:none}
+.ff-footer .privacy summary .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ff-footer .privacy summary::after{content:'▸';transition:transform .2s ease}
+.ff-footer .privacy[open] summary::after{transform:rotate(90deg)}
+.ff-footer .privacy summary:hover{box-shadow:var(--inset-sm)}
+.ff-footer .privacy summary:focus-visible{outline:2px solid var(--petrol);outline-offset:3px}
+.ff-footer .privacy-body{
+  margin:16px auto 0;max-width:640px;padding:20px 22px;border-radius:var(--r);
+  background:var(--bg);box-shadow:var(--inset-sm);
+  color:var(--ink-2);font-size:12px;line-height:1.75;font-weight:500;text-align:left}
+.ff-footer .privacy-body h4{color:var(--ink);font-size:12px;font-weight:800;margin:16px 0 5px}
+.ff-footer .privacy-body h4:first-child{margin-top:0}
+.ff-footer .privacy-body p{margin:0 0 6px}
+.ff-footer .privacy-body strong{color:var(--ink);font-weight:700}
 </style>
 <script>
 /* Tema: sozinho, segue o sistema; dentro do Folha Fácil (iframe) quem define
@@ -345,6 +370,37 @@ r.setAttribute('data-theme',(window.matchMedia&&matchMedia('(prefers-color-schem
 </section>
 
 </main>
+
+<footer class="ff-footer">
+  <details class="privacy">
+    <summary><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="10.5" width="17" height="10.5" rx="2.5"/><path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5"/></svg> Política de Privacidade</summary>
+    <div class="privacy-body">
+      <h4>Processamento local</h4>
+      <p>Toda a análise acontece no seu próprio navegador. As planilhas importadas e os dados
+      extraídos <strong>nunca são enviados, transmitidos ou armazenados em nenhum
+      servidor</strong>. Não há upload: o arquivo não sai do seu dispositivo.</p>
+
+      <h4>Sem rastreamento</h4>
+      <p>Não usamos cookies, analytics, pixels ou qualquer identificador de
+      rastreamento. Esta ferramenta não grava nada no navegador; a única
+      preferência guardada localmente é a de tema (claro/escuro) do Folha
+      Fácil — nenhuma informação das planilhas é salva.</p>
+
+      <h4>Dados na memória</h4>
+      <p>Durante o uso, as planilhas e os resultados ficam apenas na memória temporária do navegador. Eles são <strong>apagados automaticamente</strong> ao fechar ou recarregar a aba, e também ao clicar em “Recomeçar”.</p>
+
+      <h4>Arquivos que você baixa</h4>
+      <p>As planilhas exportadas são geradas no seu dispositivo e contêm nomes, CPF e o vínculo de titulares e dependentes nos planos. Após o download, esses arquivos ficam sob a sua guarda e
+      responsabilidade.</p>
+
+      <h4>Dados pessoais (LGPD)</h4>
+      <p>As planilhas trazem dados pessoais de titulares e dependentes (nome, CPF, vínculo e plano contratado). Como o tratamento é integralmente local, nenhum desses dados trafega
+      ou é retido por esta ferramenta. A base legal e a finalidade do uso são de
+      responsabilidade da organização que opera a ferramenta (controladora dos
+      dados), nos termos da Lei nº 13.709/2018 (LGPD).</p>
+    </div>
+  </details>
+</footer>
 </div>
 
 <script>
