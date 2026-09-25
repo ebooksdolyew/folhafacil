@@ -82,9 +82,10 @@ body{font-family:var(--sans);color:var(--ink);font-size:14px;line-height:1.45;tr
 header.masthead{padding:36px 0 0;margin:0 0 24px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .embutido header.masthead{padding-top:0}
 /* dentro do Folha Fácil o aviso de direitos autorais da página de fora fecha o
-   rodapé: sem o recuo de baixo, ele fica à mesma distância da Política de
-   Privacidade nas três ferramentas */
-.embutido .wrap{padding-bottom:0}
+   rodapé. O recuo de baixo é o mesmo vão de 40px do Guardião — e é ele que
+   deixa a sombra do botão de Política de Privacidade inteira: sem ele o
+   iframe terminava colado no botão e cortava a sombra numa linha reta */
+.embutido .wrap{padding-bottom:40px}
 header.masthead h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:26px;font-weight:800;letter-spacing:-.6px;line-height:1.2;color:var(--ink);margin:0 0 6px}
 header.masthead .sub{color:var(--ink-2);font-size:13.5px;font-weight:500;line-height:1.55;max-width:620px;margin:0}
 @media(max-width:768px){header.masthead{margin-bottom:18px}header.masthead h1{font-size:21px}}
