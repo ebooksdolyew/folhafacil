@@ -2,6 +2,8 @@
   "name": "ghub",
   "version": "2.3.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Andrey Wesley Gomes",
   "description": "Ghub — análise inteligente de ponto eletrônico em PDF",
   "scripts": {
     "build": "node scripts/build-deploy.js",

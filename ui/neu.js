@@ -1,3 +1,7 @@
+/* Folha Fácil — © 2026 Andrey Wesley Gomes. Todos os direitos reservados.
+   Software proprietário. É proibido copiar, reproduzir, modificar ou redistribuir
+   este código, no todo ou em parte, sem autorização por escrito do autor.
+   Ver LICENSE. */
 /* ════════════════════════════════════════════════════════════════════════
    Folha Fácil — lista neumórfica no lugar da lista nativa do <select>
 

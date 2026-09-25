@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+  Folha Fácil — © 2026 Andrey Wesley Gomes. Todos os direitos reservados.
+  Software proprietário. É proibido copiar, reproduzir, modificar ou redistribuir
+  este código, no todo ou em parte, sem autorização por escrito do autor.
+  Ver LICENSE.
+-->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -775,6 +781,15 @@ td strong{
 
 .footer strong{color:var(--text-primary);font-weight:800}
 .footer .privacy{margin-top:0;width:100%;max-width:760px}
+
+/* Aviso de direitos autorais: fica fora das ferramentas, vale para as três */
+.copyright{
+  margin:40px auto 0;max-width:760px;text-align:center;
+  color:var(--text-muted);font-size:12px;font-weight:500;line-height:1.7
+}
+.copyright a{color:var(--text-primary);font-weight:700;text-decoration:none}
+.copyright a:hover{color:var(--accent);text-decoration:underline}
+.copyright a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 .footer .privacy summary{
   cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;
   color:var(--accent);font-weight:700;font-size:12px;
@@ -1136,6 +1151,12 @@ td strong{
   <!-- Terceira ferramenta: Conciliador de Planilhas, mesmo isolamento em iframe -->
   <iframe class="tool-frame" id="toolConciliador" title="Conciliador de Planilhas" role="tabpanel"
           aria-labelledby="toolBtnConcil" data-src="./conciliadorde-planilha.html" style="display:none"></iframe>
+
+  <!-- Direitos autorais: abaixo de qualquer ferramenta aberta -->
+  <p class="copyright">
+    © 2026 <a class="autor" href="https://www.instagram.com/wesley.gomesds/" target="_blank" rel="noopener noreferrer" title="Instagram @wesley.gomesds">Andrey Wesley Gomes</a>. Todos os direitos reservados.<br>
+    Software proprietário: é proibida a cópia, reprodução ou redistribuição, total ou parcial, sem autorização do autor.
+  </p>
 </div>
 
 <script>

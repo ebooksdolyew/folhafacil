@@ -148,3 +148,9 @@ Folhas de ponto e planilhas de infrequência trazem nome, CPF e atestado médico
   snapshots gerados a partir de arquivos reais. **Não remova essas linhas**;
 - o site não faz nenhuma requisição a terceiros: fontes e bibliotecas são
   auto-hospedadas, e a CSP do `_headers` bloqueia o resto.
+
+## Licença
+
+Software proprietário — © 2026 Andrey Wesley Gomes. Todos os direitos reservados.
+Cópia, reprodução ou redistribuição só com autorização por escrito do autor. Ver
+[`LICENSE`](LICENSE).
