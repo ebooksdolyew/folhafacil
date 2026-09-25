@@ -4,6 +4,7 @@
   "private": true,
   "description": "Ghub — análise inteligente de ponto eletrônico em PDF",
   "scripts": {
+    "build": "node scripts/build-deploy.js",
     "fixtures": "node tests/fixtures/gerar-pdf-sintetico.js tests/fixtures/ponto-sintetico.pdf",
     "pretest": "npm run fixtures",
     "test": "playwright test",
